@@ -377,6 +377,36 @@ const RecapScreen = () => {
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.country}</div>
             ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 3px;">${currentQuote.addresses.contact.email}</div>` : ''}
             ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.phone}</div>` : ''}
+            
+            ${currentQuote.addresses.useSeparateAddresses ? `
+              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${colors.borderSecondary};">
+                <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">Adresse de facturation :</div>
+                <div style="color: ${colors.textColor}; margin-top: 3px; font-size: 13px;">
+                  <div>${currentQuote.addresses.billing.company}</div>
+                  <div>${currentQuote.addresses.billing.name}</div>
+                  <div>${currentQuote.addresses.billing.street}</div>
+                  <div>${currentQuote.addresses.billing.postalCode} ${currentQuote.addresses.billing.city}</div>
+                  <div>${currentQuote.addresses.billing.country}</div>
+                </div>
+              </div>
+              
+              <div style="margin-top: 10px;">
+                <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">Adresse d'installation :</div>
+                <div style="color: ${colors.textColor}; margin-top: 3px; font-size: 13px;">
+                  <div>${currentQuote.addresses.installation.company}</div>
+                  <div>${currentQuote.addresses.installation.name}</div>
+                  <div>${currentQuote.addresses.installation.street}</div>
+                  <div>${currentQuote.addresses.installation.postalCode} ${currentQuote.addresses.installation.city}</div>
+                  <div>${currentQuote.addresses.installation.country}</div>
+                </div>
+              </div>
+            ` : `
+              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${colors.borderSecondary};">
+                <div style="color: ${colors.mutedTextColor}; font-size: 13px; font-style: italic;">
+                  Facturation et installation à la même adresse
+                </div>
+              </div>
+            `}
           </div>
         </div>
       </div>
