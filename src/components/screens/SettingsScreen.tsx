@@ -62,7 +62,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -78,10 +78,6 @@ const SettingsScreen = () => {
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center space-x-2">
-            <Settings2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Avancé</span>
           </TabsTrigger>
         </TabsList>
 
@@ -378,12 +374,33 @@ const SettingsScreen = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="logoUrl">Logo URL</Label>
-                    <Input
-                      id="logoUrl"
-                      value={settings.logoUrl}
-                      onChange={(e) => updateSettings({ logoUrl: e.target.value })}
-                      placeholder="https://example.com/logo.png"
-                    />
+                    <div className="flex space-x-2">
+                      <Input
+                        id="logoUrl"
+                        value={settings.logoUrl}
+                        onChange={(e) => updateSettings({ logoUrl: e.target.value })}
+                        placeholder="https://example.com/logo.png"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (file) {
+                              // Pour l'instant, afficher un message - l'upload de fichier nécessiterait Supabase Storage
+                              alert('Upload de fichier à implémenter avec Supabase Storage');
+                            }
+                          };
+                          input.click();
+                        }}
+                      >
+                        Importer
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pdfTitle">En-tête PDF (titre)</Label>
@@ -425,28 +442,6 @@ const SettingsScreen = () => {
           <CurrencySettings />
         </TabsContent>
 
-        <TabsContent value="advanced">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Paramètres Avancés</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Fonctionnalités avancées à venir : export/import de configuration, 
-                  sauvegarde cloud, intégrations API, etc.
-                </p>
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Note sur les adresses</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Les adresses de facturation et d'installation sont maintenant configurées 
-                    directement dans chaque devis individuel, dans l'onglet "Devis".
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

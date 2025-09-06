@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Copy, Trash2, Zap, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 import { useStore } from '@/store/useStore';
 import { QuoteItem, Client } from '@/types';
 import { calculateQuoteItem } from '@/utils/calculations';
@@ -51,6 +52,7 @@ const DevisScreen = () => {
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
+    toast.success(`Abonnement "${subscription.label}" ajouté au devis`);
   };
 
   const addNewItem = () => {
@@ -72,6 +74,7 @@ const DevisScreen = () => {
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
+    toast.success('Nouvelle ligne ajoutée au devis');
   };
 
   const handleClientSelect = (client: Client | null) => {

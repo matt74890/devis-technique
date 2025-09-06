@@ -15,8 +15,45 @@ const RecapScreen = () => {
   const totals = calculateQuoteTotals(currentQuote, settings.tvaPct);
   
   const generatePDF = () => {
-    // TODO: Implémentation PDF
-    alert('Génération PDF à venir');
+    // Validation des données requises
+    if (!currentQuote.ref) {
+      alert('Veuillez renseigner une référence pour le devis');
+      return;
+    }
+    
+    if (!currentQuote.client) {
+      alert('Veuillez sélectionner ou renseigner un client');
+      return;
+    }
+    
+    if (currentQuote.items.length === 0) {
+      alert('Veuillez ajouter au moins une ligne au devis');
+      return;
+    }
+    
+    // Créer un PDF basique (simulation)
+    const pdfContent = `
+DEVIS ${currentQuote.ref}
+Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}
+Client: ${currentQuote.client}
+
+DÉTAIL DES LIGNES:
+${currentQuote.items.map(item => 
+  `${item.reference} - ${item.qty} x ${item.puTTC.toFixed(2)} CHF = ${item.totalTTC.toFixed(2)} CHF`
+).join('\n')}
+
+TOTAL: ${totals.global.totalTTC.toFixed(2)} CHF
+${totals.mensuel.totalTTC > 0 ? `+ ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois` : ''}
+    `;
+    
+    // Simuler le téléchargement
+    const blob = new Blob([pdfContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `devis-${currentQuote.ref || 'nouveau'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
