@@ -374,7 +374,6 @@ const RecapScreen = () => {
             <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
-            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.country}</div>
             ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 3px;">${currentQuote.addresses.contact.email}</div>` : ''}
             ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.phone}</div>` : ''}
             
@@ -386,7 +385,6 @@ const RecapScreen = () => {
                   <div>${currentQuote.addresses.billing.name}</div>
                   <div>${currentQuote.addresses.billing.street}</div>
                   <div>${currentQuote.addresses.billing.postalCode} ${currentQuote.addresses.billing.city}</div>
-                  <div>${currentQuote.addresses.billing.country}</div>
                 </div>
               </div>
               
@@ -397,7 +395,6 @@ const RecapScreen = () => {
                   <div>${currentQuote.addresses.installation.name}</div>
                   <div>${currentQuote.addresses.installation.street}</div>
                   <div>${currentQuote.addresses.installation.postalCode} ${currentQuote.addresses.installation.city}</div>
-                  <div>${currentQuote.addresses.installation.country}</div>
                 </div>
               </div>
             ` : `
