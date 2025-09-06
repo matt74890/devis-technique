@@ -579,11 +579,6 @@ const RecapScreen = () => {
             ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
             ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
           </div>
-          ${settings.sellerInfo?.signature ? `
-            <div style="margin: 15px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
-            </div>
-          ` : ''}
           <div class="signature-line">
             ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
