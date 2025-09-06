@@ -16,95 +16,68 @@ const TemplateColors = () => {
     });
   };
 
+  const colorFields = [
+    { key: 'primary', label: 'Couleur principale', description: 'Titres et éléments importants' },
+    { key: 'secondary', label: 'Couleur secondaire', description: 'Textes secondaires et sous-titres' },
+    { key: 'accent', label: 'Couleur d\'accent', description: 'Éléments de mise en valeur' },
+    { key: 'tableHeader', label: 'En-tête de tableau', description: 'Fond des en-têtes de tableau' },
+    { key: 'tableRow', label: 'Lignes de tableau', description: 'Fond des lignes alternées' },
+    { key: 'tableBorder', label: 'Bordures de tableau', description: 'Couleur des bordures' },
+    { key: 'background', label: 'Arrière-plan', description: 'Couleur de fond principal' },
+    { key: 'cardBackground', label: 'Fond des cartes', description: 'Arrière-plan des sections' }
+  ];
+
   return (
     <Card className="shadow-soft">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Palette className="h-5 w-5 text-primary" />
-          <span>Couleurs du template</span>
+          <span>Couleurs du template PDF</span>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Personnalisez les couleurs utilisées dans les devis PDF (maximum 3 couleurs en hexadécimal)
+          Personnalisez toutes les couleurs utilisées dans les devis PDF (format hexadécimal)
         </p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="primary-color">Couleur principale *</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="primary-color"
-                type="color"
-                value={settings.templateColors?.primary || '#2563eb'}
-                onChange={(e) => handleUpdateColor('primary', e.target.value)}
-                className="w-16 h-10 p-1 border rounded"
-              />
-              <Input
-                value={settings.templateColors?.primary || '#2563eb'}
-                onChange={(e) => handleUpdateColor('primary', e.target.value)}
-                placeholder="#2563eb"
-                className="font-mono"
-              />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {colorFields.map((field) => (
+            <div key={field.key} className="space-y-2">
+              <Label htmlFor={`${field.key}-color`}>
+                {field.label}
+                <span className="text-xs text-muted-foreground block">{field.description}</span>
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id={`${field.key}-color`}
+                  type="color"
+                  value={settings.templateColors?.[field.key as keyof typeof settings.templateColors] || '#000000'}
+                  onChange={(e) => handleUpdateColor(field.key as keyof typeof settings.templateColors, e.target.value)}
+                  className="w-16 h-10 p-1 border rounded"
+                />
+                <Input
+                  value={settings.templateColors?.[field.key as keyof typeof settings.templateColors] || '#000000'}
+                  onChange={(e) => handleUpdateColor(field.key as keyof typeof settings.templateColors, e.target.value)}
+                  placeholder="#000000"
+                  className="font-mono"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="secondary-color">Couleur secondaire</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="secondary-color"
-                type="color"
-                value={settings.templateColors?.secondary || '#64748b'}
-                onChange={(e) => handleUpdateColor('secondary', e.target.value)}
-                className="w-16 h-10 p-1 border rounded"
-              />
-              <Input
-                value={settings.templateColors?.secondary || '#64748b'}
-                onChange={(e) => handleUpdateColor('secondary', e.target.value)}
-                placeholder="#64748b"
-                className="font-mono"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="accent-color">Couleur d'accent</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="accent-color"
-                type="color"
-                value={settings.templateColors?.accent || '#059669'}
-                onChange={(e) => handleUpdateColor('accent', e.target.value)}
-                className="w-16 h-10 p-1 border rounded"
-              />
-              <Input
-                value={settings.templateColors?.accent || '#059669'}
-                onChange={(e) => handleUpdateColor('accent', e.target.value)}
-                placeholder="#059669"
-                className="font-mono"
-              />
-            </div>
-          </div>
+          ))}
         </div>
         
-        <div className="mt-4 p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-2">Aperçu des couleurs</h4>
-          <div className="flex space-x-2">
-            <div 
-              className="w-8 h-8 rounded border-2 border-white shadow-sm"
-              style={{ backgroundColor: settings.templateColors?.primary || '#2563eb' }}
-              title="Couleur principale"
-            />
-            <div 
-              className="w-8 h-8 rounded border-2 border-white shadow-sm"
-              style={{ backgroundColor: settings.templateColors?.secondary || '#64748b' }}
-              title="Couleur secondaire"
-            />
-            <div 
-              className="w-8 h-8 rounded border-2 border-white shadow-sm"
-              style={{ backgroundColor: settings.templateColors?.accent || '#059669' }}
-              title="Couleur d'accent"
-            />
+        <div className="mt-6 p-4 bg-muted rounded-lg">
+          <h4 className="font-medium mb-3">Aperçu des couleurs</h4>
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+            {colorFields.map((field) => (
+              <div key={field.key} className="text-center">
+                <div 
+                  className="w-8 h-8 rounded border-2 border-white shadow-sm mx-auto mb-1"
+                  style={{ backgroundColor: settings.templateColors?.[field.key as keyof typeof settings.templateColors] || '#000000' }}
+                  title={field.label}
+                />
+                <span className="text-xs text-muted-foreground">{field.label.split(' ')[0]}</span>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>

@@ -142,7 +142,12 @@ const defaultLetterTemplate: LetterTemplate = {
 const defaultTemplateColors: TemplateColors = {
   primary: '#2563eb',
   secondary: '#64748b', 
-  accent: '#059669'
+  accent: '#059669',
+  tableHeader: '#1e40af',
+  tableRow: '#f8fafc',
+  tableBorder: '#cbd5e1',
+  background: '#ffffff',
+  cardBackground: '#f1f5f9'
 };
 
 const defaultSettings: Settings = {

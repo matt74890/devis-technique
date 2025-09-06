@@ -25,6 +25,11 @@ export interface TemplateColors {
   primary: string;
   secondary: string;
   accent: string;
+  tableHeader: string;
+  tableRow: string;
+  tableBorder: string;
+  background: string;
+  cardBackground: string;
 }
 
 export interface LetterTemplate {

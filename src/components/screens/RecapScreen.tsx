@@ -40,13 +40,22 @@ const RecapScreen = () => {
     console.log('Validation passée, génération du PDF');
     
     // Créer le contenu HTML pour la génération PDF
-    const colors = settings.templateColors || { primary: '#2563eb', secondary: '#64748b', accent: '#059669' };
+    const colors = settings.templateColors || { 
+      primary: '#2563eb', 
+      secondary: '#64748b', 
+      accent: '#059669',
+      tableHeader: '#1e40af',
+      tableRow: '#f8fafc',
+      tableBorder: '#cbd5e1',
+      background: '#ffffff',
+      cardBackground: '#f1f5f9'
+    };
     
     let htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Devis ${currentQuote.ref}</title>
+          <title>${settings.letterTemplate?.enabled ? 'Lettre et Devis' : 'Devis'} ${currentQuote.ref}</title>
           <meta charset="utf-8">
           <style>
             body { 
@@ -54,13 +63,15 @@ const RecapScreen = () => {
               margin: 0; 
               padding: 20px; 
               color: #000;
-              background: white;
+              background: ${colors.background};
             }
             @media print { 
               body { margin: 0; }
               .no-print { display: none !important; }
+              .page-break { page-break-before: always; }
             }
             .container { max-width: 800px; margin: 0 auto; }
+            .letter-container { margin-bottom: 40px; padding-bottom: 40px; border-bottom: 3px solid ${colors.primary}; }
             .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
             .logo { height: 80px; margin-bottom: 15px; }
             .seller-info { flex: 1; }
@@ -75,7 +86,7 @@ const RecapScreen = () => {
             .title { color: ${colors.primary}; font-size: 28px; font-weight: bold; margin: 0; }
             .subtitle { color: ${colors.secondary}; font-size: 16px; margin: 8px 0 0 0; }
             .project-details { 
-              background: #f8fafc; 
+              background: ${colors.cardBackground}; 
               padding: 15px; 
               border-radius: 8px; 
               margin: 20px 0; 
@@ -84,21 +95,21 @@ const RecapScreen = () => {
               width: 100%; 
               border-collapse: collapse; 
               margin: 20px 0; 
-              border: 1px solid ${colors.secondary}; 
+              border: 1px solid ${colors.tableBorder}; 
             }
             th { 
-              background: ${colors.primary}; 
+              background: ${colors.tableHeader}; 
               color: white; 
               padding: 12px 8px; 
               text-align: left; 
               font-weight: bold;
-              border: 1px solid ${colors.secondary};
+              border: 1px solid ${colors.tableBorder};
             }
             td { 
               padding: 10px 8px; 
-              border: 1px solid ${colors.secondary}; 
+              border: 1px solid ${colors.tableBorder}; 
             }
-            tr:nth-child(even) { background: #f8fafc; }
+            tr:nth-child(even) { background: ${colors.tableRow}; }
             .mode-badge { 
               padding: 3px 8px; 
               border-radius: 12px; 
@@ -113,7 +124,7 @@ const RecapScreen = () => {
               border: 2px solid; 
               padding: 15px; 
               border-radius: 8px; 
-              background: #f8fafc;
+              background: ${colors.cardBackground};
             }
             .total-unique { border-color: ${colors.secondary}; }
             .total-mensuel { border-color: ${colors.accent}; background: #f0fdf4; }
@@ -137,18 +148,82 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .comment-box { 
-              border: 1px solid ${colors.secondary}; 
-              background: #f8fafc; 
+              border: 1px solid ${colors.tableBorder}; 
+              background: ${colors.cardBackground}; 
               padding: 15px; 
               border-radius: 8px; 
             }
+            .letter-header { margin-bottom: 30px; }
+            .letter-date { text-align: right; margin: 20px 0; font-weight: bold; }
+            .letter-recipient { margin: 20px 0; }
+            .letter-subject { margin: 20px 0; font-weight: bold; color: ${colors.primary}; }
+            .letter-content { margin: 20px 0; line-height: 1.6; text-align: justify; }
+            .letter-signature { margin-top: 30px; }
           </style>
         </head>
         <body>
           <div class="container">
     `;
 
-    // En-tête avec logo et adresses
+    // Ajouter la lettre de présentation si activée
+    if (settings.letterTemplate?.enabled) {
+      const letterDate = new Date().toLocaleDateString('fr-FR');
+      const clientAddress = currentQuote.addresses.contact;
+      
+      htmlContent += `
+        <div class="letter-container">
+          <div class="letter-header">
+            ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
+            <div style="margin-top: 20px;">
+              <div style="font-weight: bold; font-size: 18px; color: ${colors.primary};">${settings.letterTemplate.companyName}</div>
+              <div style="margin-top: 10px; color: ${colors.secondary};">${settings.letterTemplate.companyAddress}</div>
+              <div style="margin-top: 10px;">
+                <div>${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}</div>
+                <div>Tél: ${settings.letterTemplate.contactPhone}</div>
+                <div>Email: ${settings.letterTemplate.contactEmail}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="letter-date">${letterDate}</div>
+          
+          <div class="letter-recipient">
+            <div style="font-weight: bold;">À l'attention de :</div>
+            <div style="margin-top: 10px;">
+              ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
+              <div>${clientAddress.name}</div>
+              <div>${clientAddress.street}</div>
+              <div>${clientAddress.postalCode} ${clientAddress.city}</div>
+              <div>${clientAddress.country}</div>
+            </div>
+          </div>
+          
+          <div class="letter-subject">
+            <strong>Objet:</strong> ${settings.letterTemplate.subject}
+          </div>
+          
+          <div class="letter-content">
+            <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
+            <p>${settings.letterTemplate.body.replace(/\n/g, '</p><p>')}</p>
+            <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
+          </div>
+          
+          <div class="letter-signature">
+            <p><strong>Cordialement,</strong></p>
+            <div style="margin-top: 20px;">
+              <div style="font-weight: bold;">${settings.sellerInfo?.name || settings.letterTemplate.contactName}</div>
+              <div>${settings.sellerInfo?.title || settings.letterTemplate.contactTitle}</div>
+              <div>${settings.sellerInfo?.email || settings.letterTemplate.contactEmail}</div>
+              <div>${settings.sellerInfo?.phone || settings.letterTemplate.contactPhone}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="page-break"></div>
+      `;
+    }
+
+    // En-tête avec logo et adresses pour le devis
     htmlContent += `
       <div class="header">
         <div class="seller-info">
@@ -255,7 +330,7 @@ const RecapScreen = () => {
             <span>TVA (${settings.tvaPct}%):</span>
             <span>${totals.unique.tva.toFixed(2)} CHF</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.secondary}; padding-top: 8px; color: ${colors.primary};">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.tableBorder}; padding-top: 8px; color: ${colors.primary};">
             <span>Total TTC:</span>
             <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -352,7 +427,7 @@ const RecapScreen = () => {
         printWindow.document.write(htmlContent);
         printWindow.document.close();
         
-        toast.success('PDF généré avec succès ! Utilisez Ctrl+P ou Cmd+P pour sauvegarder en PDF.');
+        toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès ! Utilisez Ctrl+P ou Cmd+P pour sauvegarder en PDF.`);
       } else {
         toast.error('Impossible d\'ouvrir la fenêtre de génération PDF. Vérifiez que les popups ne sont pas bloquées.');
       }
