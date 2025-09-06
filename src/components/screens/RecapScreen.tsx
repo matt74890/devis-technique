@@ -104,9 +104,11 @@ const RecapScreen = () => {
             body { 
               font-family: Arial, sans-serif; 
               margin: 0; 
-              padding: 20px; 
+              padding: 10px; 
               color: ${colors.textColor};
               background: ${colors.background};
+              font-size: 12px;
+              line-height: 1.3;
             }
             @media print { 
               body { margin: 0; }
@@ -115,53 +117,55 @@ const RecapScreen = () => {
             }
             .container { max-width: 800px; margin: 0 auto; }
             .letter-container { 
-              margin-bottom: 20px; 
-              padding-bottom: 20px; 
-              border-bottom: 2px solid ${colors.borderPrimary}; 
+              margin-bottom: 10px; 
+              padding-bottom: 10px; 
+              border-bottom: 1px solid ${colors.borderPrimary}; 
               background: ${colors.headerBackground};
-              padding: 20px;
-              border-radius: 8px;
+              padding: 10px;
+              border-radius: 4px;
             }
-            .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
-            .logo { height: 50px; margin-bottom: 10px; }
+            .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+            .logo { height: 40px; margin-bottom: 5px; }
             .seller-info { flex: 1; }
             .client-info { text-align: right; max-width: 300px; }
             .title-section { 
               text-align: center; 
-              padding: 20px 0; 
-              border-top: 3px solid ${colors.borderPrimary}; 
+              padding: 10px 0; 
+              border-top: 2px solid ${colors.borderPrimary}; 
               border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: 20px 0;
+              margin: 10px 0;
               background: ${colors.headerBackground};
-              border-radius: 8px;
+              border-radius: 4px;
             }
-            .title { color: ${colors.titleColor}; font-size: 28px; font-weight: bold; margin: 0; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: 16px; margin: 8px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: 22px; font-weight: bold; margin: 0; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: 14px; margin: 4px 0 0 0; }
             .project-details { 
               background: ${colors.cardBackground}; 
-              padding: 15px; 
-              border-radius: 8px; 
-              margin: 20px 0; 
+              padding: 8px; 
+              border-radius: 4px; 
+              margin: 10px 0; 
               border: 1px solid ${colors.borderSecondary};
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 20px 0; 
+              margin: 10px 0; 
               border: 1px solid ${colors.tableBorder}; 
             }
             th { 
               background: ${colors.tableHeader}; 
               color: ${colors.tableHeaderText}; 
-              padding: 12px 8px; 
+              padding: 6px 4px; 
               text-align: left; 
               font-weight: bold;
               border: 1px solid ${colors.tableBorder};
+              font-size: 11px;
             }
             td { 
-              padding: 10px 8px; 
+              padding: 5px 4px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
+              font-size: 11px;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
             tr:nth-child(odd) { background: ${colors.tableRow}; }
@@ -174,11 +178,11 @@ const RecapScreen = () => {
             }
             .mode-unique { background: ${colors.badgeUnique}; }
             .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
             .total-card { 
-              border: 2px solid ${colors.totalCardBorder}; 
-              padding: 15px; 
-              border-radius: 8px; 
+              border: 1px solid ${colors.totalCardBorder}; 
+              padding: 8px; 
+              border-radius: 4px; 
               background: ${colors.cardBackground};
             }
             .total-unique { 
@@ -191,55 +195,60 @@ const RecapScreen = () => {
             }
             .grand-total { 
               text-align: center; 
-              padding: 25px; 
-              border: 3px solid ${colors.grandTotalBorder}; 
-              border-radius: 8px; 
+              padding: 15px; 
+              border: 2px solid ${colors.grandTotalBorder}; 
+              border-radius: 4px; 
               background: ${colors.grandTotalBackground};
-              margin: 25px 0;
+              margin: 15px 0;
             }
             .footer { 
               text-align: center; 
-              font-size: 12px; 
+              font-size: 10px; 
               color: ${colors.mutedTextColor}; 
-              border-top: 2px solid ${colors.borderPrimary}; 
-              padding-top: 15px; 
-              margin-top: 30px; 
+              border-top: 1px solid ${colors.borderPrimary}; 
+              padding-top: 10px; 
+              margin-top: 15px; 
             }
             .comment-section { 
-              margin: 20px 0; 
+              margin: 10px 0; 
             }
             .comment-box { 
               border: 1px solid ${colors.borderSecondary}; 
               background: ${colors.cardBackground}; 
-              padding: 15px; 
-              border-radius: 8px; 
+              padding: 8px; 
+              border-radius: 4px; 
               color: ${colors.textColor};
             }
             .letter-header { margin-bottom: 30px; }
             .letter-date { 
               text-align: right; 
-              margin: 20px 0; 
+              margin: 10px 0; 
               font-weight: bold; 
               color: ${colors.letterDateColor};
+              font-size: 12px;
             }
             .letter-recipient { 
-              margin: 20px 0; 
+              margin: 10px 0; 
               color: ${colors.textColor};
+              font-size: 12px;
             }
             .letter-subject { 
-              margin: 20px 0; 
+              margin: 10px 0; 
               font-weight: bold; 
-              color: ${colors.letterSubjectColor}; 
+              color: ${colors.letterSubjectColor};
+              font-size: 12px; 
             }
             .letter-content { 
-              margin: 20px 0; 
-              line-height: 1.6; 
+              margin: 10px 0; 
+              line-height: 1.4; 
               text-align: justify; 
               color: ${colors.textColor};
+              font-size: 11px;
             }
             .letter-signature { 
-              margin-top: 30px; 
+              margin-top: 15px; 
               color: ${colors.letterSignatureColor};
+              font-size: 11px;
             }
             .separator { 
               height: 1px; 
@@ -247,17 +256,17 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .signatures-section {
-              margin: 20px 0 10px 0;
+              margin: 15px 0 5px 0;
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 20px;
+              gap: 15px;
             }
             .signature-box {
-              border: 2px solid ${colors.signatureBoxBorder};
+              border: 1px solid ${colors.signatureBoxBorder};
               background: ${colors.signatureBoxBackground};
-              padding: 15px;
-              border-radius: 8px;
-              min-height: 80px;
+              padding: 10px;
+              border-radius: 4px;
+              min-height: 60px;
             }
             .signature-title {
               font-weight: bold;
