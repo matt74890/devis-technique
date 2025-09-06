@@ -589,12 +589,13 @@ const RecapScreen = () => {
           ` : ''}
         </div>
         
-        <div style="float: right; width: 45%; text-align: left;">
-          <div style="font-weight: bold; color: ${colors.titleColor}; margin-bottom: 10px;">
-            ${currentQuote.addresses.contact.name}
+        <div class="signature-box">
+          <div class="signature-title">SIGNATURE DU CLIENT</div>
+          <div class="signature-content">
+            <div>${currentQuote.addresses.contact.name}</div>
           </div>
           <div class="signature-line">
-            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+            Date et signature
           </div>
         </div>
       </div>
