@@ -595,7 +595,7 @@ const RecapScreen = () => {
             <div>${currentQuote.addresses.contact.name}</div>
           </div>
           <div class="signature-line">
-            Date et signature
+            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
         </div>
       </div>
