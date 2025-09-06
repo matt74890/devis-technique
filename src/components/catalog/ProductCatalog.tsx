@@ -14,7 +14,7 @@ import { Product } from '@/types';
 const ProductCatalog = () => {
   const { settings, addProduct, updateProduct, deleteProduct } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     reference: '',
@@ -32,7 +32,7 @@ const ProductCatalog = () => {
     const matchesSearch = !searchTerm || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.reference.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !selectedType || product.type === selectedType;
+    const matchesType = selectedType === 'all' || product.type === selectedType;
     return matchesSearch && matchesType;
   });
 
@@ -126,7 +126,7 @@ const ProductCatalog = () => {
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 {settings.types.map((type) => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
