@@ -7,24 +7,29 @@ export const calculateQuoteItem = (
 ): QuoteItem => {
   const tvaMultiplier = 1 + (tvaPct / 100);
   
+  // Valeurs par défaut pour les calculs
+  const qty = item.qty || 1;
+  const unitPriceValue = item.unitPriceValue || 0;
+  const lineDiscountPct = item.lineDiscountPct || 0;
+  
   // Calcul PU HT et TTC
   let puHT: number, puTTC: number;
   
   if (item.unitPriceMode === 'HT') {
-    puHT = item.unitPriceValue;
+    puHT = unitPriceValue;
     puTTC = puHT * tvaMultiplier;
   } else {
-    puTTC = item.unitPriceValue;
+    puTTC = unitPriceValue;
     puHT = puTTC / tvaMultiplier;
   }
   
   // Calcul totaux bruts
-  const totalHT_brut = puHT * item.qty;
-  const totalTTC_brut = puTTC * item.qty;
+  const totalHT_brut = puHT * qty;
+  const totalTTC_brut = puTTC * qty;
   
   // Calcul remise ligne (si mode per_line)
   const discountHT = isPerLineDiscount ? 
-    totalHT_brut * (item.lineDiscountPct / 100) : 0;
+    totalHT_brut * (lineDiscountPct / 100) : 0;
   
   // Calcul totaux nets
   const totalHT_net = totalHT_brut - discountHT;
@@ -49,21 +54,21 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
   const mensuelItems = quote.items.filter(item => item.mode === 'mensuel');
   
   // Calculs pour unique
-  const uniqueSubtotalHT = uniqueItems.reduce((sum, item) => sum + item.totalHT_net, 0);
+  const uniqueSubtotalHT = uniqueItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
   const uniqueDiscountHT = quote.discountMode === 'per_line' 
-    ? uniqueItems.reduce((sum, item) => sum + item.discountHT, 0)
+    ? uniqueItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
     : 0;
   
   // Calculs pour mensuel
-  const mensuelSubtotalHT = mensuelItems.reduce((sum, item) => sum + item.totalHT_net, 0);
+  const mensuelSubtotalHT = mensuelItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
   const mensuelDiscountHT = quote.discountMode === 'per_line'
-    ? mensuelItems.reduce((sum, item) => sum + item.discountHT, 0)
+    ? mensuelItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
     : 0;
   
   // Calculs globaux
   const globalSubtotalHT = uniqueSubtotalHT + mensuelSubtotalHT;
   const globalDiscountHT = quote.discountMode === 'global' 
-    ? globalSubtotalHT * (quote.discountPct / 100)
+    ? globalSubtotalHT * ((quote.discountPct || 0) / 100)
     : 0;
   
   // Si remise globale, répartition proportionnelle

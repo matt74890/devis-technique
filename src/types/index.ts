@@ -83,7 +83,7 @@ export interface PDFField {
 export interface Subscription {
   id: string;
   label: string;
-  puTTC: number;
+  puTTC?: number;
   active: boolean;
   defaultType: string;
   defaultRef: string;
@@ -107,7 +107,7 @@ export interface Quote {
   canton: string;
   comment: string;
   discountMode: 'per_line' | 'global';
-  discountPct: number;
+  discountPct?: number;
   items: QuoteItem[];
   addresses: {
     contact: Address;
@@ -122,17 +122,17 @@ export interface QuoteItem {
   type: string;
   reference: string;
   mode: 'unique' | 'mensuel';
-  qty: number;
-  unitPriceValue: number;
+  qty?: number;
+  unitPriceValue?: number;
   unitPriceMode: 'TTC' | 'HT';
-  lineDiscountPct: number;
+  lineDiscountPct?: number;
   // Computed values
-  puHT: number;
-  puTTC: number;
-  totalHT_brut: number;
-  discountHT: number;
-  totalHT_net: number;
-  totalTTC: number;
+  puHT?: number;
+  puTTC?: number;
+  totalHT_brut?: number;
+  discountHT?: number;
+  totalHT_net?: number;
+  totalTTC?: number;
 }
 
 export interface QuoteTotals {

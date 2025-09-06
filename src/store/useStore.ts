@@ -165,7 +165,7 @@ const createDefaultQuote = (): Quote => ({
   canton: '',
   comment: '',
   discountMode: 'per_line',
-  discountPct: 0,
+  discountPct: undefined,
   items: [],
   addresses: {
     contact: { ...defaultAddress },

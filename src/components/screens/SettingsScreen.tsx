@@ -98,13 +98,14 @@ const SettingsScreen = () => {
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="tva">TVA (%)</Label>
-                  <Input
-                    id="tva"
-                    type="number"
-                    step="0.01"
-                    value={settings.tvaPct}
-                    onChange={(e) => updateSettings({ tvaPct: parseFloat(e.target.value) || 8.10 })}
-                  />
+                   <Input
+                     id="tva"
+                     type="number"
+                     step="0.01"
+                     value={settings.tvaPct || ''}
+                     onChange={(e) => updateSettings({ tvaPct: parseFloat(e.target.value) || 8.10 })}
+                     placeholder="8.10"
+                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="decimals">Affichage décimales</Label>
@@ -166,13 +167,14 @@ const SettingsScreen = () => {
                             />
                           </td>
                           <td className="p-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={subscription.puTTC}
-                              onChange={(e) => updateSubscription(subscription.id, { puTTC: parseFloat(e.target.value) || 0 })}
-                              className="w-24"
-                            />
+                             <Input
+                               type="number"
+                               step="0.01"
+                               value={subscription.puTTC || ''}
+                               onChange={(e) => updateSubscription(subscription.id, { puTTC: parseFloat(e.target.value) || undefined })}
+                               className="w-24"
+                               placeholder="Prix"
+                             />
                           </td>
                           <td className="p-2">
                             <Switch
@@ -224,13 +226,13 @@ const SettingsScreen = () => {
                     value={newSubscription.label}
                     onChange={(e) => setNewSubscription({ ...newSubscription, label: e.target.value })}
                   />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="PU TTC"
-                    value={newSubscription.puTTC}
-                    onChange={(e) => setNewSubscription({ ...newSubscription, puTTC: parseFloat(e.target.value) || 0 })}
-                  />
+                   <Input
+                     type="number"
+                     step="0.01"
+                     placeholder="PU TTC"
+                     value={newSubscription.puTTC || ''}
+                     onChange={(e) => setNewSubscription({ ...newSubscription, puTTC: parseFloat(e.target.value) || undefined })}
+                   />
                   <div className="flex items-center space-x-2">
                     <Switch
                       checked={newSubscription.active}

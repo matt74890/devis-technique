@@ -11,6 +11,7 @@ import { Plus, Copy, Trash2, Zap, MapPin } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { QuoteItem } from '@/types';
 import { calculateQuoteItem } from '@/utils/calculations';
+import ProductSelector from '@/components/catalog/ProductSelector';
 
 const DevisScreen = () => {
   const { 
@@ -36,15 +37,15 @@ const DevisScreen = () => {
       reference: subscription.defaultRef,
       mode: 'mensuel',
       qty: 1,
-      unitPriceValue: subscription.puTTC,
+      unitPriceValue: subscription.puTTC || 0,
       unitPriceMode: 'TTC',
-      lineDiscountPct: 0,
-      puHT: 0,
-      puTTC: 0,
-      totalHT_brut: 0,
-      discountHT: 0,
-      totalHT_net: 0,
-      totalTTC: 0
+      lineDiscountPct: undefined,
+      puHT: undefined,
+      puTTC: undefined,
+      totalHT_brut: undefined,
+      discountHT: undefined,
+      totalHT_net: undefined,
+      totalTTC: undefined
     };
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
@@ -57,15 +58,15 @@ const DevisScreen = () => {
       reference: '',
       mode: newItemMode,
       qty: 1,
-      unitPriceValue: 0,
+      unitPriceValue: undefined,
       unitPriceMode: settings.priceInputModeDefault,
-      lineDiscountPct: 0,
-      puHT: 0,
-      puTTC: 0,
-      totalHT_brut: 0,
-      discountHT: 0,
-      totalHT_net: 0,
-      totalTTC: 0
+      lineDiscountPct: undefined,
+      puHT: undefined,
+      puTTC: undefined,
+      totalHT_brut: undefined,
+      discountHT: undefined,
+      totalHT_net: undefined,
+      totalTTC: undefined
     };
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
@@ -596,7 +597,7 @@ const DevisScreen = () => {
                   onClick={() => addSubscriptionQuick(subscription.id)}
                   className="bg-success-light text-success hover:bg-success hover:text-success-foreground"
                 >
-                  {subscription.label} - {subscription.puTTC.toFixed(2)} CHF
+                  {subscription.label} - {(subscription.puTTC || 0).toFixed(2)} CHF
                 </Button>
               ))}
             </div>
@@ -630,14 +631,15 @@ const DevisScreen = () => {
             {currentQuote.discountMode === 'global' && (
               <div className="space-y-2">
                 <Label htmlFor="globalDiscount">Remise globale (%)</Label>
-                <Input
-                  id="globalDiscount"
-                  type="number"
-                  step="0.01"
-                  value={currentQuote.discountPct}
-                  onChange={(e) => updateQuote({ discountPct: parseFloat(e.target.value) || 0 })}
-                  className="w-24"
-                />
+                 <Input
+                   id="globalDiscount"
+                   type="number"
+                   step="0.01"
+                   value={currentQuote.discountPct || ''}
+                   onChange={(e) => updateQuote({ discountPct: parseFloat(e.target.value) || undefined })}
+                   className="w-24"
+                   placeholder="0"
+                 />
               </div>
             )}
           </div>
@@ -701,22 +703,24 @@ const DevisScreen = () => {
                       </Select>
                     </td>
                     <td className="p-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })}
-                        className="w-20"
-                      />
+                       <Input
+                         type="number"
+                         min="1"
+                         value={item.qty || ''}
+                         onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || undefined })}
+                         className="w-20"
+                         placeholder="Qté"
+                       />
                     </td>
                     <td className="p-2">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.unitPriceValue}
-                        onChange={(e) => updateItem(item.id, { unitPriceValue: parseFloat(e.target.value) || 0 })}
-                        className="w-24"
-                      />
+                       <Input
+                         type="number"
+                         step="0.01"
+                         value={item.unitPriceValue || ''}
+                         onChange={(e) => updateItem(item.id, { unitPriceValue: parseFloat(e.target.value) || undefined })}
+                         className="w-24"
+                         placeholder="Prix"
+                       />
                     </td>
                     <td className="p-2">
                       <Switch
@@ -726,21 +730,22 @@ const DevisScreen = () => {
                     </td>
                     {currentQuote.discountMode === 'per_line' && (
                       <td className="p-2">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.lineDiscountPct}
-                          onChange={(e) => updateItem(item.id, { lineDiscountPct: parseFloat(e.target.value) || 0 })}
-                          className="w-20"
-                        />
+                         <Input
+                           type="number"
+                           step="0.01"
+                           value={item.lineDiscountPct || ''}
+                           onChange={(e) => updateItem(item.id, { lineDiscountPct: parseFloat(e.target.value) || undefined })}
+                           className="w-20"
+                           placeholder="%"
+                         />
                       </td>
                     )}
-                    <td className="p-2 font-medium">
-                      {item.totalHT_net.toFixed(2)} CHF
-                    </td>
-                    <td className="p-2 font-medium">
-                      {item.totalTTC.toFixed(2)} CHF
-                    </td>
+                     <td className="p-2 font-medium">
+                       {(item.totalHT_net || 0).toFixed(2)} CHF
+                     </td>
+                     <td className="p-2 font-medium">
+                       {(item.totalTTC || 0).toFixed(2)} CHF
+                     </td>
                     <td className="p-2">
                       <div className="flex space-x-1">
                         <Button
@@ -766,7 +771,7 @@ const DevisScreen = () => {
           </div>
 
           {/* Ajouter ligne */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <Select value={newItemMode} onValueChange={(value: 'unique' | 'mensuel') => setNewItemMode(value)}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -780,6 +785,10 @@ const DevisScreen = () => {
               <Plus className="h-4 w-4 mr-2" />
               Ajouter ligne
             </Button>
+            <ProductSelector 
+              onProductSelect={(item) => addQuoteItem(item)} 
+              mode={newItemMode} 
+            />
           </div>
         </CardContent>
       </Card>
