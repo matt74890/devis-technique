@@ -21,8 +21,8 @@ const ProductCatalog = () => {
     name: '',
     description: '',
     type: '',
-    priceHT: 0,
-    priceTTC: 0,
+    priceHT: undefined,
+    priceTTC: undefined,
     imageUrl: '',
     active: true,
     tags: []
@@ -62,8 +62,8 @@ const ProductCatalog = () => {
       name: '',
       description: '',
       type: '',
-      priceHT: 0,
-      priceTTC: 0,
+      priceHT: undefined,
+      priceTTC: undefined,
       imageUrl: '',
       active: true,
       tags: []
@@ -185,11 +185,12 @@ const ProductCatalog = () => {
                 id="priceHT"
                 type="number"
                 step="0.01"
-                value={newProduct.priceHT}
+                value={newProduct.priceHT || ''}
                 onChange={(e) => {
                   const prices = calculatePrice(parseFloat(e.target.value) || 0, true);
                   setNewProduct({ ...newProduct, ...prices });
                 }}
+                placeholder="Prix HT"
               />
             </div>
             <div className="space-y-2">
@@ -198,11 +199,12 @@ const ProductCatalog = () => {
                 id="priceTTC"
                 type="number"
                 step="0.01"
-                value={newProduct.priceTTC}
+                value={newProduct.priceTTC || ''}
                 onChange={(e) => {
                   const prices = calculatePrice(parseFloat(e.target.value) || 0, false);
                   setNewProduct({ ...newProduct, ...prices });
                 }}
+                placeholder="Prix TTC"
               />
             </div>
             <div className="space-y-2">
@@ -214,7 +216,26 @@ const ProductCatalog = () => {
                   onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                 />
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          setNewProduct({ ...newProduct, imageUrl: e.target?.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    };
+                    input.click();
+                  }}
+                >
                   <Upload className="h-4 w-4" />
                 </Button>
               </div>
@@ -253,8 +274,8 @@ const ProductCatalog = () => {
                       name: '',
                       description: '',
                       type: '',
-                      priceHT: 0,
-                      priceTTC: 0,
+                      priceHT: undefined,
+                      priceTTC: undefined,
                       imageUrl: '',
                       active: true,
                       tags: []
