@@ -369,7 +369,7 @@ const RecapScreen = () => {
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="margin-top: 50px;">
+          <div style="margin-top: 65px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
             <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
@@ -542,21 +542,32 @@ const RecapScreen = () => {
 
     // Section signatures
     htmlContent += `
-      <div style="margin: 40px 0 20px 0; text-align: left;">
-        <div style="margin-bottom: 30px;">
-          ${settings.sellerInfo?.name ? `<div style="font-weight: bold; color: ${colors.textColor};">${settings.sellerInfo.name}</div>` : ''}
-          ${settings.sellerInfo?.title ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.title}</div>` : ''}
+      <div class="signatures-section">
+        <div class="signature-box">
+          <div class="signature-title">SIGNATURE DU VENDEUR</div>
+          <div class="signature-content">
+            ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
+            ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
+          </div>
+          ${settings.sellerInfo?.signature ? `
+            <div style="margin: 15px 0;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+            </div>
+          ` : ''}
+          <div class="signature-line">
+            ${new Date().toLocaleDateString('fr-CH')} - Signature
+          </div>
         </div>
         
-        <div style="border: 2px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; padding: 20px; border-radius: 8px; min-height: 100px;">
-          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 10px; font-size: 16px;">SIGNATURE DU CLIENT</div>
-          <div style="color: ${colors.signatureTextColor}; font-size: 12px; line-height: 1.4;">
+        <div class="signature-box">
+          <div class="signature-title">SIGNATURE DU CLIENT</div>
+          <div class="signature-content">
             <div><strong>${currentQuote.addresses.contact.company}</strong></div>
             <div>${currentQuote.addresses.contact.name}</div>
             ${currentQuote.addresses.contact.email ? `<div>${currentQuote.addresses.contact.email}</div>` : ''}
             ${currentQuote.addresses.contact.phone ? `<div>${currentQuote.addresses.contact.phone}</div>` : ''}
           </div>
-          <div style="border-top: 1px solid ${colors.signatureBoxBorder}; margin-top: 50px; padding-top: 5px; font-size: 10px; color: ${colors.signatureTextColor};">
+          <div class="signature-line">
             Date et signature
           </div>
         </div>
