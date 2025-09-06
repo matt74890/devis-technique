@@ -34,22 +34,80 @@ const RecapScreen = () => {
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Référence</p>
-            <p className="font-medium">{currentQuote.ref || 'Non définie'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Client</p>
-            <p className="font-medium">{currentQuote.client || 'Non défini'}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Date</p>
-            <p className="font-medium">{new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">TVA</p>
-            <p className="font-medium">{settings.tvaPct}%</p>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-3">Informations générales</h4>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Référence</p>
+                  <p className="font-medium">{currentQuote.ref || 'Non définie'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Client</p>
+                  <p className="font-medium">{currentQuote.client || 'Non défini'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium">{new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">TVA</p>
+                  <p className="font-medium">{settings.tvaPct}%</p>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-3">Adresses</h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Contact</p>
+                  <p className="text-sm">{currentQuote.addresses.contact.company}</p>
+                  <p className="text-sm">{currentQuote.addresses.contact.name}</p>
+                  <p className="text-sm">{currentQuote.addresses.contact.street}</p>
+                  <p className="text-sm">{currentQuote.addresses.contact.postalCode} {currentQuote.addresses.contact.city}</p>
+                  {currentQuote.addresses.contact.email && (
+                    <p className="text-sm text-primary">{currentQuote.addresses.contact.email}</p>
+                  )}
+                  {currentQuote.addresses.contact.phone && (
+                    <p className="text-sm">{currentQuote.addresses.contact.phone}</p>
+                  )}
+                </div>
+                
+                {currentQuote.addresses.useSeparateAddresses && (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-medium">Facturation</p>
+                      <p className="text-sm">{currentQuote.addresses.billing.company}</p>
+                      <p className="text-sm">{currentQuote.addresses.billing.name}</p>
+                      <p className="text-sm">{currentQuote.addresses.billing.street}</p>
+                      <p className="text-sm">{currentQuote.addresses.billing.postalCode} {currentQuote.addresses.billing.city}</p>
+                      {currentQuote.addresses.billing.email && (
+                        <p className="text-sm text-success">{currentQuote.addresses.billing.email}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-muted-foreground font-medium">Installation</p>
+                      <p className="text-sm">{currentQuote.addresses.installation.company}</p>
+                      <p className="text-sm">{currentQuote.addresses.installation.name}</p>
+                      <p className="text-sm">{currentQuote.addresses.installation.street}</p>
+                      <p className="text-sm">{currentQuote.addresses.installation.postalCode} {currentQuote.addresses.installation.city}</p>
+                      {currentQuote.addresses.installation.email && (
+                        <p className="text-sm text-warning">{currentQuote.addresses.installation.email}</p>
+                      )}
+                    </div>
+                  </>
+                )}
+                
+                {!currentQuote.addresses.useSeparateAddresses && (
+                  <Badge variant="outline" className="text-xs">
+                    Même adresse pour facturation et installation
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

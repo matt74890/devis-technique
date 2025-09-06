@@ -12,11 +12,6 @@ export interface Settings {
   types: string[];
   models: PriceModel[];
   catalog: Product[];
-  addresses: {
-    billing: Address;
-    installation: Address;
-    useSameAddress: boolean;
-  };
   pdfConfig: PDFConfig;
   defaults: {
     feesInstallHT?: number;
@@ -114,6 +109,12 @@ export interface Quote {
   discountMode: 'per_line' | 'global';
   discountPct: number;
   items: QuoteItem[];
+  addresses: {
+    contact: Address;
+    billing: Address;
+    installation: Address;
+    useSeparateAddresses: boolean;
+  };
 }
 
 export interface QuoteItem {

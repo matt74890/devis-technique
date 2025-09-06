@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Copy, Trash2, Zap } from 'lucide-react';
+import { Plus, Copy, Trash2, Zap, MapPin } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { QuoteItem } from '@/types';
 import { calculateQuoteItem } from '@/utils/calculations';
@@ -112,15 +112,6 @@ const DevisScreen = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="contact">Contact</Label>
-            <Input
-              id="contact"
-              value={currentQuote.contact}
-              onChange={(e) => updateQuote({ contact: e.target.value })}
-              placeholder="Personne de contact"
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="ref">Référence devis</Label>
             <Input
               id="ref"
@@ -174,6 +165,433 @@ const DevisScreen = () => {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Adresses Client */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              <span>Adresses du Client</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="separate-addresses"
+                checked={currentQuote.addresses.useSeparateAddresses}
+                onCheckedChange={(checked) => 
+                  updateQuote({ 
+                    addresses: { 
+                      ...currentQuote.addresses, 
+                      useSeparateAddresses: checked,
+                      // Si on désactive, copier l'adresse contact vers les autres
+                      billing: checked ? currentQuote.addresses.billing : currentQuote.addresses.contact,
+                      installation: checked ? currentQuote.addresses.installation : currentQuote.addresses.contact
+                    } 
+                  })
+                }
+              />
+              <Label htmlFor="separate-addresses" className="text-sm">
+                {currentQuote.addresses.useSeparateAddresses ? 'Adresses séparées' : 'Même adresse pour tout'}
+              </Label>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Adresse de contact (toujours présente) */}
+          <div>
+            <h4 className="font-medium mb-3 text-primary">Adresse de Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-company">Société</Label>
+                <Input
+                  id="contact-company"
+                  value={currentQuote.addresses.contact.company}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, company: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        // Si pas d'adresses séparées, propager à tous
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="Nom de la société"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-name">Contact</Label>
+                <Input
+                  id="contact-name"
+                  value={currentQuote.addresses.contact.name}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, name: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="Nom et prénom"
+                />
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="contact-street">Adresse</Label>
+                <Input
+                  id="contact-street"
+                  value={currentQuote.addresses.contact.street}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, street: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="Rue et numéro"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-postal">Code postal</Label>
+                <Input
+                  id="contact-postal"
+                  value={currentQuote.addresses.contact.postalCode}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, postalCode: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="1000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-city">Ville</Label>
+                <Input
+                  id="contact-city"
+                  value={currentQuote.addresses.contact.city}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, city: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="Lausanne"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-email">Email</Label>
+                <Input
+                  id="contact-email"
+                  type="email"
+                  value={currentQuote.addresses.contact.email}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, email: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="contact@exemple.ch"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-phone">Téléphone</Label>
+                <Input
+                  id="contact-phone"
+                  type="tel"
+                  value={currentQuote.addresses.contact.phone}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, phone: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="+41 21 XXX XX XX"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Adresses séparées si activées */}
+          {currentQuote.addresses.useSeparateAddresses && (
+            <>
+              <Separator />
+              
+              {/* Adresse de facturation */}
+              <div>
+                <h4 className="font-medium mb-3 text-success">Adresse de Facturation</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-company">Société</Label>
+                    <Input
+                      id="billing-company"
+                      value={currentQuote.addresses.billing.company}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, company: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Nom de la société"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-name">Contact</Label>
+                    <Input
+                      id="billing-name"
+                      value={currentQuote.addresses.billing.name}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, name: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Nom et prénom"
+                    />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="billing-street">Adresse</Label>
+                    <Input
+                      id="billing-street"
+                      value={currentQuote.addresses.billing.street}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, street: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Rue et numéro"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-postal">Code postal</Label>
+                    <Input
+                      id="billing-postal"
+                      value={currentQuote.addresses.billing.postalCode}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, postalCode: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="1000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-city">Ville</Label>
+                    <Input
+                      id="billing-city"
+                      value={currentQuote.addresses.billing.city}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, city: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Lausanne"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-email">Email</Label>
+                    <Input
+                      id="billing-email"
+                      type="email"
+                      value={currentQuote.addresses.billing.email}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, email: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="facture@exemple.ch"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-phone">Téléphone</Label>
+                    <Input
+                      id="billing-phone"
+                      type="tel"
+                      value={currentQuote.addresses.billing.phone}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, phone: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="+41 21 XXX XX XX"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Adresse d'installation */}
+              <div>
+                <h4 className="font-medium mb-3 text-warning">Adresse d'Installation</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="install-company">Société</Label>
+                    <Input
+                      id="install-company"
+                      value={currentQuote.addresses.installation.company}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, company: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Nom de la société"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="install-name">Contact</Label>
+                    <Input
+                      id="install-name"
+                      value={currentQuote.addresses.installation.name}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, name: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Nom et prénom"
+                    />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="install-street">Adresse</Label>
+                    <Input
+                      id="install-street"
+                      value={currentQuote.addresses.installation.street}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, street: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Rue et numéro"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="install-postal">Code postal</Label>
+                    <Input
+                      id="install-postal"
+                      value={currentQuote.addresses.installation.postalCode}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, postalCode: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="1000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="install-city">Ville</Label>
+                    <Input
+                      id="install-city"
+                      value={currentQuote.addresses.installation.city}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, city: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="Lausanne"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="install-email">Email</Label>
+                    <Input
+                      id="install-email"
+                      type="email"
+                      value={currentQuote.addresses.installation.email}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, email: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="installation@exemple.ch"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="install-phone">Téléphone</Label>
+                    <Input
+                      id="install-phone"
+                      type="tel"
+                      value={currentQuote.addresses.installation.phone}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, phone: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="+41 21 XXX XX XX"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

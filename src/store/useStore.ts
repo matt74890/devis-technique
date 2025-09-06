@@ -20,8 +20,8 @@ interface AppState {
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   
-  // Address actions
-  updateAddresses: (addresses: Partial<Settings['addresses']>) => void;
+  // Address actions (deprecated - now in quotes)
+  updateAddresses: () => void;
   
   // PDF Config actions
   updatePDFConfig: (config: PDFConfig) => void;
@@ -147,11 +147,6 @@ const defaultSettings: Settings = {
   ],
   models: [],
   catalog: [],
-  addresses: {
-    billing: defaultAddress,
-    installation: defaultAddress,
-    useSameAddress: true
-  },
   pdfConfig: defaultPDFConfig,
   defaults: {
     feesInstallHT: 150,
@@ -171,7 +166,13 @@ const createDefaultQuote = (): Quote => ({
   comment: '',
   discountMode: 'per_line',
   discountPct: 0,
-  items: []
+  items: [],
+  addresses: {
+    contact: { ...defaultAddress },
+    billing: { ...defaultAddress },
+    installation: { ...defaultAddress },
+    useSeparateAddresses: false
+  }
 });
 
 export const useStore = create<AppState>()(
@@ -258,14 +259,8 @@ export const useStore = create<AppState>()(
           }
         })),
 
-      // Address actions
-      updateAddresses: (addresses) =>
-        set((state) => ({
-          settings: {
-            ...state.settings,
-            addresses: { ...state.settings.addresses, ...addresses }
-          }
-        })),
+      // Address actions (deprecated - now in quotes)
+      updateAddresses: () => set({}), // Kept for compatibility
 
       // PDF Config actions
       updatePDFConfig: (config) =>

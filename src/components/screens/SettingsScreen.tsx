@@ -15,7 +15,6 @@ import { useStore } from '@/store/useStore';
 import { Subscription } from '@/types';
 import ProductCatalog from '../catalog/ProductCatalog';
 import PDFConfiguration from '../settings/PDFConfiguration';
-import AddressSettings from '../settings/AddressSettings';
 import CurrencySettings from '../settings/CurrencySettings';
 
 const SettingsScreen = () => {
@@ -63,7 +62,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -79,10 +78,6 @@ const SettingsScreen = () => {
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
-          </TabsTrigger>
-          <TabsTrigger value="addresses" className="flex items-center space-x-2">
-            <MapPin className="h-4 w-4" />
-            <span className="hidden sm:inline">Adresses</span>
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
@@ -422,14 +417,6 @@ const SettingsScreen = () => {
           <PDFConfiguration />
         </TabsContent>
 
-        <TabsContent value="currency">
-          <CurrencySettings />
-        </TabsContent>
-
-        <TabsContent value="addresses">
-          <AddressSettings />
-        </TabsContent>
-
         <TabsContent value="advanced">
           <div className="space-y-6">
             <Card>
@@ -441,6 +428,13 @@ const SettingsScreen = () => {
                   Fonctionnalités avancées à venir : export/import de configuration, 
                   sauvegarde cloud, intégrations API, etc.
                 </p>
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-2">Note sur les adresses</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Les adresses de facturation et d'installation sont maintenant configurées 
+                    directement dans chaque devis individuel, dans l'onglet "Devis".
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
