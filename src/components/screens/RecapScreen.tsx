@@ -124,48 +124,48 @@ const RecapScreen = () => {
               padding: 10px;
               border-radius: 4px;
             }
-            .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
-            .logo { height: 40px; margin-bottom: 5px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+            .logo { height: 35px; margin-bottom: 5px; }
             .seller-info { flex: 1; }
             .client-info { text-align: right; max-width: 300px; }
             .title-section { 
               text-align: center; 
-              padding: 10px 0; 
-              border-top: 2px solid ${colors.borderPrimary}; 
+              padding: 5px 0; 
+              border-top: 1px solid ${colors.borderPrimary}; 
               border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: 10px 0;
+              margin: 5px 0;
               background: ${colors.headerBackground};
               border-radius: 4px;
             }
-            .title { color: ${colors.titleColor}; font-size: 22px; font-weight: bold; margin: 0; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: 14px; margin: 4px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: 18px; font-weight: bold; margin: 0; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: 12px; margin: 2px 0 0 0; }
             .project-details { 
               background: ${colors.cardBackground}; 
-              padding: 8px; 
+              padding: 5px; 
               border-radius: 4px; 
-              margin: 10px 0; 
+              margin: 5px 0; 
               border: 1px solid ${colors.borderSecondary};
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 10px 0; 
+              margin: 5px 0; 
               border: 1px solid ${colors.tableBorder}; 
             }
             th { 
               background: ${colors.tableHeader}; 
               color: ${colors.tableHeaderText}; 
-              padding: 6px 4px; 
+              padding: 4px 3px; 
               text-align: left; 
               font-weight: bold;
               border: 1px solid ${colors.tableBorder};
-              font-size: 11px;
+              font-size: 10px;
             }
             td { 
-              padding: 5px 4px; 
+              padding: 3px 3px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
-              font-size: 11px;
+              font-size: 10px;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
             tr:nth-child(odd) { background: ${colors.tableRow}; }
@@ -178,12 +178,13 @@ const RecapScreen = () => {
             }
             .mode-unique { background: ${colors.badgeUnique}; }
             .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 5px 0; }
             .total-card { 
               border: 1px solid ${colors.totalCardBorder}; 
-              padding: 8px; 
+              padding: 5px; 
               border-radius: 4px; 
               background: ${colors.cardBackground};
+              font-size: 11px;
             }
             .total-unique { 
               border-color: ${colors.totalCardBorder}; 
@@ -195,11 +196,12 @@ const RecapScreen = () => {
             }
             .grand-total { 
               text-align: center; 
-              padding: 15px; 
+              padding: 10px; 
               border: 2px solid ${colors.grandTotalBorder}; 
               border-radius: 4px; 
               background: ${colors.grandTotalBackground};
-              margin: 15px 0;
+              margin: 10px 0;
+              font-size: 12px;
             }
             .footer { 
               text-align: center; 
@@ -368,22 +370,22 @@ const RecapScreen = () => {
         <div class="seller-info">
           ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
           ${settings.sellerInfo?.name ? `
-            <div style="margin-top: 15px;">
-              <div style="font-weight: bold; color: ${colors.primary};">${settings.sellerInfo.name}</div>
-              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; margin-top: 5px;">${settings.sellerInfo.title}</div>` : ''}
-              ${settings.sellerInfo.email ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${settings.sellerInfo.email}</div>` : ''}
-              ${settings.sellerInfo.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${settings.sellerInfo.phone}</div>` : ''}
+            <div style="margin-top: 10px;">
+              <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">${settings.sellerInfo.name}</div>
+              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; margin-top: 2px; font-size: 12px;">${settings.sellerInfo.title}</div>` : ''}
+              ${settings.sellerInfo.email ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${settings.sellerInfo.email}</div>` : ''}
+              ${settings.sellerInfo.phone ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${settings.sellerInfo.phone}</div>` : ''}
             </div>
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="margin-top: 95px;">
-            <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
-            <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
-            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
-            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
-            ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 3px;">${currentQuote.addresses.contact.email}</div>` : ''}
-            ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.phone}</div>` : ''}
+          <div>
+            <div style="font-weight: bold; font-size: 14px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
+            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 12px;">${currentQuote.addresses.contact.name}</div>
+            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.street}</div>
+            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
+            ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.email}</div>` : ''}
+            ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.phone}</div>` : ''}
             
             ${currentQuote.addresses.useSeparateAddresses ? `
               <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${colors.borderSecondary};">
