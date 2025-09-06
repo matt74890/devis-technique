@@ -37,97 +37,324 @@ const RecapScreen = () => {
       return;
     }
     
-    console.log('Validation passée, génération du contenu PDF');
+    console.log('Validation passée, génération du PDF');
     
-    let pdfContent = '';
+    // Créer le contenu HTML pour la génération PDF
+    const colors = settings.templateColors || { primary: '#2563eb', secondary: '#64748b', accent: '#059669' };
     
-    // Ajouter la lettre de présentation si activée
-    if (settings.letterTemplate?.enabled) {
-      const letterDate = new Date().toLocaleDateString('fr-FR');
-      const clientAddress = currentQuote.addresses.contact;
-      
-      pdfContent += `${settings.logoUrl ? `[LOGO: ${settings.logoUrl}]` : ''}
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Devis ${currentQuote.ref}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              color: #000;
+              background: white;
+            }
+            @media print { 
+              body { margin: 0; }
+              .no-print { display: none !important; }
+            }
+            .container { max-width: 800px; margin: 0 auto; }
+            .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
+            .logo { height: 80px; margin-bottom: 15px; }
+            .seller-info { flex: 1; }
+            .client-info { text-align: right; max-width: 300px; }
+            .title-section { 
+              text-align: center; 
+              padding: 20px 0; 
+              border-top: 3px solid ${colors.primary}; 
+              border-bottom: 1px solid ${colors.secondary}; 
+              margin: 20px 0;
+            }
+            .title { color: ${colors.primary}; font-size: 28px; font-weight: bold; margin: 0; }
+            .subtitle { color: ${colors.secondary}; font-size: 16px; margin: 8px 0 0 0; }
+            .project-details { 
+              background: #f8fafc; 
+              padding: 15px; 
+              border-radius: 8px; 
+              margin: 20px 0; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 20px 0; 
+              border: 1px solid ${colors.secondary}; 
+            }
+            th { 
+              background: ${colors.primary}; 
+              color: white; 
+              padding: 12px 8px; 
+              text-align: left; 
+              font-weight: bold;
+              border: 1px solid ${colors.secondary};
+            }
+            td { 
+              padding: 10px 8px; 
+              border: 1px solid ${colors.secondary}; 
+            }
+            tr:nth-child(even) { background: #f8fafc; }
+            .mode-badge { 
+              padding: 3px 8px; 
+              border-radius: 12px; 
+              font-size: 11px; 
+              color: white; 
+              font-weight: bold;
+            }
+            .mode-unique { background: ${colors.secondary}; }
+            .mode-mensuel { background: ${colors.accent}; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .total-card { 
+              border: 2px solid; 
+              padding: 15px; 
+              border-radius: 8px; 
+              background: #f8fafc;
+            }
+            .total-unique { border-color: ${colors.secondary}; }
+            .total-mensuel { border-color: ${colors.accent}; background: #f0fdf4; }
+            .grand-total { 
+              text-align: center; 
+              padding: 25px; 
+              border: 3px solid ${colors.primary}; 
+              border-radius: 8px; 
+              background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08);
+              margin: 25px 0;
+            }
+            .footer { 
+              text-align: center; 
+              font-size: 12px; 
+              color: ${colors.secondary}; 
+              border-top: 2px solid ${colors.primary}; 
+              padding-top: 15px; 
+              margin-top: 30px; 
+            }
+            .comment-section { 
+              margin: 20px 0; 
+            }
+            .comment-box { 
+              border: 1px solid ${colors.secondary}; 
+              background: #f8fafc; 
+              padding: 15px; 
+              border-radius: 8px; 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+    `;
 
-${settings.letterTemplate.companyName}
-${settings.letterTemplate.companyAddress}
-${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}
-Tél: ${settings.letterTemplate.contactPhone}
-Email: ${settings.letterTemplate.contactEmail}
+    // En-tête avec logo et adresses
+    htmlContent += `
+      <div class="header">
+        <div class="seller-info">
+          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
+          ${settings.sellerInfo?.name ? `
+            <div>
+              <div style="font-weight: bold; color: ${colors.primary};">${settings.sellerInfo.name}</div>
+              ${settings.sellerInfo.title ? `<div style="color: #666;">${settings.sellerInfo.title}</div>` : ''}
+              ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
+              ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+        <div class="client-info">
+          <div style="font-weight: bold; font-size: 18px;">${currentQuote.addresses.contact.company}</div>
+          <div>${currentQuote.addresses.contact.name}</div>
+          <div>${currentQuote.addresses.contact.street}</div>
+          <div>${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
+          <div>${currentQuote.addresses.contact.country}</div>
+          ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary};">${currentQuote.addresses.contact.email}</div>` : ''}
+          ${currentQuote.addresses.contact.phone ? `<div>${currentQuote.addresses.contact.phone}</div>` : ''}
+        </div>
+      </div>
+    `;
 
-                                                    ${letterDate}
+    // Titre du devis
+    htmlContent += `
+      <div class="title-section">
+        <h1 class="title">${settings.pdfTitle}</h1>
+        <p class="subtitle">Devis N° ${currentQuote.ref}</p>
+        <p style="color: #666;">Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
+      </div>
+    `;
 
-À l'attention de :
-${clientAddress.company || ''}
-${clientAddress.name}
-${clientAddress.street}
-${clientAddress.postalCode} ${clientAddress.city}
-
-Objet: ${settings.letterTemplate.subject}
-
-${settings.letterTemplate.opening}
-
-${settings.letterTemplate.body}
-
-${settings.letterTemplate.closing}
-
-Cordialement,
-
-${settings.sellerInfo?.name || settings.letterTemplate.contactName}
-${settings.sellerInfo?.title || settings.letterTemplate.contactTitle}
-${settings.sellerInfo?.email || settings.letterTemplate.contactEmail}
-${settings.sellerInfo?.phone || settings.letterTemplate.contactPhone}
-
-
-═══════════════════════════════════════════════════════════════
-                            DEVIS DÉTAILLÉ
-═══════════════════════════════════════════════════════════════
-
-`;
+    // Détails du projet
+    if (currentQuote.site || currentQuote.contact || currentQuote.canton) {
+      htmlContent += `
+        <div class="project-details">
+          <h3 style="color: ${colors.primary}; margin: 0 0 10px 0;">Détails du projet</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px;">
+            ${currentQuote.site ? `<div><strong>Site:</strong> ${currentQuote.site}</div>` : ''}
+            ${currentQuote.contact ? `<div><strong>Contact:</strong> ${currentQuote.contact}</div>` : ''}
+            ${currentQuote.canton ? `<div><strong>Canton:</strong> ${currentQuote.canton}</div>` : ''}
+          </div>
+        </div>
+      `;
     }
+
+    // Tableau des prestations
+    htmlContent += `
+      <div>
+        <h3 style="color: ${colors.primary};">Détail des prestations</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Référence</th>
+              <th style="text-align: center;">Mode</th>
+              <th style="text-align: center;">Qté</th>
+              <th style="text-align: right;">PU TTC</th>
+              <th style="text-align: right;">Total TTC</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    currentQuote.items.forEach(item => {
+      htmlContent += `
+        <tr>
+          <td>${item.type}</td>
+          <td>${item.reference}</td>
+          <td style="text-align: center;">
+            <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
+              ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+            </span>
+          </td>
+          <td style="text-align: center;">${item.qty}</td>
+          <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
+          <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
+            ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
+          </td>
+        </tr>
+      `;
+    });
+
+    htmlContent += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Totaux
+    htmlContent += `<div class="totals-section">`;
     
-    // Ajouter le devis avec informations vendeur
-    pdfContent += `${settings.logoUrl ? `[LOGO: ${settings.logoUrl}]\n` : ''}DEVIS ${currentQuote.ref}
-Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}
-Client: ${currentQuote.client}
+    if (totals.unique.totalTTC > 0) {
+      htmlContent += `
+        <div class="total-card total-unique">
+          <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Sous-total HT:</span>
+            <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>TVA (${settings.tvaPct}%):</span>
+            <span>${totals.unique.tva.toFixed(2)} CHF</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.secondary}; padding-top: 8px; color: ${colors.primary};">
+            <span>Total TTC:</span>
+            <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
+          </div>
+        </div>
+      `;
+    }
 
-${settings.sellerInfo?.name ? `Votre conseiller: ${settings.sellerInfo.name}${settings.sellerInfo.title ? ` - ${settings.sellerInfo.title}` : ''}
-Contact direct: ${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}
+    if (totals.mensuel.totalTTC > 0) {
+      htmlContent += `
+        <div class="total-card total-mensuel">
+          <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Sous-total HT:</span>
+            <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>TVA (${settings.tvaPct}%):</span>
+            <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
+            <span>Total TTC:</span>
+            <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
+          </div>
+        </div>
+      `;
+    }
 
-` : ''}DÉTAIL DES LIGNES:
-${currentQuote.items.map(item => 
-  `${item.reference} - ${item.qty} x ${item.puTTC.toFixed(2)} CHF = ${item.totalTTC.toFixed(2)} CHF`
-).join('\n')}
+    htmlContent += `</div>`;
 
-TOTAL: ${totals.global.totalTTC.toFixed(2)} CHF
-${totals.mensuel.totalTTC > 0 ? `+ ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois` : ''}
+    // Total général
+    htmlContent += `
+      <div class="grand-total">
+        <h4 style="color: ${colors.primary}; font-size: 24px; margin: 0 0 15px 0;">TOTAL GÉNÉRAL</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+          <div>
+            <p style="margin: 0; color: ${colors.secondary};">Total HT</p>
+            <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+          </div>
+          <div>
+            <p style="margin: 0; color: ${colors.secondary};">TVA totale</p>
+            <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+          </div>
+        </div>
+        <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
+          <p style="margin: 0; font-size: 32px; font-weight: bold; color: ${colors.primary};">
+            ${totals.global.totalTTC.toFixed(2)} CHF
+          </p>
+          ${totals.mensuel.totalTTC > 0 ? `
+            <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.accent};">
+              + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+            </p>
+          ` : ''}
+        </div>
+      </div>
+    `;
 
-${settings.sellerInfo?.name ? `─────────────────────────────────────────────────────
-Pour toute question concernant ce devis :
-${settings.sellerInfo.name}${settings.sellerInfo.title ? ` - ${settings.sellerInfo.title}` : ''}
-${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}` : ''}
+    // Commentaire
+    if (currentQuote.comment) {
+      htmlContent += `
+        <div class="comment-section">
+          <h4 style="color: ${colors.primary};">Commentaires</h4>
+          <div class="comment-box">
+            <p style="margin: 0; white-space: pre-wrap;">${currentQuote.comment}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Pied de page
+    htmlContent += `
+      <div class="footer">
+        <p style="font-weight: bold; margin: 0 0 8px 0;">${settings.pdfFooter}</p>
+        <p style="margin: 0;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
+      </div>
+    `;
+
+    htmlContent += `
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
     `;
     
     try {
-      console.log('Création du blob et téléchargement');
-      // Note: Dans un vrai PDF, le logo serait intégré visuellement
-      // Pour l'instant, on indique l'emplacement du logo avec [LOGO: URL]
-      
-      // Simuler le téléchargement
-      const blob = new Blob([pdfContent], { type: 'text/plain; charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${settings.letterTemplate?.enabled ? 'lettre-et-devis' : 'devis'}-${currentQuote.ref || 'nouveau'}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('PDF généré avec succès');
-      toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès !`);
-      
-      if (settings.logoUrl) {
-        toast.info('Note: Le logo sera intégré visuellement dans la version PDF finale');
+      // Ouvrir une nouvelle fenêtre avec le contenu HTML formaté
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        toast.success('PDF généré avec succès ! Utilisez Ctrl+P ou Cmd+P pour sauvegarder en PDF.');
+      } else {
+        toast.error('Impossible d\'ouvrir la fenêtre de génération PDF. Vérifiez que les popups ne sont pas bloquées.');
       }
     } catch (error) {
       console.error('Erreur lors de la génération PDF:', error);
