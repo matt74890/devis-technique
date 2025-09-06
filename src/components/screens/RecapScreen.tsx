@@ -312,7 +312,6 @@ const RecapScreen = () => {
               <div>${clientAddress.name}</div>
               <div>${clientAddress.street}</div>
               <div>${clientAddress.postalCode} ${clientAddress.city}</div>
-              <div>${clientAddress.country}</div>
             </div>
           </div>
           
