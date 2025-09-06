@@ -358,12 +358,12 @@ const SettingsScreen = () => {
               </CardContent>
             </Card>
 
-            {/* Textes & PDF basiques */}
+            {/* Textes et informations de base */}
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  <span>Textes de base</span>
+                  <span>Informations de base</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Edit, Trash2, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -166,6 +166,9 @@ const ClientsScreen = () => {
               <DialogTitle>
                 {editingClient ? 'Modifier le client' : 'Nouveau client'}
               </DialogTitle>
+              <DialogDescription>
+                {editingClient ? 'Modifiez les informations du client' : 'Ajoutez un nouveau client à votre base de données'}
+              </DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">

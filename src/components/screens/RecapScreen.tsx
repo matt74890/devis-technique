@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileDown, Calculator, Euro } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals } from '@/utils/calculations';
+import PDFPreview from '@/components/pdf/PDFPreview';
 
 const RecapScreen = () => {
   const { currentQuote, settings } = useStore();
@@ -28,10 +29,13 @@ const RecapScreen = () => {
               <Calculator className="h-5 w-5 text-primary" />
               <span>Récapitulatif du devis</span>
             </div>
-            <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
-              <FileDown className="h-4 w-4 mr-2" />
-              Générer PDF
-            </Button>
+            <div className="flex space-x-2">
+              <PDFPreview />
+              <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
+                <FileDown className="h-4 w-4 mr-2" />
+                Générer PDF
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
