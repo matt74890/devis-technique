@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileDown, Calculator, Euro } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals } from '@/utils/calculations';
+import { toast } from 'sonner';
 import PDFPreview from '@/components/pdf/PDFPreview';
 
 const RecapScreen = () => {
@@ -15,21 +16,28 @@ const RecapScreen = () => {
   const totals = calculateQuoteTotals(currentQuote, settings.tvaPct);
   
   const generatePDF = () => {
+    console.log('Début génération PDF');
+    
     // Validation des données requises
     if (!currentQuote.ref) {
-      alert('Veuillez renseigner une référence pour le devis');
+      console.log('Erreur: Référence manquante');
+      toast.error('Veuillez renseigner une référence pour le devis');
       return;
     }
     
     if (!currentQuote.client) {
-      alert('Veuillez sélectionner ou renseigner un client');
+      console.log('Erreur: Client manquant');  
+      toast.error('Veuillez sélectionner ou renseigner un client');
       return;
     }
     
     if (currentQuote.items.length === 0) {
-      alert('Veuillez ajouter au moins une ligne au devis');
+      console.log('Erreur: Aucune ligne dans le devis');
+      toast.error('Veuillez ajouter au moins une ligne au devis');
       return;
     }
+    
+    console.log('Validation passée, génération du contenu PDF');
     
     // Créer un PDF basique (simulation)
     const pdfContent = `
@@ -46,14 +54,25 @@ TOTAL: ${totals.global.totalTTC.toFixed(2)} CHF
 ${totals.mensuel.totalTTC > 0 ? `+ ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois` : ''}
     `;
     
-    // Simuler le téléchargement
-    const blob = new Blob([pdfContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `devis-${currentQuote.ref || 'nouveau'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      console.log('Création du blob et téléchargement');
+      // Simuler le téléchargement
+      const blob = new Blob([pdfContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devis-${currentQuote.ref || 'nouveau'}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log('PDF généré avec succès');
+      toast.success('PDF généré avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la génération PDF:', error);
+      toast.error('Erreur lors de la génération du PDF');
+    }
   };
 
   return (

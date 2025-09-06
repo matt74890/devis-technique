@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useStore, defaultSettings } from '@/store/useStore';
 import { Settings } from '@/types';
@@ -19,8 +19,10 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   const { settings, loading, updateSettings } = useUserSettings(defaultSettings);
   const setSettings = useStore((state) => state.setSettings);
 
-  // Synchroniser avec le store local
-  setSettings(settings);
+  // Synchroniser avec le store local - utiliser useEffect pour éviter les mises à jour pendant le rendu
+  useEffect(() => {
+    setSettings(settings);
+  }, [settings, setSettings]);
 
   return (
     <SettingsContext.Provider value={{ settings, loading, updateSettings }}>
