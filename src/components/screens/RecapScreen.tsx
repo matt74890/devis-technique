@@ -322,7 +322,7 @@ const RecapScreen = () => {
           
           <div class="letter-content">
             <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor};">
-              <strong>Monsieur ${clientAddress.name || currentQuote.client || 'Client'},</strong>
+              ${settings.letterTemplate.civility || 'Monsieur'} ${clientAddress.name || currentQuote.client || 'Client'},
             </div>
             
             <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
@@ -330,7 +330,7 @@ const RecapScreen = () => {
             <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
             
             <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor};">
-              <p>Dans l'attente de votre retour, nous vous prions d'agréer, <strong>Monsieur ${clientAddress.name || currentQuote.client || 'Client'}</strong>, l'expression de nos salutations distinguées.</p>
+              <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${settings.letterTemplate.civility || 'Monsieur'} ${clientAddress.name || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
             </div>
           </div>
           

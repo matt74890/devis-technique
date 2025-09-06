@@ -84,6 +84,7 @@ export interface LetterTemplate {
   contactEmail: string;
   companyAddress: string;
   subject: string;
+  civility: 'Monsieur' | 'Madame';
   opening: string;
   body: string;
   closing: string;

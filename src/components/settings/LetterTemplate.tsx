@@ -104,12 +104,25 @@ const LetterTemplate = () => {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="civility-select">Civilité</Label>
+              <select
+                id="civility-select"
+                value={settings.letterTemplate?.civility || 'Monsieur'}
+                onChange={(e) => handleUpdateLetter('civility', e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="Monsieur">Monsieur</option>
+                <option value="Madame">Madame</option>
+              </select>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="letter-opening">Formule d'ouverture</Label>
               <Textarea
                 id="letter-opening"
                 value={settings.letterTemplate?.opening || ''}
                 onChange={(e) => handleUpdateLetter('opening', e.target.value)}
-                placeholder="Madame, Monsieur,&#10;&#10;Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
+                placeholder="Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
                 rows={4}
               />
             </div>
