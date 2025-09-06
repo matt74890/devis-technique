@@ -369,7 +369,7 @@ const RecapScreen = () => {
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="margin-top: 15px;">
+          <div style="margin-top: 50px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
             <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
@@ -542,24 +542,21 @@ const RecapScreen = () => {
 
     // Section signatures
     htmlContent += `
-      <div class="signatures-section">
-        <div>
-          <div style="margin-bottom: 30px;">
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: left;">VENDEUR</div>
-            ${settings.sellerInfo?.name ? `<div style="font-weight: bold; color: ${colors.textColor};">${settings.sellerInfo.name}</div>` : ''}
-            ${settings.sellerInfo?.title ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.title}</div>` : ''}
-          </div>
+      <div style="margin: 40px 0 20px 0; text-align: left;">
+        <div style="margin-bottom: 30px;">
+          ${settings.sellerInfo?.name ? `<div style="font-weight: bold; color: ${colors.textColor};">${settings.sellerInfo.name}</div>` : ''}
+          ${settings.sellerInfo?.title ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.title}</div>` : ''}
         </div>
         
-        <div class="signature-box">
-          <div class="signature-title">SIGNATURE DU CLIENT</div>
-          <div class="signature-content">
+        <div style="border: 2px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; padding: 20px; border-radius: 8px; min-height: 100px;">
+          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 10px; font-size: 16px;">SIGNATURE DU CLIENT</div>
+          <div style="color: ${colors.signatureTextColor}; font-size: 12px; line-height: 1.4;">
             <div><strong>${currentQuote.addresses.contact.company}</strong></div>
             <div>${currentQuote.addresses.contact.name}</div>
             ${currentQuote.addresses.contact.email ? `<div>${currentQuote.addresses.contact.email}</div>` : ''}
             ${currentQuote.addresses.contact.phone ? `<div>${currentQuote.addresses.contact.phone}</div>` : ''}
           </div>
-          <div class="signature-line">
+          <div style="border-top: 1px solid ${colors.signatureBoxBorder}; margin-top: 50px; padding-top: 5px; font-size: 10px; color: ${colors.signatureTextColor};">
             Date et signature
           </div>
         </div>
