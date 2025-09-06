@@ -141,50 +141,56 @@ const defaultLetterTemplate: LetterTemplate = {
 
 const defaultTemplateColors: TemplateColors = {
   // Couleurs principales
-  primary: '#2563eb',
-  secondary: '#64748b', 
-  accent: '#059669',
+  primary: '#000000',
+  secondary: '#666666', 
+  accent: '#333333',
   
   // Couleurs de texte
-  titleColor: '#1e40af',
-  subtitleColor: '#64748b',
-  textColor: '#374151',
-  mutedTextColor: '#6b7280',
+  titleColor: '#000000',
+  subtitleColor: '#666666',
+  textColor: '#000000',
+  mutedTextColor: '#999999',
   
   // Couleurs de fond
   background: '#ffffff',
-  cardBackground: '#f8fafc',
-  headerBackground: '#f1f5f9',
+  cardBackground: '#ffffff',
+  headerBackground: '#ffffff',
   
   // Couleurs de tableau
-  tableHeader: '#1e40af',
-  tableHeaderText: '#ffffff',
+  tableHeader: '#f5f5f5',
+  tableHeaderText: '#000000',
   tableRow: '#ffffff',
-  tableRowAlt: '#f8fafc',
-  tableBorder: '#cbd5e1',
+  tableRowAlt: '#f9f9f9',
+  tableBorder: '#cccccc',
   
   // Couleurs des badges
-  badgeUnique: '#64748b',
-  badgeMensuel: '#059669',
+  badgeUnique: '#666666',
+  badgeMensuel: '#666666',
   badgeText: '#ffffff',
   
   // Couleurs des totaux
-  totalCardBorder: '#cbd5e1',
-  totalUniqueBackground: '#f8fafc',
-  totalMensuelBackground: '#f0fdf4',
-  grandTotalBackground: 'linear-gradient(135deg, #2563eb08, #05966908)',
-  grandTotalBorder: '#2563eb',
+  totalCardBorder: '#cccccc',
+  totalUniqueBackground: '#ffffff',
+  totalMensuelBackground: '#ffffff',
+  grandTotalBackground: '#f5f5f5',
+  grandTotalBorder: '#000000',
   
   // Couleurs des bordures et séparateurs
-  borderPrimary: '#2563eb',
-  borderSecondary: '#cbd5e1',
-  separatorColor: '#e5e7eb',
+  borderPrimary: '#000000',
+  borderSecondary: '#cccccc',
+  separatorColor: '#e0e0e0',
   
   // Couleurs spécifiques à la lettre
-  letterHeaderColor: '#1e40af',
-  letterDateColor: '#374151',
-  letterSubjectColor: '#2563eb',
-  letterSignatureColor: '#374151'
+  letterHeaderColor: '#000000',
+  letterDateColor: '#000000',
+  letterSubjectColor: '#000000',
+  letterSignatureColor: '#000000',
+  
+  // Couleurs des signatures
+  signatureBoxBorder: '#000000',
+  signatureBoxBackground: '#ffffff',
+  signatureTitleColor: '#000000',
+  signatureTextColor: '#666666'
 };
 
 const defaultSettings: Settings = {

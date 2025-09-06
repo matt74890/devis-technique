@@ -86,6 +86,15 @@ const TemplateColors = () => {
         { key: 'letterSubjectColor', label: 'Objet de la lettre', description: 'Couleur de l\'objet' },
         { key: 'letterSignatureColor', label: 'Signature', description: 'Couleur de la signature' }
       ]
+    },
+    {
+      title: 'Couleurs des signatures',
+      fields: [
+        { key: 'signatureBoxBorder', label: 'Bordure encart signature', description: 'Bordure des encarts de signature' },
+        { key: 'signatureBoxBackground', label: 'Fond encart signature', description: 'Arrière-plan des encarts' },
+        { key: 'signatureTitleColor', label: 'Titre signature', description: 'Couleur des titres d\'encart' },
+        { key: 'signatureTextColor', label: 'Texte signature', description: 'Couleur du texte descriptif' }
+      ]
     }
   ];
 

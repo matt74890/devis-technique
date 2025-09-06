@@ -67,6 +67,12 @@ export interface TemplateColors {
   letterDateColor: string;
   letterSubjectColor: string;
   letterSignatureColor: string;
+  
+  // Couleurs des signatures
+  signatureBoxBorder: string;
+  signatureBoxBackground: string;
+  signatureTitleColor: string;
+  signatureTextColor: string;
 }
 
 export interface LetterTemplate {

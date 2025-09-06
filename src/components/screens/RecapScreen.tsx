@@ -42,50 +42,56 @@ const RecapScreen = () => {
     // Créer le contenu HTML pour la génération PDF
     const colors = settings.templateColors || { 
       // Couleurs principales
-      primary: '#2563eb',
-      secondary: '#64748b', 
-      accent: '#059669',
+      primary: '#000000',
+      secondary: '#666666', 
+      accent: '#333333',
       
       // Couleurs de texte
-      titleColor: '#1e40af',
-      subtitleColor: '#64748b',
-      textColor: '#374151',
-      mutedTextColor: '#6b7280',
+      titleColor: '#000000',
+      subtitleColor: '#666666',
+      textColor: '#000000',
+      mutedTextColor: '#999999',
       
       // Couleurs de fond
       background: '#ffffff',
-      cardBackground: '#f8fafc',
-      headerBackground: '#f1f5f9',
+      cardBackground: '#ffffff',
+      headerBackground: '#ffffff',
       
       // Couleurs de tableau
-      tableHeader: '#1e40af',
-      tableHeaderText: '#ffffff',
+      tableHeader: '#f5f5f5',
+      tableHeaderText: '#000000',
       tableRow: '#ffffff',
-      tableRowAlt: '#f8fafc',
-      tableBorder: '#cbd5e1',
+      tableRowAlt: '#f9f9f9',
+      tableBorder: '#cccccc',
       
       // Couleurs des badges
-      badgeUnique: '#64748b',
-      badgeMensuel: '#059669',
+      badgeUnique: '#666666',
+      badgeMensuel: '#666666',
       badgeText: '#ffffff',
       
       // Couleurs des totaux
-      totalCardBorder: '#cbd5e1',
-      totalUniqueBackground: '#f8fafc',
-      totalMensuelBackground: '#f0fdf4',
-      grandTotalBackground: 'linear-gradient(135deg, #2563eb08, #05966908)',
-      grandTotalBorder: '#2563eb',
+      totalCardBorder: '#cccccc',
+      totalUniqueBackground: '#ffffff',
+      totalMensuelBackground: '#ffffff',
+      grandTotalBackground: '#f5f5f5',
+      grandTotalBorder: '#000000',
       
       // Couleurs des bordures et séparateurs
-      borderPrimary: '#2563eb',
-      borderSecondary: '#cbd5e1',
-      separatorColor: '#e5e7eb',
+      borderPrimary: '#000000',
+      borderSecondary: '#cccccc',
+      separatorColor: '#e0e0e0',
       
       // Couleurs spécifiques à la lettre
-      letterHeaderColor: '#1e40af',
-      letterDateColor: '#374151',
-      letterSubjectColor: '#2563eb',
-      letterSignatureColor: '#374151'
+      letterHeaderColor: '#000000',
+      letterDateColor: '#000000',
+      letterSubjectColor: '#000000',
+      letterSignatureColor: '#000000',
+      
+      // Couleurs des signatures
+      signatureBoxBorder: '#000000',
+      signatureBoxBackground: '#ffffff',
+      signatureTitleColor: '#000000',
+      signatureTextColor: '#666666'
     };
     
     let htmlContent = `
@@ -188,7 +194,7 @@ const RecapScreen = () => {
               padding: 25px; 
               border: 3px solid ${colors.grandTotalBorder}; 
               border-radius: 8px; 
-              background: ${colors.cardBackground};
+              background: ${colors.grandTotalBackground};
               margin: 25px 0;
             }
             .footer { 
@@ -239,6 +245,37 @@ const RecapScreen = () => {
               height: 1px; 
               background: ${colors.separatorColor}; 
               margin: 20px 0; 
+            }
+            .signatures-section {
+              margin: 40px 0 20px 0;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+            }
+            .signature-box {
+              border: 2px solid ${colors.signatureBoxBorder};
+              background: ${colors.signatureBoxBackground};
+              padding: 20px;
+              border-radius: 8px;
+              min-height: 100px;
+            }
+            .signature-title {
+              font-weight: bold;
+              color: ${colors.signatureTitleColor};
+              margin-bottom: 10px;
+              font-size: 16px;
+            }
+            .signature-content {
+              color: ${colors.signatureTextColor};
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            .signature-line {
+              border-top: 1px solid ${colors.signatureBoxBorder};
+              margin-top: 50px;
+              padding-top: 5px;
+              font-size: 10px;
+              color: ${colors.signatureTextColor};
             }
           </style>
         </head>
@@ -485,6 +522,37 @@ const RecapScreen = () => {
       <div class="footer">
         <p style="font-weight: bold; margin: 0 0 8px 0;">${settings.pdfFooter}</p>
         <p style="margin: 0;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
+      </div>
+    `;
+
+    // Section signatures
+    htmlContent += `
+      <div class="signatures-section">
+        <div class="signature-box">
+          <div class="signature-title">SIGNATURE DU VENDEUR</div>
+          <div class="signature-content">
+            ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
+            ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
+            ${settings.sellerInfo?.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
+            ${settings.sellerInfo?.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
+          </div>
+          <div class="signature-line">
+            Date et signature
+          </div>
+        </div>
+        
+        <div class="signature-box">
+          <div class="signature-title">SIGNATURE DU CLIENT</div>
+          <div class="signature-content">
+            <div><strong>${currentQuote.addresses.contact.company}</strong></div>
+            <div>${currentQuote.addresses.contact.name}</div>
+            ${currentQuote.addresses.contact.email ? `<div>${currentQuote.addresses.contact.email}</div>` : ''}
+            ${currentQuote.addresses.contact.phone ? `<div>${currentQuote.addresses.contact.phone}</div>` : ''}
+          </div>
+          <div class="signature-line">
+            Date et signature
+          </div>
+        </div>
       </div>
     `;
 
