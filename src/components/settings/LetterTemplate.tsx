@@ -1,0 +1,160 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText } from 'lucide-react';
+import { useSettings } from '@/components/SettingsProvider';
+
+const LetterTemplate = () => {
+  const { settings, updateSettings } = useSettings();
+
+  const handleUpdateLetter = (field: string, value: string) => {
+    updateSettings({
+      letterTemplate: {
+        ...settings.letterTemplate,
+        [field]: value
+      }
+    });
+  };
+
+  return (
+    <Card className="shadow-soft">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <span>Lettre de présentation</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Informations vendeur/entreprise */}
+        <div>
+          <h4 className="font-medium mb-3 text-primary">Informations de votre entreprise</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Nom de l'entreprise</Label>
+              <Input
+                id="company-name"
+                value={settings.letterTemplate?.companyName || ''}
+                onChange={(e) => handleUpdateLetter('companyName', e.target.value)}
+                placeholder="Votre Entreprise SA"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-name">Nom du contact</Label>
+              <Input
+                id="contact-name"
+                value={settings.letterTemplate?.contactName || ''}
+                onChange={(e) => handleUpdateLetter('contactName', e.target.value)}
+                placeholder="Jean Dupont"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-title">Fonction</Label>
+              <Input
+                id="contact-title"
+                value={settings.letterTemplate?.contactTitle || ''}
+                onChange={(e) => handleUpdateLetter('contactTitle', e.target.value)}
+                placeholder="Responsable commercial"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-phone">Téléphone</Label>
+              <Input
+                id="contact-phone"
+                value={settings.letterTemplate?.contactPhone || ''}
+                onChange={(e) => handleUpdateLetter('contactPhone', e.target.value)}
+                placeholder="+41 21 XXX XX XX"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-email">Email</Label>
+              <Input
+                id="contact-email"
+                type="email"
+                value={settings.letterTemplate?.contactEmail || ''}
+                onChange={(e) => handleUpdateLetter('contactEmail', e.target.value)}
+                placeholder="contact@votre-entreprise.ch"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-address">Adresse de l'entreprise</Label>
+              <Input
+                id="company-address"
+                value={settings.letterTemplate?.companyAddress || ''}
+                onChange={(e) => handleUpdateLetter('companyAddress', e.target.value)}
+                placeholder="Rue de l'Exemple 123, 1000 Lausanne"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Texte de la lettre */}
+        <div>
+          <h4 className="font-medium mb-3 text-primary">Contenu de la lettre</h4>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="letter-subject">Objet de la lettre</Label>
+              <Input
+                id="letter-subject"
+                value={settings.letterTemplate?.subject || ''}
+                onChange={(e) => handleUpdateLetter('subject', e.target.value)}
+                placeholder="Proposition commerciale - Sécurité technique"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="letter-opening">Formule d'ouverture</Label>
+              <Textarea
+                id="letter-opening"
+                value={settings.letterTemplate?.opening || ''}
+                onChange={(e) => handleUpdateLetter('opening', e.target.value)}
+                placeholder="Madame, Monsieur,&#10;&#10;Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
+                rows={4}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="letter-body">Corps du message</Label>
+              <Textarea
+                id="letter-body"
+                value={settings.letterTemplate?.body || ''}
+                onChange={(e) => handleUpdateLetter('body', e.target.value)}
+                placeholder="Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.&#10;&#10;Vous trouverez ci-joint notre devis détaillé comprenant..."
+                rows={6}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="letter-closing">Formule de politesse</Label>
+              <Textarea
+                id="letter-closing"
+                value={settings.letterTemplate?.closing || ''}
+                onChange={(e) => handleUpdateLetter('closing', e.target.value)}
+                placeholder="Nous restons à votre disposition pour tout complément d'information et espérons que notre proposition retiendra votre attention.&#10;&#10;Dans l'attente de votre retour, nous vous prions d'agréer, Madame, Monsieur, l'expression de nos salutations distinguées."
+                rows={4}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Options */}
+        <div>
+          <h4 className="font-medium mb-3 text-primary">Options</h4>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="include-letter"
+              checked={settings.letterTemplate?.enabled || false}
+              onChange={(e) => handleUpdateLetter('enabled', e.target.checked.toString())}
+              className="rounded"
+            />
+            <Label htmlFor="include-letter">Inclure la lettre de présentation avant le devis</Label>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default LetterTemplate;

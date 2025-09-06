@@ -39,9 +39,49 @@ const RecapScreen = () => {
     
     console.log('Validation passée, génération du contenu PDF');
     
-    // Créer un PDF basique (simulation)
-    const pdfContent = `
-DEVIS ${currentQuote.ref}
+    let pdfContent = '';
+    
+    // Ajouter la lettre de présentation si activée
+    if (settings.letterTemplate?.enabled) {
+      const letterDate = new Date().toLocaleDateString('fr-FR');
+      const clientAddress = currentQuote.addresses.contact;
+      
+      pdfContent += `${settings.letterTemplate.companyName}
+${settings.letterTemplate.companyAddress}
+${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}
+Tél: ${settings.letterTemplate.contactPhone}
+Email: ${settings.letterTemplate.contactEmail}
+
+                                                    ${letterDate}
+
+À l'attention de :
+${clientAddress.company || ''}
+${clientAddress.name}
+${clientAddress.street}
+${clientAddress.postalCode} ${clientAddress.city}
+
+Objet: ${settings.letterTemplate.subject}
+
+${settings.letterTemplate.opening}
+
+${settings.letterTemplate.body}
+
+${settings.letterTemplate.closing}
+
+
+${settings.letterTemplate.contactName}
+${settings.letterTemplate.contactTitle}
+
+
+═══════════════════════════════════════════════════════════════
+                            DEVIS DÉTAILLÉ
+═══════════════════════════════════════════════════════════════
+
+`;
+    }
+    
+    // Ajouter le devis
+    pdfContent += `DEVIS ${currentQuote.ref}
 Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}
 Client: ${currentQuote.client}
 
@@ -57,18 +97,18 @@ ${totals.mensuel.totalTTC > 0 ? `+ ${totals.mensuel.totalTTC.toFixed(2)} CHF/moi
     try {
       console.log('Création du blob et téléchargement');
       // Simuler le téléchargement
-      const blob = new Blob([pdfContent], { type: 'text/plain' });
+      const blob = new Blob([pdfContent], { type: 'text/plain; charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `devis-${currentQuote.ref || 'nouveau'}.txt`;
+      a.download = `${settings.letterTemplate?.enabled ? 'lettre-et-devis' : 'devis'}-${currentQuote.ref || 'nouveau'}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
       console.log('PDF généré avec succès');
-      toast.success('PDF généré avec succès !');
+      toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès !`);
     } catch (error) {
       console.error('Erreur lors de la génération PDF:', error);
       toast.error('Erreur lors de la génération du PDF');

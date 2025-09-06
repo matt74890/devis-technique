@@ -16,6 +16,7 @@ import { Subscription } from '@/types';
 import ProductCatalog from '../catalog/ProductCatalog';
 import PDFConfiguration from '../settings/PDFConfiguration';
 import CurrencySettings from '../settings/CurrencySettings';
+import LetterTemplate from '../settings/LetterTemplate';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -93,10 +94,10 @@ const SettingsScreen = () => {
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Catalogue</span>
           </TabsTrigger>
-          <TabsTrigger value="pdf" className="flex items-center space-x-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">PDF</span>
-          </TabsTrigger>
+            <TabsTrigger value="pdf" className="flex items-center space-x-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF & Lettre</span>
+            </TabsTrigger>
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
@@ -456,6 +457,7 @@ const SettingsScreen = () => {
               </CardContent>
             </Card>
             
+            <LetterTemplate />
             <PDFConfiguration />
           </div>
         </TabsContent>

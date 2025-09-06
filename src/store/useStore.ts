@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address } from '@/types';
+import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate } from '@/types';
 
 interface AppState {
   // Local state (non-persisted)
@@ -118,6 +118,20 @@ const defaultPDFConfig: PDFConfig = {
   }
 };
 
+const defaultLetterTemplate: LetterTemplate = {
+  enabled: false,
+  companyName: '',
+  contactName: '',
+  contactTitle: '',
+  contactPhone: '',
+  contactEmail: '',
+  companyAddress: '',
+  subject: 'Proposition commerciale - Sécurité technique',
+  opening: 'Madame, Monsieur,\n\nSuite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale.',
+  body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant l\'ensemble des prestations et équipements nécessaires.',
+  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, Madame, Monsieur, l\'expression de nos salutations distinguées.'
+};
+
 const defaultSettings: Settings = {
   tvaPct: 8.10,
   priceInputModeDefault: 'TTC',
@@ -126,6 +140,7 @@ const defaultSettings: Settings = {
   pdfTitle: 'Devis Technique',
   pdfFooter: 'Mentions légales - #NousRendonsLaSuisseSure',
   defaultComment: 'Merci de votre confiance.',
+  letterTemplate: defaultLetterTemplate,
   subscriptions: [
     {
       id: '1',

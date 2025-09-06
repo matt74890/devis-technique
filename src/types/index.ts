@@ -14,6 +14,20 @@ export interface Client {
   updated_at?: string;
 }
 
+export interface LetterTemplate {
+  enabled: boolean;
+  companyName: string;
+  contactName: string;
+  contactTitle: string;
+  contactPhone: string;
+  contactEmail: string;
+  companyAddress: string;
+  subject: string;
+  opening: string;
+  body: string;
+  closing: string;
+}
+
 export interface Settings {
   tvaPct: number;
   priceInputModeDefault: 'TTC' | 'HT';
@@ -27,6 +41,7 @@ export interface Settings {
   models: PriceModel[];
   catalog: Product[];
   pdfConfig: PDFConfig;
+  letterTemplate: LetterTemplate;
   defaults: {
     feesInstallHT?: number;
     feesDossierHT?: number;
