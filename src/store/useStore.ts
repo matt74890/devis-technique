@@ -140,14 +140,51 @@ const defaultLetterTemplate: LetterTemplate = {
 };
 
 const defaultTemplateColors: TemplateColors = {
+  // Couleurs principales
   primary: '#2563eb',
   secondary: '#64748b', 
   accent: '#059669',
-  tableHeader: '#1e40af',
-  tableRow: '#f8fafc',
-  tableBorder: '#cbd5e1',
+  
+  // Couleurs de texte
+  titleColor: '#1e40af',
+  subtitleColor: '#64748b',
+  textColor: '#374151',
+  mutedTextColor: '#6b7280',
+  
+  // Couleurs de fond
   background: '#ffffff',
-  cardBackground: '#f1f5f9'
+  cardBackground: '#f8fafc',
+  headerBackground: '#f1f5f9',
+  
+  // Couleurs de tableau
+  tableHeader: '#1e40af',
+  tableHeaderText: '#ffffff',
+  tableRow: '#ffffff',
+  tableRowAlt: '#f8fafc',
+  tableBorder: '#cbd5e1',
+  
+  // Couleurs des badges
+  badgeUnique: '#64748b',
+  badgeMensuel: '#059669',
+  badgeText: '#ffffff',
+  
+  // Couleurs des totaux
+  totalCardBorder: '#cbd5e1',
+  totalUniqueBackground: '#f8fafc',
+  totalMensuelBackground: '#f0fdf4',
+  grandTotalBackground: 'linear-gradient(135deg, #2563eb08, #05966908)',
+  grandTotalBorder: '#2563eb',
+  
+  // Couleurs des bordures et séparateurs
+  borderPrimary: '#2563eb',
+  borderSecondary: '#cbd5e1',
+  separatorColor: '#e5e7eb',
+  
+  // Couleurs spécifiques à la lettre
+  letterHeaderColor: '#1e40af',
+  letterDateColor: '#374151',
+  letterSubjectColor: '#2563eb',
+  letterSignatureColor: '#374151'
 };
 
 const defaultSettings: Settings = {

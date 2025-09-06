@@ -22,14 +22,51 @@ export interface SellerInfo {
 }
 
 export interface TemplateColors {
+  // Couleurs principales
   primary: string;
   secondary: string;
   accent: string;
-  tableHeader: string;
-  tableRow: string;
-  tableBorder: string;
+  
+  // Couleurs de texte
+  titleColor: string;
+  subtitleColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  
+  // Couleurs de fond
   background: string;
   cardBackground: string;
+  headerBackground: string;
+  
+  // Couleurs de tableau
+  tableHeader: string;
+  tableHeaderText: string;
+  tableRow: string;
+  tableRowAlt: string;
+  tableBorder: string;
+  
+  // Couleurs des badges
+  badgeUnique: string;
+  badgeMensuel: string;
+  badgeText: string;
+  
+  // Couleurs des totaux
+  totalCardBorder: string;
+  totalUniqueBackground: string;
+  totalMensuelBackground: string;
+  grandTotalBackground: string;
+  grandTotalBorder: string;
+  
+  // Couleurs des bordures et séparateurs
+  borderPrimary: string;
+  borderSecondary: string;
+  separatorColor: string;
+  
+  // Couleurs spécifiques à la lettre
+  letterHeaderColor: string;
+  letterDateColor: string;
+  letterSubjectColor: string;
+  letterSignatureColor: string;
 }
 
 export interface LetterTemplate {

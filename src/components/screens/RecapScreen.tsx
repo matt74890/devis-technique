@@ -41,14 +41,51 @@ const RecapScreen = () => {
     
     // Créer le contenu HTML pour la génération PDF
     const colors = settings.templateColors || { 
-      primary: '#2563eb', 
+      // Couleurs principales
+      primary: '#2563eb',
       secondary: '#64748b', 
       accent: '#059669',
-      tableHeader: '#1e40af',
-      tableRow: '#f8fafc',
-      tableBorder: '#cbd5e1',
+      
+      // Couleurs de texte
+      titleColor: '#1e40af',
+      subtitleColor: '#64748b',
+      textColor: '#374151',
+      mutedTextColor: '#6b7280',
+      
+      // Couleurs de fond
       background: '#ffffff',
-      cardBackground: '#f1f5f9'
+      cardBackground: '#f8fafc',
+      headerBackground: '#f1f5f9',
+      
+      // Couleurs de tableau
+      tableHeader: '#1e40af',
+      tableHeaderText: '#ffffff',
+      tableRow: '#ffffff',
+      tableRowAlt: '#f8fafc',
+      tableBorder: '#cbd5e1',
+      
+      // Couleurs des badges
+      badgeUnique: '#64748b',
+      badgeMensuel: '#059669',
+      badgeText: '#ffffff',
+      
+      // Couleurs des totaux
+      totalCardBorder: '#cbd5e1',
+      totalUniqueBackground: '#f8fafc',
+      totalMensuelBackground: '#f0fdf4',
+      grandTotalBackground: 'linear-gradient(135deg, #2563eb08, #05966908)',
+      grandTotalBorder: '#2563eb',
+      
+      // Couleurs des bordures et séparateurs
+      borderPrimary: '#2563eb',
+      borderSecondary: '#cbd5e1',
+      separatorColor: '#e5e7eb',
+      
+      // Couleurs spécifiques à la lettre
+      letterHeaderColor: '#1e40af',
+      letterDateColor: '#374151',
+      letterSubjectColor: '#2563eb',
+      letterSignatureColor: '#374151'
     };
     
     let htmlContent = `
@@ -62,7 +99,7 @@ const RecapScreen = () => {
               font-family: Arial, sans-serif; 
               margin: 0; 
               padding: 20px; 
-              color: #000;
+              color: ${colors.textColor};
               background: ${colors.background};
             }
             @media print { 
@@ -71,7 +108,14 @@ const RecapScreen = () => {
               .page-break { page-break-before: always; }
             }
             .container { max-width: 800px; margin: 0 auto; }
-            .letter-container { margin-bottom: 40px; padding-bottom: 40px; border-bottom: 3px solid ${colors.primary}; }
+            .letter-container { 
+              margin-bottom: 40px; 
+              padding-bottom: 40px; 
+              border-bottom: 3px solid ${colors.borderPrimary}; 
+              background: ${colors.headerBackground};
+              padding: 30px;
+              border-radius: 8px;
+            }
             .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
             .logo { height: 80px; margin-bottom: 15px; }
             .seller-info { flex: 1; }
@@ -79,17 +123,20 @@ const RecapScreen = () => {
             .title-section { 
               text-align: center; 
               padding: 20px 0; 
-              border-top: 3px solid ${colors.primary}; 
-              border-bottom: 1px solid ${colors.secondary}; 
+              border-top: 3px solid ${colors.borderPrimary}; 
+              border-bottom: 1px solid ${colors.borderSecondary}; 
               margin: 20px 0;
+              background: ${colors.headerBackground};
+              border-radius: 8px;
             }
-            .title { color: ${colors.primary}; font-size: 28px; font-weight: bold; margin: 0; }
-            .subtitle { color: ${colors.secondary}; font-size: 16px; margin: 8px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: 28px; font-weight: bold; margin: 0; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: 16px; margin: 8px 0 0 0; }
             .project-details { 
               background: ${colors.cardBackground}; 
               padding: 15px; 
               border-radius: 8px; 
               margin: 20px 0; 
+              border: 1px solid ${colors.borderSecondary};
             }
             table { 
               width: 100%; 
@@ -99,7 +146,7 @@ const RecapScreen = () => {
             }
             th { 
               background: ${colors.tableHeader}; 
-              color: white; 
+              color: ${colors.tableHeaderText}; 
               padding: 12px 8px; 
               text-align: left; 
               font-weight: bold;
@@ -108,39 +155,47 @@ const RecapScreen = () => {
             td { 
               padding: 10px 8px; 
               border: 1px solid ${colors.tableBorder}; 
+              color: ${colors.textColor};
             }
-            tr:nth-child(even) { background: ${colors.tableRow}; }
+            tr:nth-child(even) { background: ${colors.tableRowAlt}; }
+            tr:nth-child(odd) { background: ${colors.tableRow}; }
             .mode-badge { 
               padding: 3px 8px; 
               border-radius: 12px; 
               font-size: 11px; 
-              color: white; 
+              color: ${colors.badgeText}; 
               font-weight: bold;
             }
-            .mode-unique { background: ${colors.secondary}; }
-            .mode-mensuel { background: ${colors.accent}; }
+            .mode-unique { background: ${colors.badgeUnique}; }
+            .mode-mensuel { background: ${colors.badgeMensuel}; }
             .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
             .total-card { 
-              border: 2px solid; 
+              border: 2px solid ${colors.totalCardBorder}; 
               padding: 15px; 
               border-radius: 8px; 
               background: ${colors.cardBackground};
             }
-            .total-unique { border-color: ${colors.secondary}; }
-            .total-mensuel { border-color: ${colors.accent}; background: #f0fdf4; }
+            .total-unique { 
+              border-color: ${colors.totalCardBorder}; 
+              background: ${colors.totalUniqueBackground};
+            }
+            .total-mensuel { 
+              border-color: ${colors.accent}; 
+              background: ${colors.totalMensuelBackground};
+            }
             .grand-total { 
               text-align: center; 
               padding: 25px; 
-              border: 3px solid ${colors.primary}; 
+              border: 3px solid ${colors.grandTotalBorder}; 
               border-radius: 8px; 
-              background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08);
+              background: ${colors.cardBackground};
               margin: 25px 0;
             }
             .footer { 
               text-align: center; 
               font-size: 12px; 
-              color: ${colors.secondary}; 
-              border-top: 2px solid ${colors.primary}; 
+              color: ${colors.mutedTextColor}; 
+              border-top: 2px solid ${colors.borderPrimary}; 
               padding-top: 15px; 
               margin-top: 30px; 
             }
@@ -148,17 +203,43 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .comment-box { 
-              border: 1px solid ${colors.tableBorder}; 
+              border: 1px solid ${colors.borderSecondary}; 
               background: ${colors.cardBackground}; 
               padding: 15px; 
               border-radius: 8px; 
+              color: ${colors.textColor};
             }
             .letter-header { margin-bottom: 30px; }
-            .letter-date { text-align: right; margin: 20px 0; font-weight: bold; }
-            .letter-recipient { margin: 20px 0; }
-            .letter-subject { margin: 20px 0; font-weight: bold; color: ${colors.primary}; }
-            .letter-content { margin: 20px 0; line-height: 1.6; text-align: justify; }
-            .letter-signature { margin-top: 30px; }
+            .letter-date { 
+              text-align: right; 
+              margin: 20px 0; 
+              font-weight: bold; 
+              color: ${colors.letterDateColor};
+            }
+            .letter-recipient { 
+              margin: 20px 0; 
+              color: ${colors.textColor};
+            }
+            .letter-subject { 
+              margin: 20px 0; 
+              font-weight: bold; 
+              color: ${colors.letterSubjectColor}; 
+            }
+            .letter-content { 
+              margin: 20px 0; 
+              line-height: 1.6; 
+              text-align: justify; 
+              color: ${colors.textColor};
+            }
+            .letter-signature { 
+              margin-top: 30px; 
+              color: ${colors.letterSignatureColor};
+            }
+            .separator { 
+              height: 1px; 
+              background: ${colors.separatorColor}; 
+              margin: 20px 0; 
+            }
           </style>
         </head>
         <body>
@@ -175,9 +256,9 @@ const RecapScreen = () => {
           <div class="letter-header">
             ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
             <div style="margin-top: 20px;">
-              <div style="font-weight: bold; font-size: 18px; color: ${colors.primary};">${settings.letterTemplate.companyName}</div>
-              <div style="margin-top: 10px; color: ${colors.secondary};">${settings.letterTemplate.companyAddress}</div>
-              <div style="margin-top: 10px;">
+              <div style="font-weight: bold; font-size: 18px; color: ${colors.letterHeaderColor};">${settings.letterTemplate.companyName}</div>
+              <div style="margin-top: 10px; color: ${colors.subtitleColor};">${settings.letterTemplate.companyAddress}</div>
+              <div style="margin-top: 10px; color: ${colors.textColor};">
                 <div>${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}</div>
                 <div>Tél: ${settings.letterTemplate.contactPhone}</div>
                 <div>Email: ${settings.letterTemplate.contactEmail}</div>
@@ -188,9 +269,9 @@ const RecapScreen = () => {
           <div class="letter-date">${letterDate}</div>
           
           <div class="letter-recipient">
-            <div style="font-weight: bold;">À l'attention de :</div>
+            <div style="font-weight: bold; color: ${colors.titleColor};">À l'attention de :</div>
             <div style="margin-top: 10px;">
-              ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
+              ${clientAddress.company ? `<div style="font-weight: bold; color: ${colors.titleColor};">${clientAddress.company}</div>` : ''}
               <div>${clientAddress.name}</div>
               <div>${clientAddress.street}</div>
               <div>${clientAddress.postalCode} ${clientAddress.city}</div>
@@ -231,20 +312,20 @@ const RecapScreen = () => {
           ${settings.sellerInfo?.name ? `
             <div>
               <div style="font-weight: bold; color: ${colors.primary};">${settings.sellerInfo.name}</div>
-              ${settings.sellerInfo.title ? `<div style="color: #666;">${settings.sellerInfo.title}</div>` : ''}
-              ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
-              ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
+              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
+              ${settings.sellerInfo.email ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.email}</div>` : ''}
+              ${settings.sellerInfo.phone ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.phone}</div>` : ''}
             </div>
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="font-weight: bold; font-size: 18px;">${currentQuote.addresses.contact.company}</div>
-          <div>${currentQuote.addresses.contact.name}</div>
-          <div>${currentQuote.addresses.contact.street}</div>
-          <div>${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
-          <div>${currentQuote.addresses.contact.country}</div>
+          <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
+          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.name}</div>
+          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.street}</div>
+          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
+          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.country}</div>
           ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary};">${currentQuote.addresses.contact.email}</div>` : ''}
-          ${currentQuote.addresses.contact.phone ? `<div>${currentQuote.addresses.contact.phone}</div>` : ''}
+          ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor};">${currentQuote.addresses.contact.phone}</div>` : ''}
         </div>
       </div>
     `;
@@ -254,7 +335,7 @@ const RecapScreen = () => {
       <div class="title-section">
         <h1 class="title">${settings.pdfTitle}</h1>
         <p class="subtitle">Devis N° ${currentQuote.ref}</p>
-        <p style="color: #666;">Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
+        <p style="color: ${colors.mutedTextColor};">Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
       </div>
     `;
 
@@ -263,7 +344,7 @@ const RecapScreen = () => {
       htmlContent += `
         <div class="project-details">
           <h3 style="color: ${colors.primary}; margin: 0 0 10px 0;">Détails du projet</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px; color: ${colors.textColor};">
             ${currentQuote.site ? `<div><strong>Site:</strong> ${currentQuote.site}</div>` : ''}
             ${currentQuote.contact ? `<div><strong>Contact:</strong> ${currentQuote.contact}</div>` : ''}
             ${currentQuote.canton ? `<div><strong>Canton:</strong> ${currentQuote.canton}</div>` : ''}
@@ -322,15 +403,15 @@ const RecapScreen = () => {
       htmlContent += `
         <div class="total-card total-unique">
           <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
             <span>Sous-total HT:</span>
             <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
           </div>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
             <span>TVA (${settings.tvaPct}%):</span>
             <span>${totals.unique.tva.toFixed(2)} CHF</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.tableBorder}; padding-top: 8px; color: ${colors.primary};">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
             <span>Total TTC:</span>
             <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -342,11 +423,11 @@ const RecapScreen = () => {
       htmlContent += `
         <div class="total-card total-mensuel">
           <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
             <span>Sous-total HT:</span>
             <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
           </div>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
             <span>TVA (${settings.tvaPct}%):</span>
             <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
           </div>
@@ -363,18 +444,18 @@ const RecapScreen = () => {
     // Total général
     htmlContent += `
       <div class="grand-total">
-        <h4 style="color: ${colors.primary}; font-size: 24px; margin: 0 0 15px 0;">TOTAL GÉNÉRAL</h4>
+        <h4 style="color: ${colors.titleColor}; font-size: 24px; margin: 0 0 15px 0;">TOTAL GÉNÉRAL</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
           <div>
-            <p style="margin: 0; color: ${colors.secondary};">Total HT</p>
+            <p style="margin: 0; color: ${colors.subtitleColor};">Total HT</p>
             <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
           </div>
           <div>
-            <p style="margin: 0; color: ${colors.secondary};">TVA totale</p>
+            <p style="margin: 0; color: ${colors.subtitleColor};">TVA totale</p>
             <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
           </div>
         </div>
-        <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
+        <div style="border-top: 2px solid ${colors.borderPrimary}; padding-top: 15px;">
           <p style="margin: 0; font-size: 32px; font-weight: bold; color: ${colors.primary};">
             ${totals.global.totalTTC.toFixed(2)} CHF
           </p>
