@@ -195,6 +195,7 @@ export interface Quote {
   ref: string;
   date: string;
   client: string;
+  clientCivility: 'Monsieur' | 'Madame';
   site: string;
   contact: string;
   canton: string;

@@ -287,6 +287,7 @@ const DevisScreen = () => {
                   onChange={(e) => {
                     const newAddress = { ...currentQuote.addresses.contact, name: e.target.value };
                     updateQuote({ 
+                      client: e.target.value,
                       addresses: { 
                         ...currentQuote.addresses, 
                         contact: newAddress,
@@ -297,6 +298,21 @@ const DevisScreen = () => {
                   }}
                   placeholder="Nom et prénom"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-civility">Civilité</Label>
+                <Select 
+                  value={currentQuote.clientCivility} 
+                  onValueChange={(value: 'Monsieur' | 'Madame') => updateQuote({ clientCivility: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Civilité" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border z-50">
+                    <SelectItem value="Monsieur">Monsieur</SelectItem>
+                    <SelectItem value="Madame">Madame</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-email">Email</Label>

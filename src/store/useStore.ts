@@ -244,6 +244,7 @@ const createDefaultQuote = (): Quote => ({
   ref: '',
   date: new Date().toISOString().split('T')[0],
   client: '',
+  clientCivility: 'Monsieur',
   site: '',
   contact: '',
   canton: '',
