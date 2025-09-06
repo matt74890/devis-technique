@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Copy, Trash2, Zap, MapPin } from 'lucide-react';
+import { Plus, Copy, Trash2, Zap, MapPin, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/store/useStore';
 import { QuoteItem, Client } from '@/types';
 import { calculateQuoteItem } from '@/utils/calculations';
@@ -114,6 +115,42 @@ const DevisScreen = () => {
   };
 
   const activeSubscriptions = settings.subscriptions.filter(s => s.active);
+
+  const saveClientToDatabase = async () => {
+    const contact = currentQuote.addresses.contact;
+    
+    // Validation des données minimales
+    if (!contact.name.trim()) {
+      toast.error('Le nom du client est obligatoire pour sauvegarder');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .insert([{
+          name: contact.name,
+          company: contact.company || null,
+          email: contact.email || null,
+          phone: contact.phone || null,
+          address: contact.street || null,
+          city: contact.city || null,
+          postal_code: contact.postalCode || null,
+          country: contact.country || 'Suisse'
+        }]);
+
+      if (error) throw error;
+      
+      toast.success(`Client "${contact.name}" sauvegardé avec succès`);
+    } catch (error: any) {
+      console.error('Erreur lors de la sauvegarde du client:', error);
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        toast.error('Ce client existe déjà dans la base de données');
+      } else {
+        toast.error('Erreur lors de la sauvegarde du client');
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -359,6 +396,20 @@ const DevisScreen = () => {
                 />
               </div>
             </div>
+            
+            {/* Bouton sauvegarder client */}
+            {currentQuote.addresses.contact.name && (
+              <div className="flex justify-end mt-4">
+                <Button
+                  variant="outline"
+                  onClick={saveClientToDatabase}
+                  className="flex items-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Sauvegarder ce client</span>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Adresses séparées si activées */}
