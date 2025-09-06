@@ -11,22 +11,44 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useSettings } from '@/components/SettingsProvider';
 import { Subscription } from '@/types';
 import ProductCatalog from '../catalog/ProductCatalog';
 import PDFConfiguration from '../settings/PDFConfiguration';
 import CurrencySettings from '../settings/CurrencySettings';
 
 const SettingsScreen = () => {
-  const { 
-    settings, 
-    updateSettings, 
-    addSubscription, 
-    updateSubscription, 
-    deleteSubscription,
-    addType,
-    deleteType
-  } = useStore();
+  const { settings, updateSettings } = useSettings();
+  
+  const addSubscription = (subscription: Omit<Subscription, 'id'>) => {
+    const newSubscriptions = [...settings.subscriptions, { 
+      ...subscription, 
+      id: crypto.randomUUID() 
+    }];
+    updateSettings({ subscriptions: newSubscriptions });
+  };
+
+  const updateSubscription = (id: string, subscription: Partial<Subscription>) => {
+    const newSubscriptions = settings.subscriptions.map(s => 
+      s.id === id ? { ...s, ...subscription } : s
+    );
+    updateSettings({ subscriptions: newSubscriptions });
+  };
+
+  const deleteSubscription = (id: string) => {
+    const newSubscriptions = settings.subscriptions.filter(s => s.id !== id);
+    updateSettings({ subscriptions: newSubscriptions });
+  };
+
+  const addType = (type: string) => {
+    const newTypes = [...settings.types, type];
+    updateSettings({ types: newTypes });
+  };
+
+  const deleteType = (type: string) => {
+    const newTypes = settings.types.filter(t => t !== type);
+    updateSettings({ types: newTypes });
+  };
 
   const [newSubscription, setNewSubscription] = useState<Partial<Subscription>>({
     label: '',

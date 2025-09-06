@@ -1,13 +1,16 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address } from '@/types';
 
 interface AppState {
-  settings: Settings;
+  // Local state (non-persisted)
   currentQuote: Quote | null;
   quotes: Quote[];
   
-  // Settings actions
+  // Settings (will be managed by useUserSettings hook)
+  settings: Settings;
+  setSettings: (settings: Settings) => void;
+  
+  // Settings actions (deprecated - use useUserSettings hook instead)
   updateSettings: (settings: Partial<Settings>) => void;
   addSubscription: (subscription: Omit<Subscription, 'id'>) => void;
   updateSubscription: (id: string, subscription: Partial<Subscription>) => void;
@@ -15,7 +18,7 @@ interface AppState {
   addType: (type: string) => void;
   deleteType: (type: string) => void;
   
-  // Product actions
+  // Product actions (deprecated - use useUserSettings hook instead)
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
@@ -23,7 +26,7 @@ interface AppState {
   // Address actions (deprecated - now in quotes)
   updateAddresses: () => void;
   
-  // PDF Config actions
+  // PDF Config actions (deprecated - use useUserSettings hook instead)
   updatePDFConfig: (config: PDFConfig) => void;
   
   // Quote actions
@@ -155,6 +158,8 @@ const defaultSettings: Settings = {
   }
 };
 
+export { defaultSettings };
+
 const createDefaultQuote = (): Quote => ({
   id: crypto.randomUUID(),
   ref: '',
@@ -175,12 +180,12 @@ const createDefaultQuote = (): Quote => ({
   }
 });
 
-export const useStore = create<AppState>()(
-  persist(
-    (set, get) => ({
+export const useStore = create<AppState>()((set, get) => ({
       settings: defaultSettings,
       currentQuote: createDefaultQuote(),
       quotes: [],
+
+      setSettings: (settings) => set({ settings }),
 
       updateSettings: (newSettings) => 
         set((state) => ({ 
@@ -320,9 +325,4 @@ export const useStore = create<AppState>()(
             }
           };
         })
-    }),
-    {
-      name: 'devis-app-storage',
-    }
-  )
-);
+    }));

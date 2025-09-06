@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Calculator, Settings, Building2, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Calculator, Settings, Building2, Users, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import DevisScreen from './screens/DevisScreen';
 import RecapScreen from './screens/RecapScreen';
 import SettingsScreen from './screens/SettingsScreen';
@@ -8,6 +10,11 @@ import ClientsScreen from './screens/ClientsScreen';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('devis');
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -27,6 +34,20 @@ const Layout = () => {
                   Gestion professionnelle des devis
                 </p>
               </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-muted-foreground">
+                Connecté en tant que <span className="font-medium">{user?.email}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Déconnexion
+              </Button>
             </div>
           </div>
         </div>
