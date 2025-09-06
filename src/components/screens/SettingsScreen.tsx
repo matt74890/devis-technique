@@ -357,13 +357,21 @@ const SettingsScreen = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
 
-            {/* Textes et informations de base */}
+        <TabsContent value="catalog">
+          <ProductCatalog />
+        </TabsContent>
+
+        <TabsContent value="pdf">
+          <div className="space-y-6">
+            {/* Informations de base pour PDF */}
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  <span>Informations de base</span>
+                  <span>Informations de base pour PDF</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -408,15 +416,13 @@ const SettingsScreen = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            <PDFConfiguration />
           </div>
         </TabsContent>
 
-        <TabsContent value="catalog">
-          <ProductCatalog />
-        </TabsContent>
-
-        <TabsContent value="pdf">
-          <PDFConfiguration />
+        <TabsContent value="currency">
+          <CurrencySettings />
         </TabsContent>
 
         <TabsContent value="advanced">
