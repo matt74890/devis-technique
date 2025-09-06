@@ -8,11 +8,12 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Upload, Search, Package } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useSettings } from '@/components/SettingsProvider';
 import { Product } from '@/types';
+import { toast } from 'sonner';
 
 const ProductCatalog = () => {
-  const { settings, addProduct, updateProduct, deleteProduct } = useStore();
+  const { settings, updateSettings } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -27,6 +28,27 @@ const ProductCatalog = () => {
     active: true,
     tags: []
   });
+
+  // Fonctions pour gérer le catalogue
+  const addProduct = (product: Omit<Product, 'id'>) => {
+    const newCatalog = [...settings.catalog, { ...product, id: crypto.randomUUID() }];
+    updateSettings({ catalog: newCatalog });
+    toast.success('Produit ajouté au catalogue');
+  };
+
+  const updateProduct = (id: string, productUpdates: Partial<Product>) => {
+    const newCatalog = settings.catalog.map(p => 
+      p.id === id ? { ...p, ...productUpdates } : p
+    );
+    updateSettings({ catalog: newCatalog });
+    toast.success('Produit modifié');
+  };
+
+  const deleteProduct = (id: string) => {
+    const newCatalog = settings.catalog.filter(p => p.id !== id);
+    updateSettings({ catalog: newCatalog });
+    toast.success('Produit supprimé');
+  };
 
   const filteredProducts = settings.catalog.filter(product => {
     const matchesSearch = !searchTerm || 
