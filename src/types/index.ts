@@ -19,6 +19,7 @@ export interface SellerInfo {
   title: string;
   email: string;
   phone: string;
+  signature?: string; // URL de l'image de signature
 }
 
 export interface TemplateColors {
