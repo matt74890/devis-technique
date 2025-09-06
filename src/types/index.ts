@@ -14,6 +14,13 @@ export interface Client {
   updated_at?: string;
 }
 
+export interface SellerInfo {
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+}
+
 export interface LetterTemplate {
   enabled: boolean;
   companyName: string;
@@ -42,6 +49,7 @@ export interface Settings {
   catalog: Product[];
   pdfConfig: PDFConfig;
   letterTemplate: LetterTemplate;
+  sellerInfo: SellerInfo;
   defaults: {
     feesInstallHT?: number;
     feesDossierHT?: number;

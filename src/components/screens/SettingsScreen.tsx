@@ -17,6 +17,7 @@ import ProductCatalog from '../catalog/ProductCatalog';
 import PDFConfiguration from '../settings/PDFConfiguration';
 import CurrencySettings from '../settings/CurrencySettings';
 import LetterTemplate from '../settings/LetterTemplate';
+import SellerInfo from '../settings/SellerInfo';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -106,6 +107,9 @@ const SettingsScreen = () => {
 
         <TabsContent value="general">
           <div className="space-y-6">
+            {/* Informations vendeur */}
+            <SellerInfo />
+            
             {/* TVA & Formats */}
             <Card className="shadow-soft">
               <CardHeader>

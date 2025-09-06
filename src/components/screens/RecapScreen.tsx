@@ -68,9 +68,12 @@ ${settings.letterTemplate.body}
 
 ${settings.letterTemplate.closing}
 
+Cordialement,
 
-${settings.letterTemplate.contactName}
-${settings.letterTemplate.contactTitle}
+${settings.sellerInfo?.name || settings.letterTemplate.contactName}
+${settings.sellerInfo?.title || settings.letterTemplate.contactTitle}
+${settings.sellerInfo?.email || settings.letterTemplate.contactEmail}
+${settings.sellerInfo?.phone || settings.letterTemplate.contactPhone}
 
 
 ═══════════════════════════════════════════════════════════════
@@ -80,18 +83,26 @@ ${settings.letterTemplate.contactTitle}
 `;
     }
     
-    // Ajouter le devis
+    // Ajouter le devis avec informations vendeur
     pdfContent += `DEVIS ${currentQuote.ref}
 Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}
 Client: ${currentQuote.client}
 
-DÉTAIL DES LIGNES:
+${settings.sellerInfo?.name ? `Votre conseiller: ${settings.sellerInfo.name}${settings.sellerInfo.title ? ` - ${settings.sellerInfo.title}` : ''}
+Contact direct: ${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}
+
+` : ''}DÉTAIL DES LIGNES:
 ${currentQuote.items.map(item => 
   `${item.reference} - ${item.qty} x ${item.puTTC.toFixed(2)} CHF = ${item.totalTTC.toFixed(2)} CHF`
 ).join('\n')}
 
 TOTAL: ${totals.global.totalTTC.toFixed(2)} CHF
 ${totals.mensuel.totalTTC > 0 ? `+ ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois` : ''}
+
+${settings.sellerInfo?.name ? `─────────────────────────────────────────────────────
+Pour toute question concernant ce devis :
+${settings.sellerInfo.name}${settings.sellerInfo.title ? ` - ${settings.sellerInfo.title}` : ''}
+${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}` : ''}
     `;
     
     try {

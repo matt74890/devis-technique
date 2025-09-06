@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate } from '@/types';
+import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate, SellerInfo } from '@/types';
 
 interface AppState {
   // Local state (non-persisted)
@@ -118,6 +118,13 @@ const defaultPDFConfig: PDFConfig = {
   }
 };
 
+const defaultSellerInfo: SellerInfo = {
+  name: '',
+  title: '',
+  email: '',
+  phone: ''
+};
+
 const defaultLetterTemplate: LetterTemplate = {
   enabled: false,
   companyName: '',
@@ -141,6 +148,7 @@ const defaultSettings: Settings = {
   pdfFooter: 'Mentions légales - #NousRendonsLaSuisseSure',
   defaultComment: 'Merci de votre confiance.',
   letterTemplate: defaultLetterTemplate,
+  sellerInfo: defaultSellerInfo,
   subscriptions: [
     {
       id: '1',
