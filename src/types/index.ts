@@ -3,6 +3,7 @@
 export interface Settings {
   tvaPct: number;
   priceInputModeDefault: 'TTC' | 'HT';
+  currency: Currency;
   logoUrl?: string;
   pdfTitle: string;
   pdfFooter: string;
@@ -10,11 +11,78 @@ export interface Settings {
   subscriptions: Subscription[];
   types: string[];
   models: PriceModel[];
+  catalog: Product[];
+  addresses: {
+    billing: Address;
+    installation: Address;
+    useSameAddress: boolean;
+  };
+  pdfConfig: PDFConfig;
   defaults: {
     feesInstallHT?: number;
     feesDossierHT?: number;
     showFeesAsLines: boolean;
   };
+}
+
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  position: 'before' | 'after'; // Position du symbole
+}
+
+export interface Address {
+  company: string;
+  name: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  email: string;
+  phone: string;
+}
+
+export interface Product {
+  id: string;
+  reference: string;
+  name: string;
+  description: string;
+  type: string;
+  priceHT: number;
+  priceTTC: number;
+  imageUrl?: string;
+  active: boolean;
+  tags: string[];
+}
+
+export interface PDFConfig {
+  sections: {
+    header: PDFSection;
+    clientInfo: PDFSection;
+    itemsTable: PDFSection;
+    totals: PDFSection;
+    footer: PDFSection;
+    comments: PDFSection;
+  };
+  customTexts: {
+    [key: string]: string;
+  };
+}
+
+export interface PDFSection {
+  enabled: boolean;
+  title?: string;
+  content?: string;
+  fields: PDFField[];
+}
+
+export interface PDFField {
+  id: string;
+  label: string;
+  enabled: boolean;
+  text: string;
+  order: number;
 }
 
 export interface Subscription {

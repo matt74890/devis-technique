@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Settings, Quote, QuoteItem, Subscription } from '@/types';
+import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address } from '@/types';
 
 interface AppState {
   settings: Settings;
@@ -15,6 +15,17 @@ interface AppState {
   addType: (type: string) => void;
   deleteType: (type: string) => void;
   
+  // Product actions
+  addProduct: (product: Omit<Product, 'id'>) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  deleteProduct: (id: string) => void;
+  
+  // Address actions
+  updateAddresses: (addresses: Partial<Settings['addresses']>) => void;
+  
+  // PDF Config actions
+  updatePDFConfig: (config: PDFConfig) => void;
+  
   // Quote actions
   createNewQuote: () => void;
   updateQuote: (quote: Partial<Quote>) => void;
@@ -24,9 +35,90 @@ interface AppState {
   duplicateQuoteItem: (id: string) => void;
 }
 
+const defaultCurrency: Currency = {
+  code: 'CHF',
+  symbol: 'CHF',
+  name: 'Franc suisse',
+  position: 'after'
+};
+
+const defaultAddress: Address = {
+  company: '',
+  name: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  country: 'Suisse',
+  email: '',
+  phone: ''
+};
+
+const defaultPDFConfig: PDFConfig = {
+  sections: {
+    header: {
+      enabled: true,
+      title: 'En-tête',
+      fields: [
+        { id: '1', label: 'Logo', enabled: true, text: '', order: 0 },
+        { id: '2', label: 'Titre', enabled: true, text: 'DEVIS TECHNIQUE', order: 1 },
+        { id: '3', label: 'Date', enabled: true, text: '', order: 2 }
+      ]
+    },
+    clientInfo: {
+      enabled: true,
+      title: 'Informations Client',
+      fields: [
+        { id: '4', label: 'Client', enabled: true, text: '', order: 0 },
+        { id: '5', label: 'Site', enabled: true, text: '', order: 1 },
+        { id: '6', label: 'Contact', enabled: true, text: '', order: 2 }
+      ]
+    },
+    itemsTable: {
+      enabled: true,
+      title: 'Détail des Prestations',
+      fields: [
+        { id: '7', label: 'Type', enabled: true, text: '', order: 0 },
+        { id: '8', label: 'Référence', enabled: true, text: '', order: 1 },
+        { id: '9', label: 'Quantité', enabled: true, text: '', order: 2 },
+        { id: '10', label: 'Prix unitaire', enabled: true, text: '', order: 3 },
+        { id: '11', label: 'Total', enabled: true, text: '', order: 4 }
+      ]
+    },
+    totals: {
+      enabled: true,
+      title: 'Totaux',
+      fields: [
+        { id: '12', label: 'Sous-total HT', enabled: true, text: '', order: 0 },
+        { id: '13', label: 'TVA', enabled: true, text: '', order: 1 },
+        { id: '14', label: 'Total TTC', enabled: true, text: '', order: 2 }
+      ]
+    },
+    comments: {
+      enabled: true,
+      title: 'Commentaires',
+      fields: [
+        { id: '15', label: 'Commentaire', enabled: true, text: '', order: 0 }
+      ]
+    },
+    footer: {
+      enabled: true,
+      title: 'Pied de page',
+      fields: [
+        { id: '16', label: 'Mentions légales', enabled: true, text: '#NousRendonsLaSuisseSure', order: 0 }
+      ]
+    }
+  },
+  customTexts: {
+    'conditions': 'Conditions générales de vente disponibles sur demande.',
+    'validite': 'Devis valable 30 jours.',
+    'paiement': 'Paiement à 30 jours net.'
+  }
+};
+
 const defaultSettings: Settings = {
   tvaPct: 8.10,
   priceInputModeDefault: 'TTC',
+  currency: defaultCurrency,
   logoUrl: '',
   pdfTitle: 'Devis Technique',
   pdfFooter: 'Mentions légales - #NousRendonsLaSuisseSure',
@@ -54,6 +146,13 @@ const defaultSettings: Settings = {
     'Serveur', 'Alimentation', 'Câblage', 'Installation', 'Autre'
   ],
   models: [],
+  catalog: [],
+  addresses: {
+    billing: defaultAddress,
+    installation: defaultAddress,
+    useSameAddress: true
+  },
+  pdfConfig: defaultPDFConfig,
   defaults: {
     feesInstallHT: 150,
     feesDossierHT: 50,
@@ -129,6 +228,51 @@ export const useStore = create<AppState>()(
           settings: {
             ...state.settings,
             types: state.settings.types.filter(t => t !== type)
+          }
+        })),
+
+      // Product actions
+      addProduct: (product) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            catalog: [...state.settings.catalog, { ...product, id: crypto.randomUUID() }]
+          }
+        })),
+
+      updateProduct: (id, product) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            catalog: state.settings.catalog.map(p => 
+              p.id === id ? { ...p, ...product } : p
+            )
+          }
+        })),
+
+      deleteProduct: (id) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            catalog: state.settings.catalog.filter(p => p.id !== id)
+          }
+        })),
+
+      // Address actions
+      updateAddresses: (addresses) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            addresses: { ...state.settings.addresses, ...addresses }
+          }
+        })),
+
+      // PDF Config actions
+      updatePDFConfig: (config) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            pdfConfig: config
           }
         })),
 
