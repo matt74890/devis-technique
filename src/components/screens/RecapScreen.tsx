@@ -369,7 +369,7 @@ const RecapScreen = () => {
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="margin-top: 40px;">
+          <div style="margin-top: 15px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
             <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
@@ -543,21 +543,11 @@ const RecapScreen = () => {
     // Section signatures
     htmlContent += `
       <div class="signatures-section">
-        <div class="signature-box">
-          <div class="signature-title">SIGNATURE DU VENDEUR</div>
-          <div class="signature-content">
-            ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
-            ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
-            ${settings.sellerInfo?.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
-            ${settings.sellerInfo?.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
-          </div>
-          ${settings.sellerInfo?.signature ? `
-            <div style="margin: 15px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
-            </div>
-          ` : ''}
-          <div class="signature-line">
-            Date et signature
+        <div>
+          <div style="margin-bottom: 30px;">
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: left;">VENDEUR</div>
+            ${settings.sellerInfo?.name ? `<div style="font-weight: bold; color: ${colors.textColor};">${settings.sellerInfo.name}</div>` : ''}
+            ${settings.sellerInfo?.title ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.title}</div>` : ''}
           </div>
         </div>
         
