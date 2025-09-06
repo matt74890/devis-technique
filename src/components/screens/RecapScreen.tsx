@@ -542,16 +542,16 @@ const RecapScreen = () => {
         <div class="signature-box">
           <div class="signature-title">SIGNATURE DU VENDEUR</div>
           <div class="signature-content">
-            ${settings.sellerInfo?.signature ? `
-              <div style="margin-bottom: 10px;">
-                <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
-              </div>
-            ` : ''}
             ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
             ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
             ${settings.sellerInfo?.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
             ${settings.sellerInfo?.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
           </div>
+          ${settings.sellerInfo?.signature ? `
+            <div style="margin: 15px 0;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+            </div>
+          ` : ''}
           <div class="signature-line">
             Date et signature
           </div>
