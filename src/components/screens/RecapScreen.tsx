@@ -115,15 +115,15 @@ const RecapScreen = () => {
             }
             .container { max-width: 800px; margin: 0 auto; }
             .letter-container { 
-              margin-bottom: 40px; 
-              padding-bottom: 40px; 
-              border-bottom: 3px solid ${colors.borderPrimary}; 
+              margin-bottom: 20px; 
+              padding-bottom: 20px; 
+              border-bottom: 2px solid ${colors.borderPrimary}; 
               background: ${colors.headerBackground};
-              padding: 30px;
+              padding: 20px;
               border-radius: 8px;
             }
             .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
-            .logo { height: 80px; margin-bottom: 15px; }
+            .logo { height: 50px; margin-bottom: 10px; }
             .seller-info { flex: 1; }
             .client-info { text-align: right; max-width: 300px; }
             .title-section { 
@@ -247,17 +247,17 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .signatures-section {
-              margin: 40px 0 20px 0;
+              margin: 20px 0 10px 0;
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 30px;
+              gap: 20px;
             }
             .signature-box {
               border: 2px solid ${colors.signatureBoxBorder};
               background: ${colors.signatureBoxBackground};
-              padding: 20px;
+              padding: 15px;
               border-radius: 8px;
-              min-height: 100px;
+              min-height: 80px;
             }
             .signature-title {
               font-weight: bold;
