@@ -369,7 +369,7 @@ const RecapScreen = () => {
           ` : ''}
         </div>
         <div class="client-info">
-          <div style="margin-top: 65px;">
+          <div style="margin-top: 95px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
             <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
             <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
