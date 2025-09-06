@@ -332,18 +332,20 @@ const RecapScreen = () => {
             <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor};">
               <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${currentQuote.clientCivility} ${clientAddress.name || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
               
-              ${settings.sellerInfo?.signature ? `
-                <div style="margin-top: 30px; margin-bottom: 10px;">
-                  <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+              <div style="margin-top: 40px;">
+                <p><strong>Cordialement,</strong></p>
+                
+                ${settings.sellerInfo?.signature ? `
+                  <div style="margin: 20px 0;">
+                    <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+                  </div>
+                ` : ''}
+                
+                <div style="margin-top: 10px;">
+                  ${settings.sellerInfo?.name ? `<div style="font-weight: bold;">${settings.sellerInfo.name}</div>` : ''}
+                  ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
                 </div>
-              ` : ''}
-              
-              <p style="margin-top: ${settings.sellerInfo?.signature ? '5px' : '30px'};">
-                <strong>${settings.sellerInfo?.name || 'Vendeur'}</strong><br/>
-                ${settings.sellerInfo?.title || ''}<br/>
-                ${settings.sellerInfo?.email || ''}<br/>
-                ${settings.sellerInfo?.phone || ''}
-              </p>
+              </div>
             </div>
           </div>
         </div>
