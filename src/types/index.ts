@@ -1,5 +1,19 @@
 // Types pour l'application de devis techniques
 
+export interface Client {
+  id: string;
+  name: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Settings {
   tvaPct: number;
   priceInputModeDefault: 'TTC' | 'HT';

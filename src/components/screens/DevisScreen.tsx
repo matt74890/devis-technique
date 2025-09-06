@@ -9,9 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Copy, Trash2, Zap, MapPin } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { QuoteItem } from '@/types';
+import { QuoteItem, Client } from '@/types';
 import { calculateQuoteItem } from '@/utils/calculations';
 import ProductSelector from '@/components/catalog/ProductSelector';
+import ClientSelector from '@/components/clients/ClientSelector';
 
 const DevisScreen = () => {
   const { 
@@ -71,6 +72,33 @@ const DevisScreen = () => {
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
+  };
+
+  const handleClientSelect = (client: Client | null) => {
+    if (client) {
+      // Pré-remplir les informations de contact avec les données du client
+      const newContactAddress = {
+        company: client.company || '',
+        name: client.name,
+        email: client.email || '',
+        phone: client.phone || '',
+        street: client.address || '',
+        city: client.city || '',
+        postalCode: client.postal_code || '',
+        country: client.country || 'Suisse'
+      };
+      
+      updateQuote({ 
+        client: client.name,
+        addresses: { 
+          ...currentQuote.addresses, 
+          contact: newContactAddress,
+          // Si pas d'adresses séparées, propager à tous
+          billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newContactAddress,
+          installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newContactAddress
+        } 
+      });
+    }
   };
 
   const updateItem = (id: string, updates: Partial<QuoteItem>) => {
@@ -180,6 +208,16 @@ const DevisScreen = () => {
               <MapPin className="h-4 w-4" />
               <span>Client / Contact</span>
             </h4>
+            
+            {/* Sélecteur de client */}
+            <div className="mb-4">
+              <Label htmlFor="client-selector">Sélectionner un client existant</Label>
+              <ClientSelector
+                onSelect={handleClientSelect}
+                placeholder="Choisir un client existant ou saisir manuellement..."
+              />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contact-company">Société</Label>

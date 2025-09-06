@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Calculator, Settings, Building2 } from 'lucide-react';
+import { FileText, Calculator, Settings, Building2, Users } from 'lucide-react';
 import DevisScreen from './screens/DevisScreen';
 import RecapScreen from './screens/RecapScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import ClientsScreen from './screens/ClientsScreen';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('devis');
@@ -34,7 +35,7 @@ const Layout = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex bg-card shadow-soft">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex bg-card shadow-soft">
             <TabsTrigger 
               value="devis" 
               className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -48,6 +49,13 @@ const Layout = () => {
             >
               <Calculator className="h-4 w-4" />
               <span>Récap & PDF</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="clients" 
+              className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <Users className="h-4 w-4" />
+              <span>Clients</span>
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
@@ -64,6 +72,10 @@ const Layout = () => {
           
           <TabsContent value="recap" className="mt-6">
             <RecapScreen />
+          </TabsContent>
+          
+          <TabsContent value="clients" className="mt-6">
+            <ClientsScreen />
           </TabsContent>
           
           <TabsContent value="settings" className="mt-6">
