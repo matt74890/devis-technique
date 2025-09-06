@@ -359,23 +359,28 @@ const RecapScreen = () => {
       <div class="header">
         <div class="seller-info">
           ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
-          ${settings.sellerInfo?.name ? `
-            <div>
-              <div style="font-weight: bold; color: ${colors.primary};">${settings.sellerInfo.name}</div>
-              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
-              ${settings.sellerInfo.email ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.email}</div>` : ''}
-              ${settings.sellerInfo.phone ? `<div style="color: ${colors.textColor};">${settings.sellerInfo.phone}</div>` : ''}
-            </div>
-          ` : ''}
+          <div style="margin-top: 15px;">
+            ${settings.sellerInfo?.name ? `<div style="font-weight: bold; color: ${colors.primary};">${settings.sellerInfo.name}</div>` : ''}
+            ${settings.sellerInfo?.title ? `<div style="color: ${colors.subtitleColor}; margin-top: 5px;">${settings.sellerInfo.title}</div>` : ''}
+            ${settings.sellerInfo?.email ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${settings.sellerInfo.email}</div>` : ''}
+            ${settings.sellerInfo?.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${settings.sellerInfo.phone}</div>` : ''}
+            ${settings.sellerInfo?.signature ? `
+              <div style="margin-top: 15px;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 50px; object-fit: contain;" />
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div class="client-info">
-          <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
-          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.name}</div>
-          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.street}</div>
-          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
-          <div style="color: ${colors.textColor};">${currentQuote.addresses.contact.country}</div>
-          ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary};">${currentQuote.addresses.contact.email}</div>` : ''}
-          ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor};">${currentQuote.addresses.contact.phone}</div>` : ''}
+          <div style="margin-top: 15px;">
+            <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
+            <div style="color: ${colors.textColor}; margin-top: 5px;">${currentQuote.addresses.contact.name}</div>
+            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.street}</div>
+            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
+            <div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.country}</div>
+            ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 3px;">${currentQuote.addresses.contact.email}</div>` : ''}
+            ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 3px;">${currentQuote.addresses.contact.phone}</div>` : ''}
+          </div>
         </div>
       </div>
     `;

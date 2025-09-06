@@ -202,6 +202,7 @@ const defaultSettings: Settings = {
   pdfTitle: 'Devis Technique',
   pdfFooter: 'Mentions légales - #NousRendonsLaSuisseSure',
   defaultComment: 'Merci de votre confiance.',
+  pdfFontFamily: 'Arial, sans-serif',
   letterTemplate: defaultLetterTemplate,
   sellerInfo: defaultSellerInfo,
   templateColors: defaultTemplateColors,

@@ -99,6 +99,7 @@ export interface Settings {
   pdfTitle: string;
   pdfFooter: string;
   defaultComment: string;
+  pdfFontFamily: string;
   subscriptions: Subscription[];
   types: string[];
   models: PriceModel[];

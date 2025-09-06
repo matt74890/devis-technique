@@ -6,12 +6,13 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Eye, EyeOff, Plus, Trash2, Move } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Eye, EyeOff, Plus, Trash2, Type } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PDFField, PDFSection } from '@/types';
 
 const PDFConfiguration = () => {
-  const { settings, updatePDFConfig } = useStore();
+  const { settings, updatePDFConfig, updateSettings } = useStore();
 
   const updateSection = (sectionKey: keyof typeof settings.pdfConfig.sections, updates: Partial<PDFSection>) => {
     const updatedConfig = {
@@ -84,6 +85,18 @@ const PDFConfiguration = () => {
     footer: 'Pied de page'
   };
 
+  const fontOptions = [
+    { value: 'Arial, sans-serif', label: 'Arial' },
+    { value: '"Helvetica Neue", Helvetica, sans-serif', label: 'Helvetica' },
+    { value: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif', label: 'Segoe UI' },
+    { value: 'Georgia, serif', label: 'Georgia' },
+    { value: '"Times New Roman", serif', label: 'Times New Roman' },
+    { value: '"Courier New", monospace', label: 'Courier New' },
+    { value: 'Calibri, sans-serif', label: 'Calibri' },
+    { value: '"Open Sans", sans-serif', label: 'Open Sans' },
+    { value: 'Roboto, sans-serif', label: 'Roboto' }
+  ];
+
   return (
     <div className="space-y-6">
       <Card>
@@ -97,6 +110,36 @@ const PDFConfiguration = () => {
           <p className="text-muted-foreground mb-4">
             Personnalisez entièrement votre PDF en activant/désactivant et modifiant chaque section et champ.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Police du PDF */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Type className="h-5 w-5 text-primary" />
+            <span>Police du PDF</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="font-family">Police de caractères</Label>
+            <Select
+              value={settings.pdfFontFamily}
+              onValueChange={(value) => updateSettings({ pdfFontFamily: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner une police" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    <span style={{ fontFamily: font.value }}>{font.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
