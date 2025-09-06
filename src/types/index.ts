@@ -21,6 +21,12 @@ export interface SellerInfo {
   phone: string;
 }
 
+export interface TemplateColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+}
+
 export interface LetterTemplate {
   enabled: boolean;
   companyName: string;
@@ -50,6 +56,7 @@ export interface Settings {
   pdfConfig: PDFConfig;
   letterTemplate: LetterTemplate;
   sellerInfo: SellerInfo;
+  templateColors: TemplateColors;
   defaults: {
     feesInstallHT?: number;
     feesDossierHT?: number;

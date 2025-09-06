@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate, SellerInfo } from '@/types';
+import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate, SellerInfo, TemplateColors } from '@/types';
 
 interface AppState {
   // Local state (non-persisted)
@@ -139,6 +139,12 @@ const defaultLetterTemplate: LetterTemplate = {
   closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, Madame, Monsieur, l\'expression de nos salutations distinguées.'
 };
 
+const defaultTemplateColors: TemplateColors = {
+  primary: '#2563eb',
+  secondary: '#64748b', 
+  accent: '#059669'
+};
+
 const defaultSettings: Settings = {
   tvaPct: 8.10,
   priceInputModeDefault: 'TTC',
@@ -149,6 +155,7 @@ const defaultSettings: Settings = {
   defaultComment: 'Merci de votre confiance.',
   letterTemplate: defaultLetterTemplate,
   sellerInfo: defaultSellerInfo,
+  templateColors: defaultTemplateColors,
   subscriptions: [
     {
       id: '1',

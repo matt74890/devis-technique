@@ -19,6 +19,7 @@ import CurrencySettings from '../settings/CurrencySettings';
 import LetterTemplate from '../settings/LetterTemplate';
 import SellerInfo from '../settings/SellerInfo';
 import LogoUpload from '../settings/LogoUpload';
+import TemplateColors from '../settings/TemplateColors';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -434,6 +435,7 @@ const SettingsScreen = () => {
               </CardContent>
             </Card>
             
+            <TemplateColors />
             <LetterTemplate />
             <PDFConfiguration />
           </div>
