@@ -88,94 +88,8 @@ const DevisScreen = () => {
       {/* En-tête du devis */}
       <Card className="shadow-soft">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <span>Informations du devis</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="client">Client</Label>
-            <Input
-              id="client"
-              value={currentQuote.client}
-              onChange={(e) => updateQuote({ client: e.target.value })}
-              placeholder="Nom du client"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="site">Site</Label>
-            <Input
-              id="site"
-              value={currentQuote.site}
-              onChange={(e) => updateQuote({ site: e.target.value })}
-              placeholder="Adresse du site"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ref">Référence devis</Label>
-            <Input
-              id="ref"
-              value={currentQuote.ref}
-              onChange={(e) => updateQuote({ ref: e.target.value })}
-              placeholder="DEV-2024-001"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={currentQuote.date}
-              onChange={(e) => updateQuote({ date: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="canton">Canton</Label>
-            <Select value={currentQuote.canton} onValueChange={(value) => updateQuote({ canton: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner canton" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AG">Argovie (AG)</SelectItem>
-                <SelectItem value="AI">Appenzell Rhodes-Intérieures (AI)</SelectItem>
-                <SelectItem value="AR">Appenzell Rhodes-Extérieures (AR)</SelectItem>
-                <SelectItem value="BE">Berne (BE)</SelectItem>
-                <SelectItem value="BL">Bâle-Campagne (BL)</SelectItem>
-                <SelectItem value="BS">Bâle-Ville (BS)</SelectItem>
-                <SelectItem value="FR">Fribourg (FR)</SelectItem>
-                <SelectItem value="GE">Genève (GE)</SelectItem>
-                <SelectItem value="GL">Glaris (GL)</SelectItem>
-                <SelectItem value="GR">Grisons (GR)</SelectItem>
-                <SelectItem value="JU">Jura (JU)</SelectItem>
-                <SelectItem value="LU">Lucerne (LU)</SelectItem>
-                <SelectItem value="NE">Neuchâtel (NE)</SelectItem>
-                <SelectItem value="NW">Nidwald (NW)</SelectItem>
-                <SelectItem value="OW">Obwald (OW)</SelectItem>
-                <SelectItem value="SG">Saint-Gall (SG)</SelectItem>
-                <SelectItem value="SH">Schaffhouse (SH)</SelectItem>
-                <SelectItem value="SO">Soleure (SO)</SelectItem>
-                <SelectItem value="SZ">Schwyz (SZ)</SelectItem>
-                <SelectItem value="TG">Thurgovie (TG)</SelectItem>
-                <SelectItem value="TI">Tessin (TI)</SelectItem>
-                <SelectItem value="UR">Uri (UR)</SelectItem>
-                <SelectItem value="VD">Vaud (VD)</SelectItem>
-                <SelectItem value="VS">Valais (VS)</SelectItem>
-                <SelectItem value="ZG">Zoug (ZG)</SelectItem>
-                <SelectItem value="ZH">Zurich (ZH)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Adresses Client */}
-      <Card className="shadow-soft">
-        <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              <span>Adresses du Client</span>
-            </div>
+            <span>Informations du devis</span>
             <div className="flex items-center space-x-2">
               <Switch
                 id="separate-addresses"
@@ -193,16 +107,79 @@ const DevisScreen = () => {
                 }
               />
               <Label htmlFor="separate-addresses" className="text-sm">
-                {currentQuote.addresses.useSeparateAddresses ? 'Adresses séparées' : 'Même adresse pour tout'}
+                Adresses séparées
               </Label>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Informations de base */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="ref">Référence devis</Label>
+              <Input
+                id="ref"
+                value={currentQuote.ref}
+                onChange={(e) => updateQuote({ ref: e.target.value })}
+                placeholder="DEV-2024-001"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={currentQuote.date}
+                onChange={(e) => updateQuote({ date: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="canton">Canton</Label>
+              <Select value={currentQuote.canton} onValueChange={(value) => updateQuote({ canton: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner canton" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AG">Argovie (AG)</SelectItem>
+                  <SelectItem value="AI">Appenzell Rhodes-Intérieures (AI)</SelectItem>
+                  <SelectItem value="AR">Appenzell Rhodes-Extérieures (AR)</SelectItem>
+                  <SelectItem value="BE">Berne (BE)</SelectItem>
+                  <SelectItem value="BL">Bâle-Campagne (BL)</SelectItem>
+                  <SelectItem value="BS">Bâle-Ville (BS)</SelectItem>
+                  <SelectItem value="FR">Fribourg (FR)</SelectItem>
+                  <SelectItem value="GE">Genève (GE)</SelectItem>
+                  <SelectItem value="GL">Glaris (GL)</SelectItem>
+                  <SelectItem value="GR">Grisons (GR)</SelectItem>
+                  <SelectItem value="JU">Jura (JU)</SelectItem>
+                  <SelectItem value="LU">Lucerne (LU)</SelectItem>
+                  <SelectItem value="NE">Neuchâtel (NE)</SelectItem>
+                  <SelectItem value="NW">Nidwald (NW)</SelectItem>
+                  <SelectItem value="OW">Obwald (OW)</SelectItem>
+                  <SelectItem value="SG">Saint-Gall (SG)</SelectItem>
+                  <SelectItem value="SH">Schaffhouse (SH)</SelectItem>
+                  <SelectItem value="SO">Soleure (SO)</SelectItem>
+                  <SelectItem value="SZ">Schwyz (SZ)</SelectItem>
+                  <SelectItem value="TG">Thurgovie (TG)</SelectItem>
+                  <SelectItem value="TI">Tessin (TI)</SelectItem>
+                  <SelectItem value="UR">Uri (UR)</SelectItem>
+                  <SelectItem value="VD">Vaud (VD)</SelectItem>
+                  <SelectItem value="VS">Valais (VS)</SelectItem>
+                  <SelectItem value="ZG">Zoug (ZG)</SelectItem>
+                  <SelectItem value="ZH">Zurich (ZH)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* Adresse de contact (toujours présente) */}
           <div>
-            <h4 className="font-medium mb-3 text-primary">Adresse de Contact</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h4 className="font-medium mb-3 text-primary flex items-center space-x-2">
+              <MapPin className="h-4 w-4" />
+              <span>Client / Contact</span>
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contact-company">Société</Label>
                 <Input
@@ -242,7 +219,27 @@ const DevisScreen = () => {
                   placeholder="Nom et prénom"
                 />
               </div>
-              <div className="md:col-span-2 space-y-2">
+              <div className="space-y-2">
+                <Label htmlFor="contact-email">Email</Label>
+                <Input
+                  id="contact-email"
+                  type="email"
+                  value={currentQuote.addresses.contact.email}
+                  onChange={(e) => {
+                    const newAddress = { ...currentQuote.addresses.contact, email: e.target.value };
+                    updateQuote({ 
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="contact@exemple.ch"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="contact-street">Adresse</Label>
                 <Input
                   id="contact-street"
@@ -300,26 +297,6 @@ const DevisScreen = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-email">Email</Label>
-                <Input
-                  id="contact-email"
-                  type="email"
-                  value={currentQuote.addresses.contact.email}
-                  onChange={(e) => {
-                    const newAddress = { ...currentQuote.addresses.contact, email: e.target.value };
-                    updateQuote({ 
-                      addresses: { 
-                        ...currentQuote.addresses, 
-                        contact: newAddress,
-                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
-                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
-                      } 
-                    });
-                  }}
-                  placeholder="contact@exemple.ch"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="contact-phone">Téléphone</Label>
                 <Input
                   id="contact-phone"
@@ -349,8 +326,11 @@ const DevisScreen = () => {
               
               {/* Adresse de facturation */}
               <div>
-                <h4 className="font-medium mb-3 text-success">Adresse de Facturation</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h4 className="font-medium mb-3 text-success flex items-center space-x-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>Facturation</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="billing-company">Société</Label>
                     <Input
@@ -383,7 +363,24 @@ const DevisScreen = () => {
                       placeholder="Nom et prénom"
                     />
                   </div>
-                  <div className="md:col-span-2 space-y-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="billing-email">Email</Label>
+                    <Input
+                      id="billing-email"
+                      type="email"
+                      value={currentQuote.addresses.billing.email}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            billing: { ...currentQuote.addresses.billing, email: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="facture@exemple.ch"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="billing-street">Adresse</Label>
                     <Input
                       id="billing-street"
@@ -432,23 +429,6 @@ const DevisScreen = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="billing-email">Email</Label>
-                    <Input
-                      id="billing-email"
-                      type="email"
-                      value={currentQuote.addresses.billing.email}
-                      onChange={(e) => 
-                        updateQuote({ 
-                          addresses: { 
-                            ...currentQuote.addresses, 
-                            billing: { ...currentQuote.addresses.billing, email: e.target.value } 
-                          } 
-                        })
-                      }
-                      placeholder="facture@exemple.ch"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="billing-phone">Téléphone</Label>
                     <Input
                       id="billing-phone"
@@ -472,8 +452,11 @@ const DevisScreen = () => {
 
               {/* Adresse d'installation */}
               <div>
-                <h4 className="font-medium mb-3 text-warning">Adresse d'Installation</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h4 className="font-medium mb-3 text-warning flex items-center space-x-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>Installation</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="install-company">Société</Label>
                     <Input
@@ -506,7 +489,24 @@ const DevisScreen = () => {
                       placeholder="Nom et prénom"
                     />
                   </div>
-                  <div className="md:col-span-2 space-y-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="install-email">Email</Label>
+                    <Input
+                      id="install-email"
+                      type="email"
+                      value={currentQuote.addresses.installation.email}
+                      onChange={(e) => 
+                        updateQuote({ 
+                          addresses: { 
+                            ...currentQuote.addresses, 
+                            installation: { ...currentQuote.addresses.installation, email: e.target.value } 
+                          } 
+                        })
+                      }
+                      placeholder="installation@exemple.ch"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="install-street">Adresse</Label>
                     <Input
                       id="install-street"
@@ -552,23 +552,6 @@ const DevisScreen = () => {
                         })
                       }
                       placeholder="Lausanne"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="install-email">Email</Label>
-                    <Input
-                      id="install-email"
-                      type="email"
-                      value={currentQuote.addresses.installation.email}
-                      onChange={(e) => 
-                        updateQuote({ 
-                          addresses: { 
-                            ...currentQuote.addresses, 
-                            installation: { ...currentQuote.addresses.installation, email: e.target.value } 
-                          } 
-                        })
-                      }
-                      placeholder="installation@exemple.ch"
                     />
                   </div>
                   <div className="space-y-2">
