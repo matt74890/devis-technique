@@ -346,16 +346,6 @@ const RecapScreen = () => {
               </p>
             </div>
           </div>
-          
-          <div class="letter-signature">
-            <p><strong>Cordialement,</strong></p>
-            <div style="margin-top: 20px;">
-              <div style="font-weight: bold;">${settings.sellerInfo?.name || settings.letterTemplate.contactName}</div>
-              <div>${settings.sellerInfo?.title || settings.letterTemplate.contactTitle}</div>
-              <div>${settings.sellerInfo?.email || settings.letterTemplate.contactEmail}</div>
-              <div>${settings.sellerInfo?.phone || settings.letterTemplate.contactPhone}</div>
-            </div>
-          </div>
         </div>
         
         <div class="page-break"></div>
@@ -552,6 +542,11 @@ const RecapScreen = () => {
         <div class="signature-box">
           <div class="signature-title">SIGNATURE DU VENDEUR</div>
           <div class="signature-content">
+            ${settings.sellerInfo?.signature ? `
+              <div style="margin-bottom: 10px;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+              </div>
+            ` : ''}
             ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
             ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
             ${settings.sellerInfo?.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
