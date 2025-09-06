@@ -321,9 +321,11 @@ const RecapScreen = () => {
           </div>
           
           <div class="letter-content">
+            <p>Monsieur ${currentQuote.client || 'Client'},</p>
             <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
             <p>${settings.letterTemplate.body.replace(/\n/g, '</p><p>')}</p>
             <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
+            <p>Dans l'attente de votre retour, nous vous prions d'agréer, Monsieur ${currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
           </div>
           
           <div class="letter-signature">

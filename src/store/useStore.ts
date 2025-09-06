@@ -134,22 +134,22 @@ const defaultLetterTemplate: LetterTemplate = {
   contactEmail: '',
   companyAddress: '',
   subject: 'Proposition commerciale - Sécurité technique',
-  opening: 'Madame, Monsieur,\n\nSuite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale.',
+  opening: 'Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale.',
   body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant l\'ensemble des prestations et équipements nécessaires.',
-  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, Madame, Monsieur, l\'expression de nos salutations distinguées.'
+  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.'
 };
 
 const defaultTemplateColors: TemplateColors = {
   // Couleurs principales
   primary: '#000000',
-  secondary: '#666666', 
-  accent: '#333333',
+  secondary: '#000000', 
+  accent: '#000000',
   
   // Couleurs de texte
   titleColor: '#000000',
-  subtitleColor: '#666666',
+  subtitleColor: '#000000',
   textColor: '#000000',
-  mutedTextColor: '#999999',
+  mutedTextColor: '#000000',
   
   // Couleurs de fond
   background: '#ffffff',
@@ -157,28 +157,28 @@ const defaultTemplateColors: TemplateColors = {
   headerBackground: '#ffffff',
   
   // Couleurs de tableau
-  tableHeader: '#f5f5f5',
+  tableHeader: '#000000',
   tableHeaderText: '#000000',
   tableRow: '#ffffff',
-  tableRowAlt: '#f9f9f9',
-  tableBorder: '#cccccc',
+  tableRowAlt: '#ffffff',
+  tableBorder: '#000000',
   
   // Couleurs des badges
-  badgeUnique: '#666666',
-  badgeMensuel: '#666666',
-  badgeText: '#ffffff',
+  badgeUnique: '#000000',
+  badgeMensuel: '#000000',
+  badgeText: '#000000',
   
   // Couleurs des totaux
-  totalCardBorder: '#cccccc',
+  totalCardBorder: '#000000',
   totalUniqueBackground: '#ffffff',
   totalMensuelBackground: '#ffffff',
-  grandTotalBackground: '#f5f5f5',
+  grandTotalBackground: '#ffffff',
   grandTotalBorder: '#000000',
   
   // Couleurs des bordures et séparateurs
   borderPrimary: '#000000',
-  borderSecondary: '#cccccc',
-  separatorColor: '#e0e0e0',
+  borderSecondary: '#000000',
+  separatorColor: '#000000',
   
   // Couleurs spécifiques à la lettre
   letterHeaderColor: '#000000',
@@ -190,7 +190,7 @@ const defaultTemplateColors: TemplateColors = {
   signatureBoxBorder: '#000000',
   signatureBoxBackground: '#ffffff',
   signatureTitleColor: '#000000',
-  signatureTextColor: '#666666'
+  signatureTextColor: '#000000'
 };
 
 const defaultSettings: Settings = {
