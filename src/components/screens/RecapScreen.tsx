@@ -303,7 +303,7 @@ const RecapScreen = () => {
             </div>
           </div>
           
-          <div class="letter-date">${letterDate}</div>
+          <div class="letter-date">Le ${letterDate}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}</div>
           
           <div class="letter-recipient">
             <div style="font-weight: bold; color: ${colors.titleColor};">À l'attention de :</div>
@@ -585,8 +585,13 @@ const RecapScreen = () => {
             </div>
           ` : ''}
           <div class="signature-line">
-            ${new Date().toLocaleDateString('fr-CH')} - Signature
+            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
+          ${settings.sellerInfo?.signature ? `
+            <div style="margin: 15px 0;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+            </div>
+          ` : ''}
         </div>
         
         <div class="signature-box">

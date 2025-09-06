@@ -85,6 +85,15 @@ const SellerInfo = () => {
               placeholder="+41 21 XXX XX XX"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="seller-location">Lieu de création des devis</Label>
+            <Input
+              id="seller-location"
+              value={settings.sellerInfo?.location || ''}
+              onChange={(e) => handleUpdateSeller('location', e.target.value)}
+              placeholder="Genève"
+            />
+          </div>
         </div>
         
         <div className="mt-6 space-y-2">

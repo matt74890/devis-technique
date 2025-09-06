@@ -122,7 +122,8 @@ const defaultSellerInfo: SellerInfo = {
   name: '',
   title: '',
   email: '',
-  phone: ''
+  phone: '',
+  location: ''
 };
 
 const defaultLetterTemplate: LetterTemplate = {
