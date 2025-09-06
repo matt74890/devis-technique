@@ -18,6 +18,7 @@ import PDFConfiguration from '../settings/PDFConfiguration';
 import CurrencySettings from '../settings/CurrencySettings';
 import LetterTemplate from '../settings/LetterTemplate';
 import SellerInfo from '../settings/SellerInfo';
+import LogoUpload from '../settings/LogoUpload';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -389,6 +390,8 @@ const SettingsScreen = () => {
 
         <TabsContent value="pdf">
           <div className="space-y-6">
+            <LogoUpload />
+            
             {/* Informations de base pour PDF */}
             <Card className="shadow-soft">
               <CardHeader>
@@ -399,36 +402,6 @@ const SettingsScreen = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="logoUrl">Logo URL</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="logoUrl"
-                        value={settings.logoUrl}
-                        onChange={(e) => updateSettings({ logoUrl: e.target.value })}
-                        placeholder="https://example.com/logo.png"
-                      />
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.onchange = (e) => {
-                            const file = (e.target as HTMLInputElement).files?.[0];
-                            if (file) {
-                              // Pour l'instant, afficher un message - l'upload de fichier nécessiterait Supabase Storage
-                              alert('Upload de fichier à implémenter avec Supabase Storage');
-                            }
-                          };
-                          input.click();
-                        }}
-                      >
-                        Importer
-                      </Button>
-                    </div>
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="pdfTitle">En-tête PDF (titre)</Label>
                     <Input

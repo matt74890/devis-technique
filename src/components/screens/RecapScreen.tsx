@@ -46,7 +46,9 @@ const RecapScreen = () => {
       const letterDate = new Date().toLocaleDateString('fr-FR');
       const clientAddress = currentQuote.addresses.contact;
       
-      pdfContent += `${settings.letterTemplate.companyName}
+      pdfContent += `${settings.logoUrl ? `[LOGO: ${settings.logoUrl}]` : ''}
+
+${settings.letterTemplate.companyName}
 ${settings.letterTemplate.companyAddress}
 ${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}
 Tél: ${settings.letterTemplate.contactPhone}
@@ -84,7 +86,7 @@ ${settings.sellerInfo?.phone || settings.letterTemplate.contactPhone}
     }
     
     // Ajouter le devis avec informations vendeur
-    pdfContent += `DEVIS ${currentQuote.ref}
+    pdfContent += `${settings.logoUrl ? `[LOGO: ${settings.logoUrl}]\n` : ''}DEVIS ${currentQuote.ref}
 Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}
 Client: ${currentQuote.client}
 
@@ -107,6 +109,9 @@ ${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}` : ''}
     
     try {
       console.log('Création du blob et téléchargement');
+      // Note: Dans un vrai PDF, le logo serait intégré visuellement
+      // Pour l'instant, on indique l'emplacement du logo avec [LOGO: URL]
+      
       // Simuler le téléchargement
       const blob = new Blob([pdfContent], { type: 'text/plain; charset=utf-8' });
       const url = URL.createObjectURL(blob);
@@ -120,6 +125,10 @@ ${settings.sellerInfo.email || ''} | ${settings.sellerInfo.phone || ''}` : ''}
       
       console.log('PDF généré avec succès');
       toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès !`);
+      
+      if (settings.logoUrl) {
+        toast.info('Note: Le logo sera intégré visuellement dans la version PDF finale');
+      }
     } catch (error) {
       console.error('Erreur lors de la génération PDF:', error);
       toast.error('Erreur lors de la génération du PDF');
