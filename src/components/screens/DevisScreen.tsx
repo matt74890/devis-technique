@@ -1008,13 +1008,24 @@ const DevisScreen = () => {
                 className="resize-none"
               />
             </div>
-            <Button
-              onClick={fillFromEmail}
-              disabled={!emailRaw.trim() || isProcessingEmail}
-              className="w-full bg-primary hover:bg-primary-hover"
-            >
-              {isProcessingEmail ? 'Analyse en cours...' : 'Remplir les champs du devis'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={fillFromEmail}
+                disabled={!emailRaw.trim() || isProcessingEmail}
+                className="flex-1 bg-primary hover:bg-primary-hover"
+              >
+                {isProcessingEmail ? 'Analyse en cours...' : 'Extraire le texte pour remplir les champs'}
+              </Button>
+              {emailRaw.trim() && (
+                <Button
+                  variant="outline"
+                  onClick={() => setEmailRaw('')}
+                  className="px-3"
+                >
+                  Effacer
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
