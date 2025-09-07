@@ -125,72 +125,80 @@ const RecapScreen = () => {
             body { 
               font-family: ${getFontFamily()}; 
               margin: 0; 
-              padding: 8px; 
+              padding: 4px; 
               color: ${colors.textColor};
               background: ${colors.background};
-              font-size: 11px;
-              line-height: 1.3;
+              font-size: 9px;
+              line-height: 1.2;
               font-weight: 300;
             }
             @media print { 
               body { margin: 0; }
               .no-print { display: none !important; }
               .page-break { page-break-before: always; }
-              @page { margin: 15mm; size: A4; }
+              @page { 
+                margin: 8mm; 
+                size: A4;
+                @bottom-center {
+                  content: counter(page);
+                  font-size: 10px;
+                  color: ${colors.mutedTextColor};
+                }
+              }
             }
             .container { max-width: 800px; margin: 0 auto; }
             .letter-container { 
-              margin-bottom: 10px; 
-              padding-bottom: 10px; 
+              margin-bottom: 6px; 
+              padding-bottom: 6px; 
               border-bottom: 1px solid ${colors.borderPrimary}; 
               background: ${colors.headerBackground};
-              padding: 10px;
-              border-radius: 4px;
+              padding: 6px;
+              border-radius: 3px;
             }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${getLayoutValue('header', 'marginBottom', '8')}px; }
-            .logo { height: ${getLayoutValue('logo', 'height', '32')}px; margin-bottom: ${getLayoutValue('logo', 'marginBottom', '3')}px; margin-top: ${getLayoutValue('logo', 'marginTop', '0')}px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${getLayoutValue('header', 'marginBottom', '4')}px; }
+            .logo { height: ${getLayoutValue('logo', 'height', '28')}px; margin-bottom: ${getLayoutValue('logo', 'marginBottom', '2')}px; margin-top: ${getLayoutValue('logo', 'marginTop', '0')}px; }
             .seller-info { flex: 1; }
             .client-info { text-align: right; max-width: 280px; }
             .title-section { 
               text-align: center; 
-              padding: ${getLayoutValue('title', 'padding', '4')}px 0; 
+              padding: ${getLayoutValue('title', 'padding', '2')}px 0; 
               border-top: 1px solid ${colors.borderPrimary}; 
               border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: ${getLayoutValue('title', 'margin', '4')}px 0;
+              margin: ${getLayoutValue('title', 'margin', '2')}px 0;
               background: ${colors.headerBackground};
-              border-radius: 3px;
+              border-radius: 2px;
             }
-            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 600; margin: 0; font-family: ${getFontFamily()}; letter-spacing: 0.3px; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; font-family: ${getFontFamily()}; font-weight: 400; }
+            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '14')}px; font-weight: 600; margin: 0; font-family: ${getFontFamily()}; letter-spacing: 0.2px; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '9')}px; margin: 1px 0 0 0; font-family: ${getFontFamily()}; font-weight: 400; }
             .project-details { 
               background: ${colors.cardBackground}; 
-              padding: 4px; 
-              border-radius: 3px; 
-              margin: 4px 0; 
+              padding: 3px; 
+              border-radius: 2px; 
+              margin: 3px 0; 
               border: 1px solid ${colors.borderSecondary};
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: ${getLayoutValue('table', 'margin', '4')}px 0; 
+              margin: ${getLayoutValue('table', 'margin', '2')}px 0; 
               border: 1px solid ${colors.tableBorder}; 
             }
             th { 
               background: ${colors.tableHeader}; 
               color: ${colors.tableHeaderText}; 
-              padding: ${getLayoutValue('table', 'headerPadding', '3')}px 2px; 
+              padding: ${getLayoutValue('table', 'headerPadding', '2')}px 1px; 
               text-align: left; 
               font-weight: 500;
               border: 1px solid ${colors.tableBorder};
-              font-size: ${getLayoutValue('table', 'headerFontSize', '9')}px;
+              font-size: ${getLayoutValue('table', 'headerFontSize', '8')}px;
               font-family: ${getFontFamily()};
-              letter-spacing: 0.2px;
+              letter-spacing: 0.1px;
             }
             td { 
-              padding: ${getLayoutValue('table', 'cellPadding', '2')}px 2px; 
+              padding: ${getLayoutValue('table', 'cellPadding', '1')}px 1px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
-              font-size: ${getLayoutValue('table', 'cellFontSize', '9')}px;
+              font-size: ${getLayoutValue('table', 'cellFontSize', '8')}px;
               font-family: ${getFontFamily()};
               font-weight: 300;
             }
@@ -205,13 +213,13 @@ const RecapScreen = () => {
             }
             .mode-unique { background: ${colors.badgeUnique}; }
             .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: ${getLayoutValue('totals', 'gap', '4')}px; margin: ${getLayoutValue('totals', 'margin', '4')}px 0; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: ${getLayoutValue('totals', 'gap', '2')}px; margin: ${getLayoutValue('totals', 'margin', '2')}px 0; }
             .total-card { 
               border: 1px solid ${colors.totalCardBorder}; 
-              padding: ${getLayoutValue('totals', 'padding', '4')}px; 
-              border-radius: 3px; 
+              padding: ${getLayoutValue('totals', 'padding', '2')}px; 
+              border-radius: 2px; 
               background: ${colors.cardBackground};
-              font-size: ${getLayoutValue('totals', 'fontSize', '10')}px;
+              font-size: ${getLayoutValue('totals', 'fontSize', '8')}px;
               font-family: ${getFontFamily()};
               font-weight: 400;
             }
@@ -225,15 +233,15 @@ const RecapScreen = () => {
             }
             .grand-total { 
               text-align: center; 
-              padding: ${getLayoutValue('grandTotal', 'padding', '6')}px; 
-              border: ${getLayoutValue('grandTotal', 'borderWidth', '2')}px solid ${colors.grandTotalBorder}; 
-              border-radius: 3px; 
+              padding: ${getLayoutValue('grandTotal', 'padding', '3')}px; 
+              border: ${getLayoutValue('grandTotal', 'borderWidth', '1')}px solid ${colors.grandTotalBorder}; 
+              border-radius: 2px; 
               background: ${colors.grandTotalBackground};
-              margin: ${getLayoutValue('grandTotal', 'margin', '6')}px 0;
-              font-size: ${getLayoutValue('grandTotal', 'fontSize', '11')}px;
+              margin: ${getLayoutValue('grandTotal', 'margin', '3')}px 0;
+              font-size: ${getLayoutValue('grandTotal', 'fontSize', '9')}px;
               font-family: ${getFontFamily()};
               font-weight: 600;
-              letter-spacing: 0.3px;
+              letter-spacing: 0.2px;
             }
             .footer { 
               text-align: center; 
@@ -578,26 +586,26 @@ const RecapScreen = () => {
 
     htmlContent += `</div>`;
 
-    // Total général
+    // Total général - optimisé pour tenir en 2 pages
     htmlContent += `
       <div class="grand-total">
-        <h4 style="color: ${colors.titleColor}; font-size: 24px; margin: 0 0 15px 0;">TOTAL GÉNÉRAL</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+        <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
           <div>
-            <p style="margin: 0; color: ${colors.subtitleColor};">Total HT</p>
-            <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+            <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
+            <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
           </div>
           <div>
-            <p style="margin: 0; color: ${colors.subtitleColor};">TVA totale</p>
-            <p style="margin: 5px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+            <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
+            <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
           </div>
         </div>
-        <div style="border-top: 2px solid ${colors.borderPrimary}; padding-top: 15px;">
-          <p style="margin: 0; font-size: 32px; font-weight: bold; color: ${colors.primary};">
+        <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
+          <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
             ${totals.global.totalTTC.toFixed(2)} CHF
           </p>
           ${totals.mensuel.totalTTC > 0 ? `
-            <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: bold; color: ${colors.accent};">
+            <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
               + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
             </p>
           ` : ''}
@@ -617,15 +625,10 @@ const RecapScreen = () => {
       `;
     }
 
-    // Pied de page
-    htmlContent += `
-      <div class="footer">
-        <p style="font-weight: bold; margin: 0 0 8px 0;">${settings.pdfFooter}</p>
-        <p style="margin: 0;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
-      </div>
-    `;
+    // Pied de page - supprimé, seul le numéro de page sera affiché automatiquement
+    htmlContent += ``;
 
-    // Section signatures
+    // Section signatures - optimisée
     htmlContent += `
       <div class="signatures-section">
         <div class="signature-box">
@@ -638,8 +641,8 @@ const RecapScreen = () => {
             ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
           ${settings.sellerInfo?.signature ? `
-            <div style="margin: 15px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+            <div style="margin: 10px 0;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 50px; object-fit: contain;" />
             </div>
           ` : ''}
         </div>
@@ -651,7 +654,7 @@ const RecapScreen = () => {
           </div>
           <div class="signature-line">
             <strong>Bon pour accord</strong><br>
-            Date et lieu : _____________________
+            Date et lieu : _________________
           </div>
         </div>
       </div>
