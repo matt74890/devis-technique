@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Copy, Trash2, Zap, MapPin, Save } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/store/useStore';
 import { QuoteItem, Client } from '@/types';
@@ -17,6 +17,7 @@ import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
 
 const DevisScreen = () => {
+  const { toast } = useToast();
   const { 
     currentQuote, 
     settings, 
@@ -53,7 +54,10 @@ const DevisScreen = () => {
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
-    toast.success(`Abonnement "${subscription.label}" ajouté au devis`);
+    toast({
+      title: "Abonnement ajouté",
+      description: `"${subscription.label}" ajouté au devis`,
+    });
   };
 
   const addDefaultFeeQuick = (feeType: 'install' | 'dossier') => {
@@ -78,7 +82,10 @@ const DevisScreen = () => {
     
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
-    toast.success(`${feeLabel} ajouté au devis`);
+    toast({
+      title: "Frais ajouté",
+      description: `${feeLabel} ajouté au devis (HT)`,
+    });
   };
 
   const addNewItem = () => {
@@ -100,7 +107,10 @@ const DevisScreen = () => {
 
     const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
     addQuoteItem(calculatedItem);
-    toast.success('Nouvelle ligne ajoutée au devis');
+    toast({
+      title: "Ligne ajoutée",
+      description: "Nouvelle ligne ajoutée au devis",
+    });
   };
 
   const handleClientSelect = (client: Client | null) => {
@@ -146,7 +156,11 @@ const DevisScreen = () => {
     
     // Validation des données minimales
     if (!contact.name.trim()) {
-      toast.error('Le nom du client est obligatoire pour sauvegarder');
+      toast({
+        title: "Erreur",
+        description: "Le nom du client est obligatoire pour sauvegarder",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -166,13 +180,24 @@ const DevisScreen = () => {
 
       if (error) throw error;
       
-      toast.success(`Client "${contact.name}" sauvegardé avec succès`);
+      toast({
+        title: "Client sauvegardé",
+        description: `"${contact.name}" sauvegardé avec succès`,
+      });
     } catch (error: any) {
       console.error('Erreur lors de la sauvegarde du client:', error);
       if (error.message?.includes('duplicate') || error.code === '23505') {
-        toast.error('Ce client existe déjà dans la base de données');
+        toast({
+          title: "Erreur",
+          description: "Ce client existe déjà dans la base de données",
+          variant: "destructive",
+        });
       } else {
-        toast.error('Erreur lors de la sauvegarde du client');
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de la sauvegarde du client",
+          variant: "destructive",
+        });
       }
     }
   };
