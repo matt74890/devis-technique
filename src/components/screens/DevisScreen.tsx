@@ -774,21 +774,46 @@ const DevisScreen = () => {
               <tbody>
                 {currentQuote.items.map((item) => (
                   <tr key={item.id} className="border-b">
-                    <td className="p-2">
-                      <Select
-                        value={item.type}
-                        onValueChange={(value) => updateItem(item.id, { type: value })}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {settings.types.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
+                     <td className="p-2">
+                       {item.type.startsWith('Autre - ') || (item.type === 'Autre' && !settings.types.includes(item.type)) ? (
+                         <div className="space-y-1">
+                           <Input
+                             value={item.type.replace('Autre - ', '')}
+                             onChange={(e) => updateItem(item.id, { type: e.target.value ? `Autre - ${e.target.value}` : 'Autre - ' })}
+                             className="w-32"
+                             placeholder="Type personnalisé"
+                           />
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => updateItem(item.id, { type: 'Autre' })}
+                             className="text-xs h-6"
+                           >
+                             Retour
+                           </Button>
+                         </div>
+                       ) : (
+                         <Select
+                           value={item.type}
+                           onValueChange={(value) => {
+                             if (value === 'Autre') {
+                               updateItem(item.id, { type: 'Autre - ' });
+                             } else {
+                               updateItem(item.id, { type: value });
+                             }
+                           }}
+                         >
+                           <SelectTrigger className="w-32">
+                             <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {settings.types.map((type) => (
+                               <SelectItem key={type} value={type}>{type}</SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                       )}
+                     </td>
                     <td className="p-2">
                       <Input
                         value={item.reference}
