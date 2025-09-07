@@ -394,6 +394,49 @@ const DevisScreen = () => {
 
   return (
     <div className="space-y-6">
+      {/* Import automatique depuis e-mail */}
+      {settings.importEmail.enabled && (
+        <Card className="shadow-soft border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <span>Extraction automatique d'informations</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="emailRaw">Coller l'e-mail ou un texte client</Label>
+              <Textarea
+                id="emailRaw"
+                placeholder={settings.importEmail.helpText}
+                value={emailRaw}
+                onChange={(e) => setEmailRaw(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={fillFromEmail}
+                disabled={!emailRaw.trim() || isProcessingEmail}
+                className="flex-1 bg-primary hover:bg-primary-hover"
+              >
+                {isProcessingEmail ? 'Extraction en cours...' : 'Extraire les informations'}
+              </Button>
+              {emailRaw.trim() && (
+                <Button
+                  variant="outline"
+                  onClick={() => setEmailRaw('')}
+                  className="px-3"
+                >
+                  Effacer
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* En-tête du devis */}
       <Card className="shadow-soft">
         <CardHeader>
@@ -982,49 +1025,6 @@ const DevisScreen = () => {
                   {subscription.label} - {(subscription.puTTC || 0).toFixed(2)} CHF
                 </Button>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Import automatique depuis e-mail */}
-      {settings.importEmail.enabled && (
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Mail className="h-5 w-5" />
-              <span>Import automatique</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="emailRaw">Coller l'e-mail ou un texte client</Label>
-              <Textarea
-                id="emailRaw"
-                placeholder={settings.importEmail.helpText}
-                value={emailRaw}
-                onChange={(e) => setEmailRaw(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={fillFromEmail}
-                disabled={!emailRaw.trim() || isProcessingEmail}
-                className="flex-1 bg-primary hover:bg-primary-hover"
-              >
-                {isProcessingEmail ? 'Analyse en cours...' : 'Extraire le texte pour remplir les champs'}
-              </Button>
-              {emailRaw.trim() && (
-                <Button
-                  variant="outline"
-                  onClick={() => setEmailRaw('')}
-                  className="px-3"
-                >
-                  Effacer
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
