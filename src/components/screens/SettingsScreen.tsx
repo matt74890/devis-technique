@@ -20,6 +20,7 @@ import LetterTemplate from '../settings/LetterTemplate';
 import SellerInfo from '../settings/SellerInfo';
 import LogoUpload from '../settings/LogoUpload';
 import TemplateColors from '../settings/TemplateColors';
+import PDFLayoutSettings from '../settings/PDFLayoutSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -437,6 +438,7 @@ const SettingsScreen = () => {
             
             <TemplateColors />
             <LetterTemplate />
+            <PDFLayoutSettings />
             <PDFConfiguration />
           </div>
         </TabsContent>

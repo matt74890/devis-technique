@@ -106,6 +106,7 @@ export interface Settings {
   models: PriceModel[];
   catalog: Product[];
   pdfConfig: PDFConfig;
+  pdfLayout?: PDFLayout;
   letterTemplate: LetterTemplate;
   sellerInfo: SellerInfo;
   templateColors: TemplateColors;
@@ -174,6 +175,21 @@ export interface PDFField {
   enabled: boolean;
   text: string;
   order: number;
+}
+
+export interface PDFLayoutElement {
+  [key: string]: string;
+}
+
+export interface PDFLayout {
+  logo: PDFLayoutElement;
+  header: PDFLayoutElement;
+  title: PDFLayoutElement;
+  table: PDFLayoutElement;
+  totals: PDFLayoutElement;
+  grandTotal: PDFLayoutElement;
+  signatures: PDFLayoutElement;
+  letter: PDFLayoutElement;
 }
 
 export interface Subscription {

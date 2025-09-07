@@ -94,6 +94,11 @@ const RecapScreen = () => {
       signatureTextColor: '#666666'
     };
     
+    // Fonction pour récupérer les valeurs de mise en page avec des valeurs par défaut
+    const getLayoutValue = (section: string, property: string, defaultValue: string) => {
+      return settings.pdfLayout?.[section]?.[property] || defaultValue;
+    };
+    
     let htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -124,21 +129,21 @@ const RecapScreen = () => {
               padding: 10px;
               border-radius: 4px;
             }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-            .logo { height: 32px; margin-bottom: 3px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${getLayoutValue('header', 'marginBottom', '8')}px; }
+            .logo { height: ${getLayoutValue('logo', 'height', '32')}px; margin-bottom: ${getLayoutValue('logo', 'marginBottom', '3')}px; margin-top: ${getLayoutValue('logo', 'marginTop', '0')}px; }
             .seller-info { flex: 1; }
             .client-info { text-align: right; max-width: 280px; }
             .title-section { 
               text-align: center; 
-              padding: 4px 0; 
+              padding: ${getLayoutValue('title', 'padding', '4')}px 0; 
               border-top: 1px solid ${colors.borderPrimary}; 
               border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: 4px 0;
+              margin: ${getLayoutValue('title', 'margin', '4')}px 0;
               background: ${colors.headerBackground};
               border-radius: 3px;
             }
-            .title { color: ${colors.titleColor}; font-size: 16px; font-weight: 600; margin: 0; font-family: 'Montserrat', sans-serif; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: 11px; margin: 1px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 600; margin: 0; font-family: 'Montserrat', sans-serif; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; }
             .project-details { 
               background: ${colors.cardBackground}; 
               padding: 4px; 
@@ -149,24 +154,24 @@ const RecapScreen = () => {
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 4px 0; 
+              margin: ${getLayoutValue('table', 'margin', '4')}px 0; 
               border: 1px solid ${colors.tableBorder}; 
             }
             th { 
               background: ${colors.tableHeader}; 
               color: ${colors.tableHeaderText}; 
-              padding: 3px 2px; 
+              padding: ${getLayoutValue('table', 'headerPadding', '3')}px 2px; 
               text-align: left; 
               font-weight: 600;
               border: 1px solid ${colors.tableBorder};
-              font-size: 9px;
+              font-size: ${getLayoutValue('table', 'headerFontSize', '9')}px;
               font-family: 'Inter', sans-serif;
             }
             td { 
-              padding: 2px 2px; 
+              padding: ${getLayoutValue('table', 'cellPadding', '2')}px 2px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
-              font-size: 9px;
+              font-size: ${getLayoutValue('table', 'cellFontSize', '9')}px;
               font-family: 'Roboto', sans-serif;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
@@ -180,13 +185,13 @@ const RecapScreen = () => {
             }
             .mode-unique { background: ${colors.badgeUnique}; }
             .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: ${getLayoutValue('totals', 'gap', '4')}px; margin: ${getLayoutValue('totals', 'margin', '4')}px 0; }
             .total-card { 
               border: 1px solid ${colors.totalCardBorder}; 
-              padding: 4px; 
+              padding: ${getLayoutValue('totals', 'padding', '4')}px; 
               border-radius: 3px; 
               background: ${colors.cardBackground};
-              font-size: 10px;
+              font-size: ${getLayoutValue('totals', 'fontSize', '10')}px;
               font-family: 'Inter', sans-serif;
             }
             .total-unique { 
@@ -199,12 +204,12 @@ const RecapScreen = () => {
             }
             .grand-total { 
               text-align: center; 
-              padding: 6px; 
-              border: 2px solid ${colors.grandTotalBorder}; 
+              padding: ${getLayoutValue('grandTotal', 'padding', '6')}px; 
+              border: ${getLayoutValue('grandTotal', 'borderWidth', '2')}px solid ${colors.grandTotalBorder}; 
               border-radius: 3px; 
               background: ${colors.grandTotalBackground};
-              margin: 6px 0;
-              font-size: 11px;
+              margin: ${getLayoutValue('grandTotal', 'margin', '6')}px 0;
+              font-size: ${getLayoutValue('grandTotal', 'fontSize', '11')}px;
               font-family: 'Montserrat', sans-serif;
               font-weight: 600;
             }
@@ -229,28 +234,28 @@ const RecapScreen = () => {
             .letter-header { margin-bottom: 30px; }
             .letter-date { 
               text-align: right; 
-              margin: 10px 0; 
+              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
               font-weight: bold; 
               color: ${colors.letterDateColor};
-              font-size: 12px;
+              font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
             }
             .letter-recipient { 
-              margin: 10px 0; 
+              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
               color: ${colors.textColor};
-              font-size: 12px;
+              font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
             }
             .letter-subject { 
-              margin: 10px 0; 
+              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
               font-weight: bold; 
               color: ${colors.letterSubjectColor};
-              font-size: 12px; 
+              font-size: ${getLayoutValue('letter', 'subjectFontSize', '12')}px; 
             }
             .letter-content { 
-              margin: 10px 0; 
-              line-height: 1.4; 
+              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
+              line-height: ${getLayoutValue('letter', 'lineHeight', '1.4')}; 
               text-align: justify; 
               color: ${colors.textColor};
-              font-size: 11px;
+              font-size: ${getLayoutValue('letter', 'contentFontSize', '11')}px;
             }
             .letter-signature { 
               margin-top: 15px; 
@@ -263,36 +268,36 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .signatures-section {
-              margin: 8px 0 3px 0;
+              margin: ${getLayoutValue('signatures', 'margin', '8')}px 0 3px 0;
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 10px;
+              gap: ${getLayoutValue('signatures', 'gap', '10')}px;
             }
             .signature-box {
               border: 1px solid ${colors.signatureBoxBorder};
               background: ${colors.signatureBoxBackground};
-              padding: 6px;
+              padding: ${getLayoutValue('signatures', 'padding', '6')}px;
               border-radius: 3px;
-              min-height: 45px;
+              min-height: ${getLayoutValue('signatures', 'minHeight', '45')}px;
             }
             .signature-title {
               font-weight: 600;
               color: ${colors.signatureTitleColor};
               margin-bottom: 3px;
-              font-size: 13px;
+              font-size: ${getLayoutValue('signatures', 'titleFontSize', '13')}px;
               font-family: 'Montserrat', sans-serif;
             }
             .signature-content {
               color: ${colors.signatureTextColor};
-              font-size: 10px;
+              font-size: ${getLayoutValue('signatures', 'contentFontSize', '10')}px;
               line-height: 1.2;
               margin-bottom: 3px;
             }
             .signature-line {
               border-top: 1px solid ${colors.signatureBoxBorder};
-              margin-top: 15px;
+              margin-top: ${getLayoutValue('signatures', 'lineMarginTop', '15')}px;
               padding-top: 3px;
-              font-size: 9px;
+              font-size: ${getLayoutValue('signatures', 'lineFontSize', '9')}px;
               color: ${colors.signatureTextColor};
             }
           </style>
@@ -333,7 +338,7 @@ const RecapScreen = () => {
             </div>
           </div>
           
-          <div class="letter-subject" style="margin-top: 25px;">
+          <div class="letter-subject" style="margin-top: ${getLayoutValue('letter', 'subjectMarginTop', '30')}px;">
             <strong>Objet:</strong> ${settings.letterTemplate.subject}
           </div>
           
