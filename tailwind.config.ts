@@ -70,6 +70,15 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      fontFamily: {
+        'inter': ['Inter', 'sans-serif'],
+        'playfair': ['Playfair Display', 'serif'],
+        'roboto': ['Roboto', 'sans-serif'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+        'opensans': ['Open Sans', 'sans-serif'],
+        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'serif': ['Playfair Display', 'Georgia', 'serif'],
+      },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
         "gradient-subtle": "var(--gradient-subtle)", 

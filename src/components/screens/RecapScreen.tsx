@@ -102,13 +102,13 @@ const RecapScreen = () => {
           <meta charset="utf-8">
           <style>
             body { 
-              font-family: Arial, sans-serif; 
+              font-family: 'Inter', 'Roboto', Arial, sans-serif; 
               margin: 0; 
-              padding: 10px; 
+              padding: 8px; 
               color: ${colors.textColor};
               background: ${colors.background};
-              font-size: 12px;
-              line-height: 1.3;
+              font-size: 11px;
+              line-height: 1.2;
             }
             @media print { 
               body { margin: 0; }
@@ -124,48 +124,50 @@ const RecapScreen = () => {
               padding: 10px;
               border-radius: 4px;
             }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-            .logo { height: 35px; margin-bottom: 5px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+            .logo { height: 32px; margin-bottom: 3px; }
             .seller-info { flex: 1; }
-            .client-info { text-align: right; max-width: 300px; }
+            .client-info { text-align: right; max-width: 280px; }
             .title-section { 
               text-align: center; 
-              padding: 5px 0; 
+              padding: 4px 0; 
               border-top: 1px solid ${colors.borderPrimary}; 
               border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: 5px 0;
+              margin: 4px 0;
               background: ${colors.headerBackground};
-              border-radius: 4px;
+              border-radius: 3px;
             }
-            .title { color: ${colors.titleColor}; font-size: 18px; font-weight: bold; margin: 0; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: 12px; margin: 2px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: 16px; font-weight: 600; margin: 0; font-family: 'Montserrat', sans-serif; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: 11px; margin: 1px 0 0 0; }
             .project-details { 
               background: ${colors.cardBackground}; 
-              padding: 5px; 
-              border-radius: 4px; 
-              margin: 5px 0; 
+              padding: 4px; 
+              border-radius: 3px; 
+              margin: 4px 0; 
               border: 1px solid ${colors.borderSecondary};
             }
             table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 5px 0; 
+              margin: 4px 0; 
               border: 1px solid ${colors.tableBorder}; 
             }
             th { 
               background: ${colors.tableHeader}; 
               color: ${colors.tableHeaderText}; 
-              padding: 4px 3px; 
+              padding: 3px 2px; 
               text-align: left; 
-              font-weight: bold;
+              font-weight: 600;
               border: 1px solid ${colors.tableBorder};
-              font-size: 10px;
+              font-size: 9px;
+              font-family: 'Inter', sans-serif;
             }
             td { 
-              padding: 3px 3px; 
+              padding: 2px 2px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
-              font-size: 10px;
+              font-size: 9px;
+              font-family: 'Roboto', sans-serif;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
             tr:nth-child(odd) { background: ${colors.tableRow}; }
@@ -178,13 +180,14 @@ const RecapScreen = () => {
             }
             .mode-unique { background: ${colors.badgeUnique}; }
             .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 5px 0; }
+            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
             .total-card { 
               border: 1px solid ${colors.totalCardBorder}; 
-              padding: 5px; 
-              border-radius: 4px; 
+              padding: 4px; 
+              border-radius: 3px; 
               background: ${colors.cardBackground};
-              font-size: 11px;
+              font-size: 10px;
+              font-family: 'Inter', sans-serif;
             }
             .total-unique { 
               border-color: ${colors.totalCardBorder}; 
@@ -196,12 +199,14 @@ const RecapScreen = () => {
             }
             .grand-total { 
               text-align: center; 
-              padding: 10px; 
+              padding: 6px; 
               border: 2px solid ${colors.grandTotalBorder}; 
-              border-radius: 4px; 
+              border-radius: 3px; 
               background: ${colors.grandTotalBackground};
-              margin: 10px 0;
-              font-size: 12px;
+              margin: 6px 0;
+              font-size: 11px;
+              font-family: 'Montserrat', sans-serif;
+              font-weight: 600;
             }
             .footer { 
               text-align: center; 
@@ -258,35 +263,36 @@ const RecapScreen = () => {
               margin: 20px 0; 
             }
             .signatures-section {
-              margin: 15px 0 5px 0;
+              margin: 8px 0 3px 0;
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 15px;
+              gap: 10px;
             }
             .signature-box {
               border: 1px solid ${colors.signatureBoxBorder};
               background: ${colors.signatureBoxBackground};
-              padding: 10px;
-              border-radius: 4px;
-              min-height: 60px;
+              padding: 6px;
+              border-radius: 3px;
+              min-height: 45px;
             }
             .signature-title {
-              font-weight: bold;
+              font-weight: 600;
               color: ${colors.signatureTitleColor};
-              margin-bottom: 5px;
-              font-size: 16px;
+              margin-bottom: 3px;
+              font-size: 13px;
+              font-family: 'Montserrat', sans-serif;
             }
             .signature-content {
               color: ${colors.signatureTextColor};
-              font-size: 12px;
-              line-height: 1.4;
-              margin-bottom: 5px;
+              font-size: 10px;
+              line-height: 1.2;
+              margin-bottom: 3px;
             }
             .signature-line {
               border-top: 1px solid ${colors.signatureBoxBorder};
-              margin-top: 30px;
-              padding-top: 5px;
-              font-size: 10px;
+              margin-top: 15px;
+              padding-top: 3px;
+              font-size: 9px;
               color: ${colors.signatureTextColor};
             }
           </style>
