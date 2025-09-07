@@ -99,6 +99,22 @@ const RecapScreen = () => {
       return settings.pdfLayout?.[section]?.[property] || defaultValue;
     };
     
+    // Fonction pour récupérer la police sélectionnée
+    const getFontFamily = () => {
+      const fontMap: { [key: string]: string } = {
+        'inter': 'Inter, sans-serif',
+        'dm-sans': 'DM Sans, sans-serif',
+        'nunito-sans': 'Nunito Sans, sans-serif',
+        'source-sans-pro': 'Source Sans Pro, sans-serif',
+        'work-sans': 'Work Sans, sans-serif',
+        'lato': 'Lato, sans-serif',
+        'rubik': 'Rubik, sans-serif',
+        'open-sans': 'Open Sans, sans-serif'
+      };
+      
+      return fontMap[settings.selectedFont || 'dm-sans'] || 'DM Sans, sans-serif';
+    };
+    
     let htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -107,7 +123,7 @@ const RecapScreen = () => {
           <meta charset="utf-8">
           <style>
             body { 
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', 'Source Sans Pro', Arial, sans-serif; 
+              font-family: ${getFontFamily()}; 
               margin: 0; 
               padding: 8px; 
               color: ${colors.textColor};
@@ -143,8 +159,8 @@ const RecapScreen = () => {
               background: ${colors.headerBackground};
               border-radius: 3px;
             }
-            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 600; margin: 0; font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif; letter-spacing: 0.3px; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; font-family: 'Arial Nova Light', 'Inter', sans-serif; font-weight: 400; }
+            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 600; margin: 0; font-family: ${getFontFamily()}; letter-spacing: 0.3px; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; font-family: ${getFontFamily()}; font-weight: 400; }
             .project-details { 
               background: ${colors.cardBackground}; 
               padding: 4px; 
@@ -166,7 +182,7 @@ const RecapScreen = () => {
               font-weight: 500;
               border: 1px solid ${colors.tableBorder};
               font-size: ${getLayoutValue('table', 'headerFontSize', '9')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               letter-spacing: 0.2px;
             }
             td { 
@@ -174,7 +190,7 @@ const RecapScreen = () => {
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('table', 'cellFontSize', '9')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 300;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
@@ -195,7 +211,7 @@ const RecapScreen = () => {
               border-radius: 3px; 
               background: ${colors.cardBackground};
               font-size: ${getLayoutValue('totals', 'fontSize', '10')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 400;
             }
             .total-unique { 
@@ -214,7 +230,7 @@ const RecapScreen = () => {
               background: ${colors.grandTotalBackground};
               margin: ${getLayoutValue('grandTotal', 'margin', '6')}px 0;
               font-size: ${getLayoutValue('grandTotal', 'fontSize', '11')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 600;
               letter-spacing: 0.3px;
             }
@@ -243,13 +259,13 @@ const RecapScreen = () => {
               font-weight: 500; 
               color: ${colors.letterDateColor};
               font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
-              font-family: 'Arial Nova Light', 'Inter', sans-serif;
+              font-family: ${getFontFamily()};
             }
             .letter-recipient { 
               margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
-              font-family: 'Arial Nova Light', 'Inter', sans-serif;
+              font-family: ${getFontFamily()};
               line-height: 1.4;
               font-weight: 300;
             }
@@ -258,7 +274,7 @@ const RecapScreen = () => {
               font-weight: 600; 
               color: ${colors.letterSubjectColor};
               font-size: ${getLayoutValue('letter', 'subjectFontSize', '12')}px; 
-              font-family: 'Arial Nova Light', 'Inter', sans-serif;
+              font-family: ${getFontFamily()};
               letter-spacing: 0.2px;
             }
             .letter-content { 
@@ -267,7 +283,7 @@ const RecapScreen = () => {
               text-align: justify; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('letter', 'contentFontSize', '11')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 300;
             }
             .letter-signature { 
@@ -298,7 +314,7 @@ const RecapScreen = () => {
               color: ${colors.signatureTitleColor};
               margin-bottom: 3px;
               font-size: ${getLayoutValue('signatures', 'titleFontSize', '13')}px;
-              font-family: 'Arial Nova Light', 'Inter', 'Nunito Sans', sans-serif;
+              font-family: ${getFontFamily()};
               letter-spacing: 0.3px;
               text-transform: uppercase;
             }
@@ -307,7 +323,7 @@ const RecapScreen = () => {
               font-size: ${getLayoutValue('signatures', 'contentFontSize', '10')}px;
               line-height: 1.2;
               margin-bottom: 3px;
-              font-family: 'Arial Nova Light', 'Inter', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 300;
             }
             .signature-line {
@@ -316,7 +332,7 @@ const RecapScreen = () => {
               padding-top: 3px;
               font-size: ${getLayoutValue('signatures', 'lineFontSize', '9')}px;
               color: ${colors.signatureTextColor};
-              font-family: 'Arial Nova Light', 'Inter', sans-serif;
+              font-family: ${getFontFamily()};
               font-weight: 400;
             }
           </style>

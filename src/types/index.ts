@@ -101,6 +101,8 @@ export interface Settings {
   pdfFooter: string;
   defaultComment: string;
   pdfFontFamily: string;
+  selectedFont?: string;
+  fontFamily?: string;
   subscriptions: Subscription[];
   types: string[];
   models: PriceModel[];

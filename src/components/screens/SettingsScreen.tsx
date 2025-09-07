@@ -21,6 +21,7 @@ import SellerInfo from '../settings/SellerInfo';
 import LogoUpload from '../settings/LogoUpload';
 import TemplateColors from '../settings/TemplateColors';
 import PDFLayoutSettings from '../settings/PDFLayoutSettings';
+import FontSelector from '../settings/FontSelector';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -393,6 +394,7 @@ const SettingsScreen = () => {
         <TabsContent value="pdf">
           <div className="space-y-6">
             <LogoUpload />
+            <FontSelector />
             
             {/* Informations de base pour PDF */}
             <Card className="shadow-soft">
