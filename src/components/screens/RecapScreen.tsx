@@ -545,6 +545,78 @@ const RecapScreen = () => {
           </table>
         </div>
       `;
+
+      // Ajouter les totaux pour une seule page
+      htmlContent += `<div class="totals-section">`;
+      
+      if (totals.unique.totalTTC > 0) {
+        htmlContent += `
+          <div class="total-card total-unique">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+              <span>Sous-total HT:</span>
+              <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+              <span>TVA (${settings.tvaPct}%):</span>
+              <span>${totals.unique.tva.toFixed(2)} CHF</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
+              <span>Total TTC:</span>
+              <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
+            </div>
+          </div>
+        `;
+      }
+
+      if (totals.mensuel.totalTTC > 0) {
+        htmlContent += `
+          <div class="total-card total-mensuel">
+            <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+              <span>Sous-total HT:</span>
+              <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+              <span>TVA (${settings.tvaPct}%):</span>
+              <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
+              <span>Total TTC:</span>
+              <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
+            </div>
+          </div>
+        `;
+      }
+
+      htmlContent += `</div>`;
+
+      // Total général
+      htmlContent += `
+        <div class="grand-total">
+          <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+            <div>
+              <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
+              <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+            </div>
+            <div>
+              <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
+              <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+            </div>
+          </div>
+          <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
+            <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
+              ${totals.global.totalTTC.toFixed(2)} CHF
+            </p>
+            ${totals.mensuel.totalTTC > 0 ? `
+              <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
+                + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+              </p>
+            ` : ''}
+          </div>
+        </div>
+      `;
     } else {
       // Pages multiples - générer chaque page
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
