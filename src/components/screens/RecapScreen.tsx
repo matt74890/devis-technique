@@ -392,9 +392,9 @@ const RecapScreen = () => {
             </div>
             
             <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
-              <p>${settings.letterTemplate.body.replace(/\n/g, '</p><p>')}</p>
-              <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${settings.letterTemplate.opening.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${settings.letterTemplate.body.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${settings.letterTemplate.closing.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
             </div>
             
             <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
@@ -403,15 +403,15 @@ const RecapScreen = () => {
               <div style="margin-top: 40px;">
                 <p><strong>Cordialement,</strong></p>
                 
-                ${settings.sellerInfo?.signature ? `
-                  <div style="margin: 20px 0;">
-                    <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
-                  </div>
-                ` : ''}
-                
                 <div style="margin-top: 10px;">
                   ${settings.sellerInfo?.name ? `<div style="font-weight: bold;">${settings.sellerInfo.name}</div>` : ''}
                   ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
+                  
+                  ${settings.sellerInfo?.signature ? `
+                    <div style="margin: 10px 0;">
+                      <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             </div>

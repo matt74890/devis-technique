@@ -91,6 +91,12 @@ export interface LetterTemplate {
   body: string;
   closing: string;
   textAlignment: 'left' | 'center' | 'right' | 'justify';
+  boldOptions: {
+    subject: boolean;
+    opening: boolean;
+    body: boolean;
+    closing: boolean;
+  };
 }
 
 export interface Settings {

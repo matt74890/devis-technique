@@ -9,11 +9,23 @@ import { useSettings } from '@/components/SettingsProvider';
 const LetterTemplate = () => {
   const { settings, updateSettings } = useSettings();
 
-  const handleUpdateLetter = (field: string, value: string, preserveCursor?: boolean) => {
+  const handleUpdateLetter = (field: string, value: string | boolean, preserveCursor?: boolean) => {
     updateSettings({
       letterTemplate: {
         ...settings.letterTemplate,
         [field]: value
+      }
+    });
+  };
+
+  const handleUpdateBoldOption = (field: string, value: boolean) => {
+    updateSettings({
+      letterTemplate: {
+        ...settings.letterTemplate,
+        boldOptions: {
+          ...settings.letterTemplate?.boldOptions,
+          [field]: value
+        }
       }
     });
   };
@@ -137,19 +149,32 @@ const LetterTemplate = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="letter-subject">Objet de la lettre</Label>
-              <Input
-                id="letter-subject"
-                value={settings.letterTemplate?.subject || ''}
-                onChange={(e) => {
-                  const target = e.target;
-                  const cursorPosition = target.selectionStart;
-                  handleUpdateLetter('subject', e.target.value);
-                  setTimeout(() => {
-                    target.setSelectionRange(cursorPosition, cursorPosition);
-                  }, 0);
-                }}
-                placeholder="Proposition commerciale - Sécurité technique"
-              />
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="letter-subject"
+                  value={settings.letterTemplate?.subject || ''}
+                  onChange={(e) => {
+                    const target = e.target;
+                    const cursorPosition = target.selectionStart;
+                    handleUpdateLetter('subject', e.target.value);
+                    setTimeout(() => {
+                      target.setSelectionRange(cursorPosition, cursorPosition);
+                    }, 0);
+                  }}
+                  placeholder="Proposition commerciale - Sécurité technique"
+                  className="flex-1"
+                />
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    id="subject-bold"
+                    checked={settings.letterTemplate?.boldOptions?.subject || false}
+                    onChange={(e) => handleUpdateBoldOption('subject', e.target.checked)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="subject-bold" className="text-sm">Gras</Label>
+                </div>
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -166,7 +191,19 @@ const LetterTemplate = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="letter-opening">Formule d'ouverture</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="letter-opening">Formule d'ouverture</Label>
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    id="opening-bold"
+                    checked={settings.letterTemplate?.boldOptions?.opening || false}
+                    onChange={(e) => handleUpdateBoldOption('opening', e.target.checked)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="opening-bold" className="text-sm">Gras</Label>
+                </div>
+              </div>
               <Textarea
                 id="letter-opening"
                 value={settings.letterTemplate?.opening || ''}
@@ -184,7 +221,19 @@ const LetterTemplate = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="letter-body">Corps du message</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="letter-body">Corps du message</Label>
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    id="body-bold"
+                    checked={settings.letterTemplate?.boldOptions?.body || false}
+                    onChange={(e) => handleUpdateBoldOption('body', e.target.checked)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="body-bold" className="text-sm">Gras</Label>
+                </div>
+              </div>
               <Textarea
                 id="letter-body"
                 value={settings.letterTemplate?.body || ''}
@@ -202,7 +251,19 @@ const LetterTemplate = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="letter-closing">Formule de politesse</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="letter-closing">Formule de politesse</Label>
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="checkbox"
+                    id="closing-bold"
+                    checked={settings.letterTemplate?.boldOptions?.closing || false}
+                    onChange={(e) => handleUpdateBoldOption('closing', e.target.checked)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="closing-bold" className="text-sm">Gras</Label>
+                </div>
+              </div>
               <Textarea
                 id="letter-closing"
                 value={settings.letterTemplate?.closing || ''}
