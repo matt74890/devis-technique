@@ -420,8 +420,9 @@ const RecapScreen = () => {
       `;
     }
 
-    // En-tête avec logo et adresses pour le devis
-    htmlContent += `
+    // Fonction pour générer l'en-tête complet
+    const generateHeader = (isFirstPage = false) => `
+      ${!isFirstPage ? '<div class="page-break"></div>' : ''}
       <div class="header">
         <div class="seller-info">
           ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
@@ -473,20 +474,14 @@ const RecapScreen = () => {
           </div>
         </div>
       </div>
-    `;
-
-    // Titre du devis
-    htmlContent += `
+      
       <div class="title-section">
         <h1 class="title">${settings.pdfTitle}</h1>
         <p class="subtitle">Devis N° ${currentQuote.ref}</p>
         <p style="color: ${colors.mutedTextColor};">Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
       </div>
-    `;
-
-    // Détails du projet
-    if (currentQuote.site || currentQuote.contact || currentQuote.canton) {
-      htmlContent += `
+      
+      ${currentQuote.site || currentQuote.contact || currentQuote.canton ? `
         <div class="project-details">
           <h3 style="color: ${colors.primary}; margin: 0 0 10px 0;">Détails du projet</h3>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px; color: ${colors.textColor};">
@@ -495,123 +490,194 @@ const RecapScreen = () => {
             ${currentQuote.canton ? `<div><strong>Canton:</strong> ${currentQuote.canton}</div>` : ''}
           </div>
         </div>
-      `;
-    }
+      ` : ''}
+    `;
 
-    // Tableau des prestations
-    htmlContent += `
-      <div>
-        <h3 style="color: ${colors.primary};">Détail des prestations</h3>
-        <table>
-          <thead>
+    // En-tête avec logo et adresses pour le devis - seulement pour la première page
+    htmlContent += generateHeader(true);
+
+    // Pagination automatique intelligente
+    const ITEMS_PER_PAGE = 15; // Nombre d'items max par page pour rester lisible
+    const totalItems = currentQuote.items.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+    // Si une seule page suffit
+    if (totalPages === 1) {
+      // Tableau des prestations
+      htmlContent += `
+        <div>
+          <h3 style="color: ${colors.primary};">Détail des prestations</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Référence</th>
+                <th style="text-align: center;">Mode</th>
+                <th style="text-align: center;">Qté</th>
+                <th style="text-align: right;">PU TTC</th>
+                <th style="text-align: right;">Total TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      currentQuote.items.forEach(item => {
+        htmlContent += `
+          <tr>
+            <td>${item.type}</td>
+            <td>${item.reference}</td>
+            <td style="text-align: center;">
+              <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
+                ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+              </span>
+            </td>
+            <td style="text-align: center;">${item.qty}</td>
+            <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
+            <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
+              ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
+            </td>
+          </tr>
+        `;
+      });
+
+      htmlContent += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      // Pages multiples - générer chaque page
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const startIndex = pageIndex * ITEMS_PER_PAGE;
+        const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
+        const pageItems = currentQuote.items.slice(startIndex, endIndex);
+        const isFirstPage = pageIndex === 0;
+        const isLastPage = pageIndex === totalPages - 1;
+
+        // Ajouter l'en-tête pour cette page (sauf la première qui l'a déjà)
+        if (!isFirstPage) {
+          htmlContent += generateHeader(false);
+        }
+
+        // Tableau pour cette page
+        htmlContent += `
+          <div>
+            <h3 style="color: ${colors.primary};">Détail des prestations ${totalPages > 1 ? `(Page ${pageIndex + 1}/${totalPages})` : ''}</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Référence</th>
+                  <th style="text-align: center;">Mode</th>
+                  <th style="text-align: center;">Qté</th>
+                  <th style="text-align: right;">PU TTC</th>
+                  <th style="text-align: right;">Total TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        pageItems.forEach(item => {
+          htmlContent += `
             <tr>
-              <th>Type</th>
-              <th>Référence</th>
-              <th style="text-align: center;">Mode</th>
-              <th style="text-align: center;">Qté</th>
-              <th style="text-align: right;">PU TTC</th>
-              <th style="text-align: right;">Total TTC</th>
+              <td>${item.type}</td>
+              <td>${item.reference}</td>
+              <td style="text-align: center;">
+                <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
+                  ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                </span>
+              </td>
+              <td style="text-align: center;">${item.qty}</td>
+              <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
+              <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
+                ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-    `;
+          `;
+        });
 
-    currentQuote.items.forEach(item => {
-      htmlContent += `
-        <tr>
-          <td>${item.type}</td>
-          <td>${item.reference}</td>
-          <td style="text-align: center;">
-            <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
-              ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-            </span>
-          </td>
-          <td style="text-align: center;">${item.qty}</td>
-          <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
-          <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
-            ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
-          </td>
-        </tr>
-      `;
-    });
+        htmlContent += `
+              </tbody>
+            </table>
+          </div>
+        `;
 
-    htmlContent += `
-          </tbody>
-        </table>
-      </div>
-    `;
+        // Ajouter les totaux uniquement sur la dernière page
+        if (isLastPage) {
+          // Totaux
+          htmlContent += `<div class="totals-section">`;
+          
+          if (totals.unique.totalTTC > 0) {
+            htmlContent += `
+              <div class="total-card total-unique">
+                <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
+                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+                  <span>Sous-total HT:</span>
+                  <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+                  <span>TVA (${settings.tvaPct}%):</span>
+                  <span>${totals.unique.tva.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
+                  <span>Total TTC:</span>
+                  <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
+                </div>
+              </div>
+            `;
+          }
 
-    // Totaux
-    htmlContent += `<div class="totals-section">`;
-    
-    if (totals.unique.totalTTC > 0) {
-      htmlContent += `
-        <div class="total-card total-unique">
-          <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-            <span>Sous-total HT:</span>
-            <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-            <span>TVA (${settings.tvaPct}%):</span>
-            <span>${totals.unique.tva.toFixed(2)} CHF</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
-            <span>Total TTC:</span>
-            <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
-          </div>
-        </div>
-      `;
+          if (totals.mensuel.totalTTC > 0) {
+            htmlContent += `
+              <div class="total-card total-mensuel">
+                <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
+                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+                  <span>Sous-total HT:</span>
+                  <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
+                  <span>TVA (${settings.tvaPct}%):</span>
+                  <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
+                  <span>Total TTC:</span>
+                  <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
+                </div>
+              </div>
+            `;
+          }
+
+          htmlContent += `</div>`;
+
+          // Total général
+          htmlContent += `
+            <div class="grand-total">
+              <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <div>
+                  <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
+                  <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+                </div>
+                <div>
+                  <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
+                  <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+                </div>
+              </div>
+              <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
+                <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
+                  ${totals.global.totalTTC.toFixed(2)} CHF
+                </p>
+                ${totals.mensuel.totalTTC > 0 ? `
+                  <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
+                    + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+                  </p>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+      }
     }
-
-    if (totals.mensuel.totalTTC > 0) {
-      htmlContent += `
-        <div class="total-card total-mensuel">
-          <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-            <span>Sous-total HT:</span>
-            <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-            <span>TVA (${settings.tvaPct}%):</span>
-            <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
-            <span>Total TTC:</span>
-            <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
-          </div>
-        </div>
-      `;
-    }
-
-    htmlContent += `</div>`;
-
-    // Total général - optimisé pour tenir en 2 pages
-    htmlContent += `
-      <div class="grand-total">
-        <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-          <div>
-            <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
-            <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
-          </div>
-          <div>
-            <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
-            <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-          </div>
-        </div>
-        <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
-          <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
-            ${totals.global.totalTTC.toFixed(2)} CHF
-          </p>
-          ${totals.mensuel.totalTTC > 0 ? `
-            <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
-              + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
-            </p>
-          ` : ''}
-        </div>
-      </div>
-    `;
 
     // Commentaire
     if (currentQuote.comment) {
