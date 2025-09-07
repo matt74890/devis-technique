@@ -103,6 +103,7 @@ export interface Settings {
   pdfFontFamily: string;
   selectedFont?: string;
   fontFamily?: string;
+  customFontName?: string;
   subscriptions: Subscription[];
   types: string[];
   models: PriceModel[];
