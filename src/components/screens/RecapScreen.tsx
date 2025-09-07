@@ -136,15 +136,7 @@ const RecapScreen = () => {
               body { margin: 0; }
               .no-print { display: none !important; }
               .page-break { page-break-before: always; }
-            }
-            @page {
-              margin: 15mm;
-              @bottom-left { content: ""; }
-              @bottom-center { content: counter(page); }
-              @bottom-right { content: ""; }
-              @top-left { content: ""; }
-              @top-center { content: ""; }
-              @top-right { content: ""; }
+              @page { margin: 15mm; size: A4; }
             }
             .container { max-width: 800px; margin: 0 auto; }
             .letter-container { 
@@ -670,9 +662,22 @@ const RecapScreen = () => {
           <script>
             window.onload = function() {
               setTimeout(function() {
+                // Instructions pour l'utilisateur
+                alert('IMPORTANT: Dans la boîte d\\'impression qui va s\\'ouvrir:\\n\\n1. Cliquez sur "Plus de paramètres"\\n2. Décochez "En-têtes et pieds de page"\\n3. Puis cliquez sur "Imprimer" ou "Enregistrer au format PDF"');
                 window.print();
               }, 500);
             };
+            
+            // Essayer de masquer les en-têtes/pieds de page automatiquement
+            if (window.matchMedia) {
+              var mediaQueryList = window.matchMedia('print');
+              mediaQueryList.addListener(function(mql) {
+                if (mql.matches) {
+                  document.body.style.margin = '0';
+                  document.body.style.padding = '0';
+                }
+              });
+            }
           </script>
         </body>
       </html>
