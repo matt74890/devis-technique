@@ -56,6 +56,31 @@ const DevisScreen = () => {
     toast.success(`Abonnement "${subscription.label}" ajouté au devis`);
   };
 
+  const addDefaultFeeQuick = (feeType: 'install' | 'dossier') => {
+    const feeValue = feeType === 'install' ? settings.defaults.feesInstallHT : settings.defaults.feesDossierHT;
+    const feeLabel = feeType === 'install' ? 'Frais d\'installation' : 'Frais de dossier';
+    
+    const newItem: Omit<QuoteItem, 'id'> = {
+      type: 'Installation',
+      reference: feeLabel,
+      mode: 'unique',
+      qty: 1,
+      unitPriceValue: feeValue,
+      unitPriceMode: 'HT',
+      lineDiscountPct: undefined,
+      puHT: undefined,
+      puTTC: undefined,
+      totalHT_brut: undefined,
+      discountHT: undefined,
+      totalHT_net: undefined,
+      totalTTC: undefined
+    };
+    
+    const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
+    addQuoteItem(calculatedItem);
+    toast.success(`${feeLabel} ajouté au devis`);
+  };
+
   const addNewItem = () => {
     const newItem: Omit<QuoteItem, 'id'> = {
       type: settings.types[0] || 'Autre',
@@ -686,6 +711,40 @@ const DevisScreen = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Boutons rapides frais par défaut */}
+      {(settings.defaults.feesInstallHT > 0 || settings.defaults.feesDossierHT > 0) && (
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Zap className="h-5 w-5 text-warning" />
+              <span>Frais par défaut (HT)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {settings.defaults.feesInstallHT > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => addDefaultFeeQuick('install')}
+                  className="bg-warning-light text-warning hover:bg-warning hover:text-warning-foreground"
+                >
+                  Frais d'installation - {settings.defaults.feesInstallHT.toFixed(2)} CHF
+                </Button>
+              )}
+              {settings.defaults.feesDossierHT > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => addDefaultFeeQuick('dossier')}
+                  className="bg-warning-light text-warning hover:bg-warning hover:text-warning-foreground"
+                >
+                  Frais de dossier - {settings.defaults.feesDossierHT.toFixed(2)} CHF
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Boutons rapides abonnements */}
       {activeSubscriptions.length > 0 && (
