@@ -9,7 +9,7 @@ import { useSettings } from '@/components/SettingsProvider';
 const LetterTemplate = () => {
   const { settings, updateSettings } = useSettings();
 
-  const handleUpdateLetter = (field: string, value: string) => {
+  const handleUpdateLetter = (field: string, value: string, preserveCursor?: boolean) => {
     updateSettings({
       letterTemplate: {
         ...settings.letterTemplate,
@@ -36,7 +36,14 @@ const LetterTemplate = () => {
               <Input
                 id="company-name"
                 value={settings.letterTemplate?.companyName || ''}
-                onChange={(e) => handleUpdateLetter('companyName', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('companyName', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Votre Entreprise SA"
               />
             </div>
@@ -45,7 +52,14 @@ const LetterTemplate = () => {
               <Input
                 id="contact-name"
                 value={settings.letterTemplate?.contactName || ''}
-                onChange={(e) => handleUpdateLetter('contactName', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('contactName', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Jean Dupont"
               />
             </div>
@@ -54,7 +68,14 @@ const LetterTemplate = () => {
               <Input
                 id="contact-title"
                 value={settings.letterTemplate?.contactTitle || ''}
-                onChange={(e) => handleUpdateLetter('contactTitle', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('contactTitle', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Responsable commercial"
               />
             </div>
@@ -63,7 +84,14 @@ const LetterTemplate = () => {
               <Input
                 id="contact-phone"
                 value={settings.letterTemplate?.contactPhone || ''}
-                onChange={(e) => handleUpdateLetter('contactPhone', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('contactPhone', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="+41 21 XXX XX XX"
               />
             </div>
@@ -73,7 +101,14 @@ const LetterTemplate = () => {
                 id="contact-email"
                 type="email"
                 value={settings.letterTemplate?.contactEmail || ''}
-                onChange={(e) => handleUpdateLetter('contactEmail', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('contactEmail', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="contact@votre-entreprise.ch"
               />
             </div>
@@ -82,7 +117,14 @@ const LetterTemplate = () => {
               <Input
                 id="company-address"
                 value={settings.letterTemplate?.companyAddress || ''}
-                onChange={(e) => handleUpdateLetter('companyAddress', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('companyAddress', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Rue de l'Exemple 123, 1000 Lausanne"
               />
             </div>
@@ -98,7 +140,14 @@ const LetterTemplate = () => {
               <Input
                 id="letter-subject"
                 value={settings.letterTemplate?.subject || ''}
-                onChange={(e) => handleUpdateLetter('subject', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('subject', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Proposition commerciale - Sécurité technique"
               />
             </div>
@@ -121,7 +170,14 @@ const LetterTemplate = () => {
               <Textarea
                 id="letter-opening"
                 value={settings.letterTemplate?.opening || ''}
-                onChange={(e) => handleUpdateLetter('opening', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('opening', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
                 rows={4}
               />
@@ -132,7 +188,14 @@ const LetterTemplate = () => {
               <Textarea
                 id="letter-body"
                 value={settings.letterTemplate?.body || ''}
-                onChange={(e) => handleUpdateLetter('body', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('body', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.&#10;&#10;Vous trouverez ci-joint notre devis détaillé comprenant..."
                 rows={6}
               />
@@ -143,7 +206,14 @@ const LetterTemplate = () => {
               <Textarea
                 id="letter-closing"
                 value={settings.letterTemplate?.closing || ''}
-                onChange={(e) => handleUpdateLetter('closing', e.target.value)}
+                onChange={(e) => {
+                  const target = e.target;
+                  const cursorPosition = target.selectionStart;
+                  handleUpdateLetter('closing', e.target.value);
+                  setTimeout(() => {
+                    target.setSelectionRange(cursorPosition, cursorPosition);
+                  }, 0);
+                }}
                 placeholder="Nous restons à votre disposition pour tout complément d'information et espérons que notre proposition retiendra votre attention.&#10;&#10;Dans l'attente de votre retour, nous vous prions d'agréer, Madame, Monsieur, l'expression de nos salutations distinguées."
                 rows={4}
               />

@@ -273,17 +273,18 @@ const RecapScreen = () => {
             .signature-title {
               font-weight: bold;
               color: ${colors.signatureTitleColor};
-              margin-bottom: 10px;
+              margin-bottom: 5px;
               font-size: 16px;
             }
             .signature-content {
               color: ${colors.signatureTextColor};
               font-size: 12px;
               line-height: 1.4;
+              margin-bottom: 5px;
             }
             .signature-line {
               border-top: 1px solid ${colors.signatureBoxBorder};
-              margin-top: 50px;
+              margin-top: 30px;
               padding-top: 5px;
               font-size: 10px;
               color: ${colors.signatureTextColor};
@@ -326,7 +327,7 @@ const RecapScreen = () => {
             </div>
           </div>
           
-          <div class="letter-subject">
+          <div class="letter-subject" style="margin-top: 25px;">
             <strong>Objet:</strong> ${settings.letterTemplate.subject}
           </div>
           
