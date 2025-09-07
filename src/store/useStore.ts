@@ -138,7 +138,8 @@ const defaultLetterTemplate: LetterTemplate = {
   civility: 'Monsieur',
   opening: 'Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale.',
   body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant l\'ensemble des prestations et équipements nécessaires.',
-  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.'
+  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.',
+  textAlignment: 'left'
 };
 
 const defaultTemplateColors: TemplateColors = {

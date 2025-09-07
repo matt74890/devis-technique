@@ -387,15 +387,17 @@ const RecapScreen = () => {
           </div>
           
           <div class="letter-content">
-            <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor};">
+            <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
               ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.name || currentQuote.client || 'Client'},
             </div>
             
-            <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
-            <p>${settings.letterTemplate.body.replace(/\n/g, '</p><p>')}</p>
-            <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
+            <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
+              <p>${settings.letterTemplate.opening.replace(/\n/g, '</p><p>')}</p>
+              <p>${settings.letterTemplate.body.replace(/\n/g, '</p><p>')}</p>
+              <p>${settings.letterTemplate.closing.replace(/\n/g, '</p><p>')}</p>
+            </div>
             
-            <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor};">
+            <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
               <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${currentQuote.clientCivility} ${clientAddress.name || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
               
               <div style="margin-top: 40px;">

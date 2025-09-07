@@ -90,6 +90,7 @@ export interface LetterTemplate {
   opening: string;
   body: string;
   closing: string;
+  textAlignment: 'left' | 'center' | 'right' | 'justify';
 }
 
 export interface Settings {
