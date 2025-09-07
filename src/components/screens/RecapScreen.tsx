@@ -137,6 +137,15 @@ const RecapScreen = () => {
               .no-print { display: none !important; }
               .page-break { page-break-before: always; }
             }
+            @page {
+              margin: 15mm;
+              @bottom-left { content: ""; }
+              @bottom-center { content: counter(page); }
+              @bottom-right { content: ""; }
+              @top-left { content: ""; }
+              @top-center { content: ""; }
+              @top-right { content: ""; }
+            }
             .container { max-width: 800px; margin: 0 auto; }
             .letter-container { 
               margin-bottom: 10px; 
