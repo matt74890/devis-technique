@@ -107,13 +107,14 @@ const RecapScreen = () => {
           <meta charset="utf-8">
           <style>
             body { 
-              font-family: 'Inter', 'Roboto', Arial, sans-serif; 
+              font-family: 'Crimson Text', 'Lora', 'Times New Roman', serif; 
               margin: 0; 
               padding: 8px; 
               color: ${colors.textColor};
               background: ${colors.background};
               font-size: 11px;
-              line-height: 1.2;
+              line-height: 1.3;
+              font-weight: 400;
             }
             @media print { 
               body { margin: 0; }
@@ -142,8 +143,8 @@ const RecapScreen = () => {
               background: ${colors.headerBackground};
               border-radius: 3px;
             }
-            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 600; margin: 0; font-family: 'Montserrat', sans-serif; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; }
+            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '16')}px; font-weight: 700; margin: 0; font-family: 'Source Sans Pro', 'Montserrat', sans-serif; letter-spacing: 0.5px; }
+            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '11')}px; margin: 1px 0 0 0; font-family: 'Poppins', sans-serif; font-weight: 500; }
             .project-details { 
               background: ${colors.cardBackground}; 
               padding: 4px; 
@@ -165,14 +166,15 @@ const RecapScreen = () => {
               font-weight: 600;
               border: 1px solid ${colors.tableBorder};
               font-size: ${getLayoutValue('table', 'headerFontSize', '9')}px;
-              font-family: 'Inter', sans-serif;
+              font-family: 'Source Sans Pro', 'Inter', sans-serif;
+              letter-spacing: 0.3px;
             }
             td { 
               padding: ${getLayoutValue('table', 'cellPadding', '2')}px 2px; 
               border: 1px solid ${colors.tableBorder}; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('table', 'cellFontSize', '9')}px;
-              font-family: 'Roboto', sans-serif;
+              font-family: 'Crimson Text', 'Lora', serif;
             }
             tr:nth-child(even) { background: ${colors.tableRowAlt}; }
             tr:nth-child(odd) { background: ${colors.tableRow}; }
@@ -192,7 +194,8 @@ const RecapScreen = () => {
               border-radius: 3px; 
               background: ${colors.cardBackground};
               font-size: ${getLayoutValue('totals', 'fontSize', '10')}px;
-              font-family: 'Inter', sans-serif;
+              font-family: 'Poppins', 'Source Sans Pro', sans-serif;
+              font-weight: 500;
             }
             .total-unique { 
               border-color: ${colors.totalCardBorder}; 
@@ -210,8 +213,9 @@ const RecapScreen = () => {
               background: ${colors.grandTotalBackground};
               margin: ${getLayoutValue('grandTotal', 'margin', '6')}px 0;
               font-size: ${getLayoutValue('grandTotal', 'fontSize', '11')}px;
-              font-family: 'Montserrat', sans-serif;
-              font-weight: 600;
+              font-family: 'Merriweather', 'Source Sans Pro', sans-serif;
+              font-weight: 700;
+              letter-spacing: 0.5px;
             }
             .footer { 
               text-align: center; 
@@ -235,27 +239,33 @@ const RecapScreen = () => {
             .letter-date { 
               text-align: right; 
               margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              font-weight: bold; 
+              font-weight: 600; 
               color: ${colors.letterDateColor};
               font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
+              font-family: 'Poppins', sans-serif;
             }
             .letter-recipient { 
               margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
+              font-family: 'Crimson Text', serif;
+              line-height: 1.4;
             }
             .letter-subject { 
               margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              font-weight: bold; 
+              font-weight: 700; 
               color: ${colors.letterSubjectColor};
               font-size: ${getLayoutValue('letter', 'subjectFontSize', '12')}px; 
+              font-family: 'Source Sans Pro', sans-serif;
+              letter-spacing: 0.3px;
             }
             .letter-content { 
               margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              line-height: ${getLayoutValue('letter', 'lineHeight', '1.4')}; 
+              line-height: ${getLayoutValue('letter', 'lineHeight', '1.5')}; 
               text-align: justify; 
               color: ${colors.textColor};
               font-size: ${getLayoutValue('letter', 'contentFontSize', '11')}px;
+              font-family: 'Crimson Text', 'Lora', serif;
             }
             .letter-signature { 
               margin-top: 15px; 
@@ -281,17 +291,20 @@ const RecapScreen = () => {
               min-height: ${getLayoutValue('signatures', 'minHeight', '45')}px;
             }
             .signature-title {
-              font-weight: 600;
+              font-weight: 700;
               color: ${colors.signatureTitleColor};
               margin-bottom: 3px;
               font-size: ${getLayoutValue('signatures', 'titleFontSize', '13')}px;
-              font-family: 'Montserrat', sans-serif;
+              font-family: 'Source Sans Pro', 'Montserrat', sans-serif;
+              letter-spacing: 0.5px;
+              text-transform: uppercase;
             }
             .signature-content {
               color: ${colors.signatureTextColor};
               font-size: ${getLayoutValue('signatures', 'contentFontSize', '10')}px;
               line-height: 1.2;
               margin-bottom: 3px;
+              font-family: 'Crimson Text', serif;
             }
             .signature-line {
               border-top: 1px solid ${colors.signatureBoxBorder};
@@ -299,6 +312,8 @@ const RecapScreen = () => {
               padding-top: 3px;
               font-size: ${getLayoutValue('signatures', 'lineFontSize', '9')}px;
               color: ${colors.signatureTextColor};
+              font-family: 'Poppins', sans-serif;
+              font-weight: 500;
             }
           </style>
         </head>
