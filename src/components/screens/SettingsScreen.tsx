@@ -434,6 +434,50 @@ const SettingsScreen = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Import e-mail */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Settings2 className="h-5 w-5 text-primary" />
+                  <span>Import e-mail</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="importEmailEnabled">Activer le remplissage automatique</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Active le bouton "Remplir les champs du devis" dans l'écran Devis
+                    </p>
+                  </div>
+                  <Switch
+                    id="importEmailEnabled"
+                    checked={settings.importEmail.enabled}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        importEmail: { ...settings.importEmail, enabled: checked } 
+                      })
+                    }
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="importEmailHelp">Texte d'aide</Label>
+                  <Textarea
+                    id="importEmailHelp"
+                    value={settings.importEmail.helpText}
+                    onChange={(e) => 
+                      updateSettings({ 
+                        importEmail: { ...settings.importEmail, helpText: e.target.value } 
+                      })
+                    }
+                    rows={2}
+                    placeholder="Texte d'explication pour l'utilisateur..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

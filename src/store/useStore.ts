@@ -243,6 +243,10 @@ const defaultSettings: Settings = {
     feesInstallHT: 150,
     feesDossierHT: 50,
     showFeesAsLines: true
+  },
+  importEmail: {
+    enabled: true,
+    helpText: 'Collez un e-mail client, puis cliquez sur Remplir. Le parseur créera abonnements, lignes matériel, remises et frais.'
   }
 };
 

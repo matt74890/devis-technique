@@ -125,6 +125,10 @@ export interface Settings {
     feesDossierHT?: number;
     showFeesAsLines: boolean;
   };
+  importEmail: {
+    enabled: boolean;
+    helpText: string;
+  };
 }
 
 export interface Currency {

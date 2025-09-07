@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Copy, Trash2, Zap, MapPin, Save } from 'lucide-react';
+import { Plus, Copy, Trash2, Zap, MapPin, Save, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/store/useStore';
@@ -29,6 +29,8 @@ const DevisScreen = () => {
   } = useStore();
 
   const [newItemMode, setNewItemMode] = useState<'unique' | 'mensuel'>('unique');
+  const [emailRaw, setEmailRaw] = useState('');
+  const [isProcessingEmail, setIsProcessingEmail] = useState(false);
 
   if (!currentQuote) return null;
 
@@ -111,6 +113,194 @@ const DevisScreen = () => {
       title: "Ligne ajoutée",
       description: "Nouvelle ligne ajoutée au devis",
     });
+  };
+
+  const fillFromEmail = async () => {
+    if (!emailRaw.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez coller du contenu à analyser",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingEmail(true);
+    
+    try {
+      // Étape 1: Extraction via IA
+      const extractResponse = await supabase.functions.invoke('extract-email-to-quote', {
+        body: { email_raw: emailRaw }
+      });
+
+      if (extractResponse.error) {
+        throw new Error(extractResponse.error.message || 'Erreur lors de l\'extraction');
+      }
+
+      const extractedData = extractResponse.data;
+      console.log('Données extraites:', extractedData);
+
+      if (!extractedData?.quote) {
+        throw new Error('Format de réponse invalide');
+      }
+
+      // Étape 2: Mapping des données vers le devis
+      await mapExtractedQuoteToForm(extractedData.quote);
+      
+      toast({
+        title: "Import réussi",
+        description: "Le devis a été pré-rempli avec les données extraites",
+      });
+
+      // Vider le champ d'import
+      setEmailRaw('');
+
+    } catch (error: any) {
+      console.error('Erreur lors du traitement:', error);
+      toast({
+        title: "Erreur d'analyse",
+        description: error.message || "Analyse incomplète, vérifiez et réessayez",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingEmail(false);
+    }
+  };
+
+  const mapExtractedQuoteToForm = async (extractedQuote: any) => {
+    const { 
+      ref, date, client, site, contact, canton, comment,
+      discountMode, discountPct, feesInstallHT, feesDossierHT,
+      subscriptions, items 
+    } = extractedQuote;
+
+    // Mise à jour des champs de base
+    const updates: any = {};
+    
+    if (ref) updates.ref = ref;
+    if (date) {
+      updates.date = date;
+    } else {
+      updates.date = new Date().toISOString().split('T')[0];
+    }
+    if (client) updates.client = client;
+    if (site) updates.site = site;
+    if (contact) updates.contact = contact;
+    if (canton) updates.canton = canton;
+    if (comment) updates.comment = comment;
+
+    // Gestion des remises
+    if (discountMode && discountMode !== 'none') {
+      updates.discountMode = discountMode;
+      if (discountPct > 0) updates.discountPct = discountPct;
+    }
+
+    updateQuote(updates);
+
+    // Ajout des abonnements
+    if (subscriptions?.raccordement50TTC) {
+      const raccordement50Item: Omit<QuoteItem, 'id'> = {
+        type: 'Autre',
+        reference: 'Raccordement alarme',
+        mode: 'mensuel',
+        qty: 1,
+        unitPriceValue: 50.00,
+        unitPriceMode: 'TTC',
+        lineDiscountPct: undefined,
+        puHT: undefined,
+        puTTC: undefined,
+        totalHT_brut: undefined,
+        discountHT: undefined,
+        totalHT_net: undefined,
+        totalTTC: undefined
+      };
+      const calculatedItem = calculateQuoteItem(raccordement50Item as QuoteItem, settings.tvaPct, discountMode === 'per_line');
+      addQuoteItem(calculatedItem);
+    }
+
+    if (subscriptions?.raccordement109TTC) {
+      const raccordement109Item: Omit<QuoteItem, 'id'> = {
+        type: 'Autre',
+        reference: 'Raccordement + interventions illimitées',
+        mode: 'mensuel',
+        qty: 1,
+        unitPriceValue: 109.00,
+        unitPriceMode: 'TTC',
+        lineDiscountPct: undefined,
+        puHT: undefined,
+        puTTC: undefined,
+        totalHT_brut: undefined,
+        discountHT: undefined,
+        totalHT_net: undefined,
+        totalTTC: undefined
+      };
+      const calculatedItem = calculateQuoteItem(raccordement109Item as QuoteItem, settings.tvaPct, discountMode === 'per_line');
+      addQuoteItem(calculatedItem);
+    }
+
+    // Ajout des items extraits
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        const newItem: Omit<QuoteItem, 'id'> = {
+          type: item.type || 'Autre',
+          reference: item.reference || '',
+          mode: item.mode || 'unique',
+          qty: item.qty || 1,
+          unitPriceValue: item.unitPriceValue || 0,
+          unitPriceMode: item.unitPriceMode || 'TTC',
+          lineDiscountPct: (discountMode === 'per_line' && item.lineDiscountPct > 0) ? item.lineDiscountPct : undefined,
+          puHT: undefined,
+          puTTC: undefined,
+          totalHT_brut: undefined,
+          discountHT: undefined,
+          totalHT_net: undefined,
+          totalTTC: undefined
+        };
+        const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, discountMode === 'per_line');
+        addQuoteItem(calculatedItem);
+      }
+    }
+
+    // Ajout des frais
+    if (feesInstallHT > 0) {
+      const installItem: Omit<QuoteItem, 'id'> = {
+        type: 'Installation',
+        reference: 'Frais d\'installation',
+        mode: 'unique',
+        qty: 1,
+        unitPriceValue: feesInstallHT,
+        unitPriceMode: 'HT',
+        lineDiscountPct: undefined,
+        puHT: undefined,
+        puTTC: undefined,
+        totalHT_brut: undefined,
+        discountHT: undefined,
+        totalHT_net: undefined,
+        totalTTC: undefined
+      };
+      const calculatedItem = calculateQuoteItem(installItem as QuoteItem, settings.tvaPct, discountMode === 'per_line');
+      addQuoteItem(calculatedItem);
+    }
+
+    if (feesDossierHT > 0) {
+      const dossierItem: Omit<QuoteItem, 'id'> = {
+        type: 'Autre',
+        reference: 'Frais de dossier',
+        mode: 'unique',
+        qty: 1,
+        unitPriceValue: feesDossierHT,
+        unitPriceMode: 'HT',
+        lineDiscountPct: undefined,
+        puHT: undefined,
+        puTTC: undefined,
+        totalHT_brut: undefined,
+        discountHT: undefined,
+        totalHT_net: undefined,
+        totalTTC: undefined
+      };
+      const calculatedItem = calculateQuoteItem(dossierItem as QuoteItem, settings.tvaPct, discountMode === 'per_line');
+      addQuoteItem(calculatedItem);
+    }
   };
 
   const handleClientSelect = (client: Client | null) => {
@@ -793,6 +983,38 @@ const DevisScreen = () => {
                 </Button>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Import automatique depuis e-mail */}
+      {settings.importEmail.enabled && (
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Mail className="h-5 w-5" />
+              <span>Import automatique</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="emailRaw">Coller l'e-mail ou un texte client</Label>
+              <Textarea
+                id="emailRaw"
+                placeholder={settings.importEmail.helpText}
+                value={emailRaw}
+                onChange={(e) => setEmailRaw(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+            <Button
+              onClick={fillFromEmail}
+              disabled={!emailRaw.trim() || isProcessingEmail}
+              className="w-full bg-primary hover:bg-primary-hover"
+            >
+              {isProcessingEmail ? 'Analyse en cours...' : 'Remplir les champs du devis'}
+            </Button>
           </CardContent>
         </Card>
       )}
