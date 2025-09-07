@@ -209,21 +209,46 @@ const SettingsScreen = () => {
                               onCheckedChange={(checked) => updateSubscription(subscription.id, { active: checked })}
                             />
                           </td>
-                          <td className="p-2">
-                            <Select
-                              value={subscription.defaultType}
-                              onValueChange={(value) => updateSubscription(subscription.id, { defaultType: value })}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {settings.types.map((type) => (
-                                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
+                           <td className="p-2">
+                             {subscription.defaultType.startsWith('Autre - ') || (subscription.defaultType === 'Autre' && !settings.types.includes(subscription.defaultType)) ? (
+                               <div className="space-y-1">
+                                 <Input
+                                   value={subscription.defaultType.replace('Autre - ', '')}
+                                   onChange={(e) => updateSubscription(subscription.id, { defaultType: e.target.value ? `Autre - ${e.target.value}` : 'Autre - ' })}
+                                   className="w-32"
+                                   placeholder="Type personnalisé"
+                                 />
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => updateSubscription(subscription.id, { defaultType: 'Autre' })}
+                                   className="text-xs h-6"
+                                 >
+                                   Retour
+                                 </Button>
+                               </div>
+                             ) : (
+                               <Select
+                                 value={subscription.defaultType}
+                                 onValueChange={(value) => {
+                                   if (value === 'Autre') {
+                                     updateSubscription(subscription.id, { defaultType: 'Autre - ' });
+                                   } else {
+                                     updateSubscription(subscription.id, { defaultType: value });
+                                   }
+                                 }}
+                               >
+                                 <SelectTrigger className="w-32">
+                                   <SelectValue />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   {settings.types.map((type) => (
+                                     <SelectItem key={type} value={type}>{type}</SelectItem>
+                                   ))}
+                                 </SelectContent>
+                               </Select>
+                             )}
+                           </td>
                           <td className="p-2">
                             <Input
                               value={subscription.defaultRef}
@@ -267,19 +292,44 @@ const SettingsScreen = () => {
                     />
                     <span className="text-sm">Actif</span>
                   </div>
-                  <Select
-                    value={newSubscription.defaultType}
-                    onValueChange={(value) => setNewSubscription({ ...newSubscription, defaultType: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {settings.types.map((type) => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   {newSubscription.defaultType?.startsWith('Autre - ') || (newSubscription.defaultType === 'Autre' && !settings.types.includes(newSubscription.defaultType || '')) ? (
+                     <div className="space-y-1">
+                       <Input
+                         value={newSubscription.defaultType?.replace('Autre - ', '') || ''}
+                         onChange={(e) => setNewSubscription({ ...newSubscription, defaultType: e.target.value ? `Autre - ${e.target.value}` : 'Autre - ' })}
+                         className="w-32"
+                         placeholder="Type personnalisé"
+                       />
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => setNewSubscription({ ...newSubscription, defaultType: 'Autre' })}
+                         className="text-xs h-6"
+                       >
+                         Retour
+                       </Button>
+                     </div>
+                   ) : (
+                     <Select
+                       value={newSubscription.defaultType}
+                       onValueChange={(value) => {
+                         if (value === 'Autre') {
+                           setNewSubscription({ ...newSubscription, defaultType: 'Autre - ' });
+                         } else {
+                           setNewSubscription({ ...newSubscription, defaultType: value });
+                         }
+                       }}
+                     >
+                       <SelectTrigger>
+                         <SelectValue placeholder="Type" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {settings.types.map((type) => (
+                           <SelectItem key={type} value={type}>{type}</SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   )}
                   <Input
                     placeholder="Référence par défaut"
                     value={newSubscription.defaultRef}
