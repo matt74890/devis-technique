@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const groqApiKey = Deno.env.get('GROQ_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,8 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY not configured');
+    if (!groqApiKey) {
+      throw new Error('GROQ_API_KEY not configured');
     }
 
     const { email_raw } = await req.json();
@@ -92,33 +92,33 @@ ${email_raw}
 
 Réponse attendue : JSON UNIQUEMENT.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a technical quote extraction assistant. Always return valid JSON only, no extra text.' 
+            content: 'Réponds uniquement en JSON strict selon le schéma de devis existant (pas de texte libre).' 
           },
           { 
             role: 'user', 
             content: prompt 
           }
         ],
-        max_tokens: 2000,
-        temperature: 0.1,
+        temperature: 0,
+        response_format: { "type": "json_object" }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API Error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+      console.error('Groq API Error:', errorText);
+      throw new Error(`Groq API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();

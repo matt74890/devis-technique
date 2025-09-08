@@ -128,7 +128,7 @@ const DevisScreen = () => {
     setIsProcessingEmail(true);
     
     try {
-      // Étape 1: Extraction via IA
+      // Étape 1: Extraction via IA (Groq)
       const extractResponse = await supabase.functions.invoke('extract-email-to-quote', {
         body: { email_raw: emailRaw }
       });
@@ -147,9 +147,18 @@ const DevisScreen = () => {
       // Étape 2: Mapping des données vers le devis
       await mapExtractedQuoteToForm(extractedData.quote);
       
+      // Success toast with details
+      let message = `Lignes importées : ${extractedData.quote.items?.length || 0}`;
+      if (extractedData.quote.subscriptions?.raccordement50TTC) {
+        message += " | Abonnement 50 activé";
+      }
+      if (extractedData.quote.subscriptions?.raccordement109TTC) {
+        message += " | Abonnement 109 activé";
+      }
+      
       toast({
-        title: "Import réussi",
-        description: "Le devis a été pré-rempli avec les données extraites",
+        title: "Extraction réussie",
+        description: message,
       });
 
       // Vider le champ d'import
@@ -158,8 +167,8 @@ const DevisScreen = () => {
     } catch (error: any) {
       console.error('Erreur lors du traitement:', error);
       toast({
-        title: "Erreur d'analyse",
-        description: error.message || "Analyse incomplète, vérifiez et réessayez",
+        title: "Extraction impossible",
+        description: "Vérifie le texte et réessaie.",
         variant: "destructive",
       });
     } finally {
