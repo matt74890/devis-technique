@@ -129,11 +129,16 @@ const DevisScreen = () => {
     
     try {
       // Étape 1: Extraction via IA (Groq)
+      console.log('Début extraction avec Groq, texte:', emailRaw.substring(0, 100) + '...');
+      
       const extractResponse = await supabase.functions.invoke('extract-email-to-quote', {
         body: { email_raw: emailRaw }
       });
 
+      console.log('Réponse extraction complète:', extractResponse);
+
       if (extractResponse.error) {
+        console.error('Erreur extraction:', extractResponse.error);
         throw new Error(extractResponse.error.message || 'Erreur lors de l\'extraction');
       }
 
