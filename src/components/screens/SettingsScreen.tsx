@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Percent, Zap, Settings2, FileText, Coins, MapPin, Package } from 'lucide-react';
+import { Percent, Zap, Settings2, FileText, Coins, MapPin, Package, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -476,6 +476,39 @@ const SettingsScreen = () => {
                     placeholder="Texte d'explication pour l'utilisateur..."
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Limites système */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span>Limites du système d'extraction IA</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 border rounded-lg bg-muted/20">
+                    <div className="text-2xl font-bold text-primary">10</div>
+                    <div className="text-sm text-muted-foreground">Requêtes/minute</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg bg-muted/20">
+                    <div className="text-2xl font-bold text-primary">100</div>
+                    <div className="text-sm text-muted-foreground">Requêtes/jour</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg bg-muted/20">
+                    <div className="text-2xl font-bold text-primary">6000</div>
+                    <div className="text-sm text-muted-foreground">Tokens/minute</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg bg-muted/20">
+                    <div className="text-2xl font-bold text-primary">250k</div>
+                    <div className="text-sm text-muted-foreground">Tokens/jour</div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Ces limites s'appliquent au système d'extraction automatique de devis par IA. En cas de dépassement, veuillez patienter avant de relancer une extraction.
+                </p>
               </CardContent>
             </Card>
           </div>

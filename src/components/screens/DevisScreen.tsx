@@ -1294,6 +1294,29 @@ const DevisScreen = () => {
           />
         </CardContent>
       </Card>
+
+      {/* Bouton Reset */}
+      <Card className="shadow-soft border-destructive/20">
+        <CardContent className="pt-6">
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const { createNewQuote } = useStore.getState();
+                createNewQuote();
+                toast({
+                  title: "Devis réinitialisé",
+                  description: "Tous les champs ont été remis à zéro.",
+                });
+              }}
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Réinitialiser le devis
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
