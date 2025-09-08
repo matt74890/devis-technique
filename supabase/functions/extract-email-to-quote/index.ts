@@ -45,6 +45,16 @@ Schéma cible :
     "discountPct": 0,
     "feesInstallHT": 0,
     "feesDossierHT": 0,
+    "clientDetails": {
+      "company": "",
+      "name": "",
+      "email": "",
+      "phone": "",
+      "street": "",
+      "city": "",
+      "postalCode": "",
+      "country": "Suisse"
+    },
     "subscriptions": {
       "raccordement50TTC": false,
       "raccordement109TTC": false
@@ -65,6 +75,7 @@ Schéma cible :
 
 Règles :
 - Date : si absente, mets "".
+- Informations client (clientDetails) : extraire nom/prénom, entreprise, email, téléphone, adresse complète (rue, ville, code postal)
 - Subscriptions :
   • "raccordement 50", "raccordement alarme", "50 TTC/mois" → subscriptions.raccordement50TTC = true
   • "interventions illimitées", "illimité", "109 TTC/mois" → subscriptions.raccordement109TTC = true

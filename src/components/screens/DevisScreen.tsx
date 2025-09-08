@@ -185,7 +185,7 @@ const DevisScreen = () => {
     const { 
       ref, date, client, site, contact, canton, comment,
       discountMode, discountPct, feesInstallHT, feesDossierHT,
-      subscriptions, items 
+      subscriptions, items, clientDetails
     } = extractedQuote;
 
     // Mise à jour des champs de base
@@ -207,6 +207,28 @@ const DevisScreen = () => {
     if (discountMode && discountMode !== 'none') {
       updates.discountMode = discountMode;
       if (discountPct > 0) updates.discountPct = discountPct;
+    }
+
+    // Mise à jour des informations client détaillées
+    if (clientDetails && Object.keys(clientDetails).some(key => clientDetails[key])) {
+      const newContactAddress = {
+        company: clientDetails.company || '',
+        name: clientDetails.name || client || '',
+        email: clientDetails.email || '',
+        phone: clientDetails.phone || '',
+        street: clientDetails.street || '',
+        city: clientDetails.city || '',
+        postalCode: clientDetails.postalCode || '',
+        country: clientDetails.country || 'Suisse'
+      };
+      
+      updates.addresses = { 
+        ...currentQuote.addresses, 
+        contact: newContactAddress,
+        // Si pas d'adresses séparées, propager à tous
+        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newContactAddress,
+        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newContactAddress
+      };
     }
 
     updateQuote(updates);
