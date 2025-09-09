@@ -1,10 +1,16 @@
-import { QuoteItem, Quote, QuoteTotals } from '@/types';
+import { QuoteItem, Quote, QuoteTotals, Settings } from '@/types';
+import { calculateAgentVacation } from './agentCalculations';
 
 export const calculateQuoteItem = (
   item: QuoteItem, 
   tvaPct: number, 
-  isPerLineDiscount: boolean
+  isPerLineDiscount: boolean,
+  settings?: Settings
 ): QuoteItem => {
+  // Handle AGENT items differently
+  if (item.kind === 'AGENT' && settings) {
+    return calculateAgentVacation(item, settings);
+  }
   const tvaMultiplier = 1 + (tvaPct / 100);
   
   // Valeurs par défaut pour les calculs
@@ -49,41 +55,50 @@ export const calculateQuoteItem = (
 export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals => {
   const tvaMultiplier = 1 + (tvaPct / 100);
   
-  // Séparer les items unique vs mensuel
-  const uniqueItems = quote.items.filter(item => item.mode === 'unique');
-  const mensuelItems = quote.items.filter(item => item.mode === 'mensuel');
+  // Séparer les items par type et mode
+  const techUniqueItems = quote.items.filter(item => item.kind === 'TECH' && item.mode === 'unique');
+  const techMensuelItems = quote.items.filter(item => item.kind === 'TECH' && item.mode === 'mensuel');
+  const agentItems = quote.items.filter(item => item.kind === 'AGENT');
   
-  // Calculs pour unique
-  const uniqueSubtotalHT = uniqueItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
+  // Calculs pour TECH unique
+  const uniqueSubtotalHT = techUniqueItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
   const uniqueDiscountHT = quote.discountMode === 'per_line' 
-    ? uniqueItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
+    ? techUniqueItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
     : 0;
   
-  // Calculs pour mensuel
-  const mensuelSubtotalHT = mensuelItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
+  // Calculs pour TECH mensuel
+  const mensuelSubtotalHT = techMensuelItems.reduce((sum, item) => sum + (item.totalHT_net || 0), 0);
   const mensuelDiscountHT = quote.discountMode === 'per_line'
-    ? mensuelItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
+    ? techMensuelItems.reduce((sum, item) => sum + (item.discountHT || 0), 0)
     : 0;
   
-  // Calculs globaux
-  const globalSubtotalHT = uniqueSubtotalHT + mensuelSubtotalHT;
+  // Calculs pour AGENT
+  const agentsSubtotalHT = agentItems.reduce((sum, item) => sum + (item.lineHT || 0), 0);
+  const agentsTva = agentItems.reduce((sum, item) => sum + (item.lineTVA || 0), 0);
+  const agentsTotalTTC = agentItems.reduce((sum, item) => sum + (item.lineTTC || 0), 0);
+  
+  // Calculs globaux (TECH seulement pour les remises)
+  const techGlobalSubtotalHT = uniqueSubtotalHT + mensuelSubtotalHT;
   const globalDiscountHT = quote.discountMode === 'global' 
-    ? globalSubtotalHT * ((quote.discountPct || 0) / 100)
+    ? techGlobalSubtotalHT * ((quote.discountPct || 0) / 100)
     : 0;
   
-  // Si remise globale, répartition proportionnelle
+  // Total global incluant agents
+  const globalSubtotalHT = techGlobalSubtotalHT + agentsSubtotalHT;
+  
+  // Si remise globale, répartition proportionnelle (sur TECH seulement)
   let uniqueGlobalDiscountHT = 0;
   let mensuelGlobalDiscountHT = 0;
   
-  if (quote.discountMode === 'global' && globalSubtotalHT > 0) {
-    const uniqueRatio = uniqueSubtotalHT / globalSubtotalHT;
-    const mensuelRatio = mensuelSubtotalHT / globalSubtotalHT;
+  if (quote.discountMode === 'global' && techGlobalSubtotalHT > 0) {
+    const uniqueRatio = uniqueSubtotalHT / techGlobalSubtotalHT;
+    const mensuelRatio = mensuelSubtotalHT / techGlobalSubtotalHT;
     
     uniqueGlobalDiscountHT = globalDiscountHT * uniqueRatio;
     mensuelGlobalDiscountHT = globalDiscountHT * mensuelRatio;
   }
   
-  // Totaux finaux par section
+  // Totaux finaux par section TECH
   const uniqueHtAfterDiscount = uniqueSubtotalHT - (uniqueDiscountHT + uniqueGlobalDiscountHT);
   const uniqueTva = uniqueHtAfterDiscount * (tvaPct / 100);
   const uniqueTotalTTC = uniqueHtAfterDiscount + uniqueTva;
@@ -92,9 +107,10 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
   const mensuelTva = mensuelHtAfterDiscount * (tvaPct / 100);
   const mensuelTotalTTC = mensuelHtAfterDiscount + mensuelTva;
   
-  // Totaux globaux finaux
-  const globalHtAfterDiscount = globalSubtotalHT - globalDiscountHT;
-  const globalTva = globalHtAfterDiscount * (tvaPct / 100);
+  // Totaux globaux finaux (TECH après remises + AGENTS)
+  const techTotalAfterDiscount = uniqueHtAfterDiscount + mensuelHtAfterDiscount;
+  const globalHtAfterDiscount = techTotalAfterDiscount + agentsSubtotalHT;
+  const globalTva = (uniqueTva + mensuelTva) + agentsTva;
   const globalTotalTTC = globalHtAfterDiscount + globalTva;
   
   return {
@@ -111,6 +127,11 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
       htAfterDiscount: mensuelHtAfterDiscount,
       tva: mensuelTva,
       totalTTC: mensuelTotalTTC
+    },
+    agents: {
+      subtotalHT: agentsSubtotalHT,
+      tva: agentsTva,
+      totalTTC: agentsTotalTTC
     },
     global: {
       subtotalHT: globalSubtotalHT,

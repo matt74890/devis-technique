@@ -5,6 +5,7 @@ interface AppState {
   // Local state (non-persisted)
   currentQuote: Quote | null;
   quotes: Quote[];
+  savedQuotes: { [clientName: string]: any };
   
   // Settings (will be managed by useUserSettings hook)
   settings: Settings;
@@ -36,6 +37,12 @@ interface AppState {
   updateQuoteItem: (id: string, item: Partial<QuoteItem>) => void;
   deleteQuoteItem: (id: string) => void;
   duplicateQuoteItem: (id: string) => void;
+  
+  // Saved quotes actions
+  saveQuoteForClient: (client: string) => void;
+  getSavedQuoteForClient: (client: string) => any | null;
+  loadSavedQuoteAsBase: (client: string) => void;
+  addSavedQuoteItems: (client: string) => void;
 }
 
 const defaultCurrency: Currency = {
@@ -247,6 +254,27 @@ const defaultSettings: Settings = {
   importEmail: {
     enabled: true,
     helpText: 'Collez un e-mail client, puis cliquez sur Remplir. Le parseur créera abonnements, lignes matériel, remises et frais.'
+  },
+  agentSettings: {
+    nightStartTime: '23:00',
+    nightEndTime: '06:00',
+    sundayStartTime: '06:00',
+    sundayEndTime: '23:00',
+    nightMarkupPct: 10,
+    sundayMarkupPct: 10,
+    holidayMarkupPct: 10,
+    holidays: {
+      'GE': ['2024-01-01', '2024-12-25'], // Example holidays
+      'VD': ['2024-01-01', '2024-12-25'],
+      'VS': ['2024-01-01', '2024-12-25']
+    },
+    agentTypes: [
+      { type: 'Sécurité', suggestedRate: 35 },
+      { type: 'Sécurité armée', suggestedRate: 45 },
+      { type: 'Maître-chien', suggestedRate: 50 },
+      { type: 'Patrouilleur', suggestedRate: 40 },
+      { type: 'Garde du corps', suggestedRate: 60 }
+    ]
   }
 };
 
@@ -277,6 +305,7 @@ export const useStore = create<AppState>()((set, get) => ({
       settings: defaultSettings,
       currentQuote: createDefaultQuote(),
       quotes: [],
+      savedQuotes: {},
 
       setSettings: (settings) => set({ settings }),
 
@@ -415,6 +444,57 @@ export const useStore = create<AppState>()((set, get) => ({
                 ...item, 
                 id: crypto.randomUUID() 
               }]
+            }
+          };
+        }),
+
+      // Saved quotes management
+      saveQuoteForClient: (client) => 
+        set((state) => {
+          if (!state.currentQuote || !client) return state;
+          
+          const savedQuote = {
+            id: crypto.randomUUID(),
+            client,
+            items: [...state.currentQuote.items],
+            savedAt: new Date().toISOString()
+          };
+          
+          return {
+            savedQuotes: {
+              ...state.savedQuotes,
+              [client]: savedQuote
+            }
+          };
+        }),
+
+      getSavedQuoteForClient: (client) => {
+        const state = get();
+        return state.savedQuotes[client] || null;
+      },
+
+      loadSavedQuoteAsBase: (client) =>
+        set((state) => {
+          const savedQuote = state.savedQuotes[client];
+          if (!savedQuote || !state.currentQuote) return state;
+          
+          return {
+            currentQuote: {
+              ...state.currentQuote,
+              items: [...savedQuote.items]
+            }
+          };
+        }),
+
+      addSavedQuoteItems: (client) =>
+        set((state) => {
+          const savedQuote = state.savedQuotes[client];
+          if (!savedQuote || !state.currentQuote) return state;
+          
+          return {
+            currentQuote: {
+              ...state.currentQuote,
+              items: [...state.currentQuote.items, ...savedQuote.items]
             }
           };
         })

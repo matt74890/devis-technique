@@ -129,6 +129,17 @@ export interface Settings {
     enabled: boolean;
     helpText: string;
   };
+  agentSettings: {
+    nightStartTime: string;
+    nightEndTime: string;
+    sundayStartTime: string;
+    sundayEndTime: string;
+    nightMarkupPct: number;
+    sundayMarkupPct: number;
+    holidayMarkupPct: number;
+    holidays: { [canton: string]: string[] };
+    agentTypes: AgentTypeRate[];
+  };
 }
 
 export interface Currency {
@@ -246,6 +257,7 @@ export interface Quote {
 
 export interface QuoteItem {
   id: string;
+  kind: 'TECH' | 'AGENT';
   type: string;
   reference: string;
   mode: 'unique' | 'mensuel';
@@ -260,6 +272,31 @@ export interface QuoteItem {
   discountHT?: number;
   totalHT_net?: number;
   totalTTC?: number;
+  // Agent vacation fields
+  dateStart?: string;
+  timeStart?: string;
+  dateEnd?: string;
+  timeEnd?: string;
+  agentType?: string;
+  rateCHFh?: number;
+  pauseMinutes?: number;
+  pausePaid?: boolean;
+  travelCHF?: number;
+  canton?: string;
+  hoursTotal?: number;
+  hoursNormal?: number;
+  hoursNight?: number;
+  hoursSunday?: number;
+  hoursHoliday?: number;
+  lineHT?: number;
+  lineTVA?: number;
+  lineTTC?: number;
+  seriesTag?: string | null;
+}
+
+export interface AgentTypeRate {
+  type: string;
+  suggestedRate: number;
 }
 
 export interface QuoteTotals {
@@ -277,6 +314,11 @@ export interface QuoteTotals {
     tva: number;
     totalTTC: number;
   };
+  agents: {
+    subtotalHT: number;
+    tva: number;
+    totalTTC: number;
+  };
   global: {
     subtotalHT: number;
     globalDiscountHT: number;
@@ -284,4 +326,12 @@ export interface QuoteTotals {
     tva: number;
     totalTTC: number;
   };
+}
+
+export interface SavedQuote {
+  id: string;
+  client: string;
+  items: QuoteItem[];
+  totals: QuoteTotals;
+  savedAt: string;
 }

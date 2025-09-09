@@ -32,6 +32,7 @@ const ProductSelector = ({ onProductSelect, mode }: ProductSelectorProps) => {
 
   const handleProductSelect = (product: Product) => {
     const newItem: Omit<QuoteItem, 'id'> = {
+      kind: 'TECH',
       type: product.type,
       reference: product.reference,
       mode: mode,

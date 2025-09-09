@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,14 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Copy, Trash2, Zap, MapPin, Save, Mail } from 'lucide-react';
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from '@/components/ui/table';
+import { Plus, Copy, Trash2, Zap, MapPin, Save, Mail, Users, Calendar, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/store/useStore';
 import { QuoteItem, Client } from '@/types';
-import { calculateQuoteItem } from '@/utils/calculations';
+import { calculateQuoteItem, calculateQuoteTotals } from '@/utils/calculations';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
+import AgentVacationRow from '@/components/vacation/AgentVacationRow';
+import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
+import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -25,12 +29,26 @@ const DevisScreen = () => {
     addQuoteItem, 
     updateQuoteItem, 
     deleteQuoteItem, 
-    duplicateQuoteItem 
+    duplicateQuoteItem,
+    saveQuoteForClient
   } = useStore();
 
   const [newItemMode, setNewItemMode] = useState<'unique' | 'mensuel'>('unique');
+  const [newItemKind, setNewItemKind] = useState<'TECH' | 'AGENT'>('TECH');
   const [emailRaw, setEmailRaw] = useState('');
   const [isProcessingEmail, setIsProcessingEmail] = useState(false);
+  const [showVacationGenerator, setShowVacationGenerator] = useState(false);
+
+  // Auto-save when client changes
+  useEffect(() => {
+    if (currentQuote?.client && currentQuote.items.length > 0) {
+      const timer = setTimeout(() => {
+        saveQuoteForClient(currentQuote.client);
+      }, 2000); // Save 2 seconds after changes
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuote?.client, currentQuote?.items, saveQuoteForClient]);
 
   if (!currentQuote) return null;
 
@@ -39,6 +57,7 @@ const DevisScreen = () => {
     if (!subscription) return;
 
     const newItem: Omit<QuoteItem, 'id'> = {
+      kind: 'TECH',
       type: subscription.defaultType,
       reference: subscription.defaultRef,
       mode: 'mensuel',
@@ -67,6 +86,7 @@ const DevisScreen = () => {
     const feeLabel = feeType === 'install' ? 'Frais d\'installation' : 'Frais de dossier';
     
     const newItem: Omit<QuoteItem, 'id'> = {
+      kind: 'TECH',
       type: 'Installation',
       reference: feeLabel,
       mode: 'unique',
@@ -91,7 +111,37 @@ const DevisScreen = () => {
   };
 
   const addNewItem = () => {
+    if (newItemKind === 'AGENT') {
+      const newVacation: Omit<QuoteItem, 'id'> = {
+        kind: 'AGENT',
+        type: 'Sécurité',
+        reference: 'Vacation sécurité',
+        mode: 'unique',
+        dateStart: new Date().toISOString().split('T')[0],
+        timeStart: '08:00',
+        dateEnd: new Date().toISOString().split('T')[0],
+        timeEnd: '16:00',
+        agentType: 'Sécurité',
+        rateCHFh: undefined,
+        pauseMinutes: 0,
+        pausePaid: false,
+        travelCHF: 0,
+        canton: 'GE',
+        unitPriceMode: settings.priceInputModeDefault
+      };
+      
+      const calculatedVacation = calculateQuoteItem(newVacation as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
+      addQuoteItem(calculatedVacation);
+      
+      toast({
+        title: "Vacation ajoutée",
+        description: "Nouvelle vacation ajoutée au devis",
+      });
+      return;
+    }
+
     const newItem: Omit<QuoteItem, 'id'> = {
+      kind: 'TECH',
       type: settings.types[0] || 'Autre',
       reference: '',
       mode: newItemMode,
@@ -107,11 +157,11 @@ const DevisScreen = () => {
       totalTTC: undefined
     };
 
-    const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
+    const calculatedItem = calculateQuoteItem(newItem as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
     addQuoteItem(calculatedItem);
     toast({
-      title: "Ligne ajoutée",
-      description: "Nouvelle ligne ajoutée au devis",
+      title: "Ligne technique ajoutée",
+      description: "Nouvelle ligne technique ajoutée au devis",
     });
   };
 
