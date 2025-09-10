@@ -286,6 +286,7 @@ const DevisScreen = () => {
     // Ajout des abonnements
     if (subscriptions?.raccordement50TTC) {
       const raccordement50Item: Omit<QuoteItem, 'id'> = {
+        kind: 'TECH',
         type: 'Autre',
         reference: 'Raccordement alarme',
         mode: 'mensuel',
@@ -306,6 +307,7 @@ const DevisScreen = () => {
 
     if (subscriptions?.raccordement109TTC) {
       const raccordement109Item: Omit<QuoteItem, 'id'> = {
+        kind: 'TECH',
         type: 'Autre',
         reference: 'Raccordement + interventions illimitées',
         mode: 'mensuel',
@@ -328,6 +330,7 @@ const DevisScreen = () => {
     if (items && Array.isArray(items)) {
       for (const item of items) {
         const newItem: Omit<QuoteItem, 'id'> = {
+          kind: 'TECH',
           type: item.type || 'Autre',
           reference: item.reference || '',
           mode: item.mode || 'unique',
@@ -350,6 +353,7 @@ const DevisScreen = () => {
     // Ajout des frais
     if (feesInstallHT > 0) {
       const installItem: Omit<QuoteItem, 'id'> = {
+        kind: 'TECH',
         type: 'Installation',
         reference: 'Frais d\'installation',
         mode: 'unique',
@@ -370,6 +374,7 @@ const DevisScreen = () => {
 
     if (feesDossierHT > 0) {
       const dossierItem: Omit<QuoteItem, 'id'> = {
+        kind: 'TECH',
         type: 'Autre',
         reference: 'Frais de dossier',
         mode: 'unique',
