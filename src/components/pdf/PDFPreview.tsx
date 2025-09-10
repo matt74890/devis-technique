@@ -69,46 +69,128 @@ const PDFPreviewContent = ({ quote, settings }: PDFPreviewProps) => {
         </div>
       )}
 
-      {/* Tableau des prestations */}
-      <div>
-        <h3 className="font-semibold text-lg mb-4" style={{ color: colors.primary }}>Détail des prestations</h3>
-        <table className="w-full border-collapse" style={{ border: `1px solid ${colors.secondary}` }}>
-          <thead>
-            <tr style={{ backgroundColor: colors.primary, color: 'white' }}>
-              <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Type</th>
-              <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Référence</th>
-              <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Mode</th>
-              <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Qté</th>
-              <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>PU TTC</th>
-              <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Total TTC</th>
-            </tr>
-          </thead>
-          <tbody>
-            {quote.items.map((item, index) => (
-              <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#f8fafc' : 'white' }}>
-                <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.type}</td>
-                <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.reference}</td>
-                <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>
-                  <span className="px-2 py-1 rounded text-xs" style={{ 
-                    backgroundColor: item.mode === 'mensuel' ? colors.accent : colors.secondary,
-                    color: 'white'
-                  }}>
-                    {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>{item.qty}</td>
-                <td className="px-3 py-2 text-right" style={{ border: `1px solid ${colors.secondary}` }}>{item.puTTC?.toFixed(2)} CHF</td>
-                <td className="px-3 py-2 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}`, color: colors.primary }}>
-                  {item.totalTTC?.toFixed(2)} CHF{item.mode === 'mensuel' ? '/mois' : ''}
-                </td>
+      {/* Prestations TECH */}
+      {quote.items.some(item => item.kind === 'TECH') && (
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg" style={{ color: colors.primary }}>Prestations techniques</h3>
+          <table className="w-full border-collapse" style={{ border: `1px solid ${colors.secondary}` }}>
+            <thead>
+              <tr style={{ backgroundColor: colors.primary, color: 'white' }}>
+                <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Type</th>
+                <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Référence</th>
+                <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Mode</th>
+                <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Qté</th>
+                <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>PU TTC</th>
+                <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Total TTC</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {quote.items.filter(item => item.kind === 'TECH').map((item, index) => (
+                <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#f8fafc' : 'white' }}>
+                  <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.type}</td>
+                  <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.reference}</td>
+                  <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>
+                    <span className="px-2 py-1 rounded text-xs" style={{ 
+                      backgroundColor: item.mode === 'mensuel' ? colors.accent : colors.secondary,
+                      color: 'white'
+                    }}>
+                      {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>{item.qty}</td>
+                  <td className="px-3 py-2 text-right" style={{ border: `1px solid ${colors.secondary}` }}>{item.puTTC?.toFixed(2)} CHF</td>
+                  <td className="px-3 py-2 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}`, color: colors.primary }}>
+                    {item.totalTTC?.toFixed(2)} CHF{item.mode === 'mensuel' ? '/mois' : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Prestations AGENT */}
+      {quote.items.some(item => item.kind === 'AGENT') && (
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg" style={{ color: colors.primary }}>Prestations d'agents de sécurité</h3>
+          <table className="w-full border-collapse" style={{ border: `1px solid ${colors.secondary}` }}>
+            <thead>
+              <tr style={{ backgroundColor: colors.primary, color: 'white' }}>
+                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Date début</th>
+                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Heure début</th>
+                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Date fin</th>
+                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Heure fin</th>
+                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Type</th>
+                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H norm.</th>
+                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H nuit</th>
+                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H dim.</th>
+                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H JF</th>
+                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Tarif CHF/h</th>
+                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Dépl.</th>
+                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>HT</th>
+                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>TVA</th>
+                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quote.items.filter(item => item.kind === 'AGENT').map((item, index) => (
+                <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#f8fafc' : 'white' }}>
+                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.timeStart || '-'}</td>
+                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.timeEnd || '-'}</td>
+                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.agentType || '-'}</td>
+                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.hoursNormal?.toFixed(1) || '0.0'}
+                  </td>
+                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.hoursNight?.toFixed(1) || '0.0'}
+                  </td>
+                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.hoursSunday?.toFixed(1) || '0.0'}
+                  </td>
+                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.hoursHoliday?.toFixed(1) || '0.0'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.rateCHFh?.toFixed(2) || '0.00'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.travelCHF?.toFixed(2) || '0.00'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.lineHT?.toFixed(2) || '0.00'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
+                    {item.lineTVA?.toFixed(2) || '0.00'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-xs font-semibold" style={{ border: `1px solid ${colors.secondary}`, color: colors.primary }}>
+                    {item.lineTTC?.toFixed(2) || '0.00'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Règles appliquées pour les agents */}
+          <div className="bg-gray-50 p-4 rounded text-sm">
+            <h4 className="font-semibold mb-2" style={{ color: colors.primary }}>Règles appliquées</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <p><span className="font-medium">Heures de nuit:</span> {settings.agentSettings?.nightStartTime || '23:00'} → {settings.agentSettings?.nightEndTime || '06:00'} (+{settings.agentSettings?.nightMarkupPct || 10}%)</p>
+              <p><span className="font-medium">Dimanche/JF:</span> {settings.agentSettings?.sundayStartTime || '06:00'} → {settings.agentSettings?.sundayEndTime || '23:00'} (+{settings.agentSettings?.sundayMarkupPct || 10}%)</p>
+              <p><span className="font-medium">Jours fériés:</span> +{settings.agentSettings?.holidayMarkupPct || 10}%</p>
+              <p><span className="font-medium">Règle spéciale:</span> Passage à 23h/06h pile = 1h pleine</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Totaux */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Unique */}
         {totals.unique.totalTTC > 0 && (
           <div className="p-4 rounded-lg" style={{ border: `2px solid ${colors.secondary}`, backgroundColor: '#f8fafc' }}>
@@ -146,6 +228,27 @@ const PDFPreviewContent = ({ quote, settings }: PDFPreviewProps) => {
               <div className="flex justify-between font-bold text-lg pt-2" style={{ borderTop: `1px solid ${colors.accent}`, color: colors.accent }}>
                 <span>Total TTC:</span>
                 <span>{totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Agents */}
+        {totals.agents.totalTTC > 0 && (
+          <div className="p-4 rounded-lg" style={{ border: `2px solid #f59e0b`, backgroundColor: '#fefbf3' }}>
+            <h4 className="font-semibold mb-3" style={{ color: '#f59e0b' }}>Agents de sécurité</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Sous-total HT:</span>
+                <span>{totals.agents.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              <div className="flex justify-between">
+                <span>TVA ({settings.tvaPct}%):</span>
+                <span>{totals.agents.tva.toFixed(2)} CHF</span>
+              </div>
+              <div className="flex justify-between font-bold text-lg pt-2" style={{ borderTop: `1px solid #f59e0b`, color: '#f59e0b' }}>
+                <span>Total TTC:</span>
+                <span>{totals.agents.totalTTC.toFixed(2)} CHF</span>
               </div>
             </div>
           </div>
@@ -205,25 +308,61 @@ const PDFPreview = () => {
   if (!currentQuote) return null;
 
   const downloadPDF = () => {
-    // Simple téléchargement via impression du navigateur
+    // Créer le contenu HTML du PDF
+    const pdfContent = document.querySelector('.pdf-preview-content')?.innerHTML || '';
+    const clientName = currentQuote.addresses.contact.name.replace(/[^a-zA-Z0-9]/g, '_');
+    const date = new Date(currentQuote.date).toISOString().split('T')[0];
+    const filename = `devis_${clientName}_${date}.pdf`;
+    
+    // Créer une nouvelle fenêtre pour le téléchargement
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Devis ${currentQuote.ref}</title>
+            <title>${filename}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-              @media print { body { margin: 0; } }
+              * { box-sizing: border-box; }
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                font-size: 12px;
+                line-height: 1.4;
+              }
+              @media print { 
+                body { margin: 0; padding: 10px; }
+                .preview-content { max-width: none; }
+                table { font-size: 10px; }
+                .page-break { page-break-before: always; }
+              }
               .preview-content { max-width: 800px; margin: 0 auto; }
+              table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+              th, td { padding: 4px 6px; border: 1px solid #ccc; }
+              .grid { display: grid; gap: 15px; }
+              .grid-cols-1 { grid-template-columns: 1fr; }
+              .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+              .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+              @media (max-width: 768px) {
+                .grid-cols-2, .grid-cols-3 { grid-template-columns: 1fr; }
+              }
             </style>
           </head>
           <body>
             <div class="preview-content">
-              ${document.querySelector('.pdf-preview-content')?.innerHTML || ''}
+              ${pdfContent}
             </div>
-            <script>window.print();</script>
+            <script>
+              window.onload = function() {
+                document.title = '${filename}';
+                setTimeout(() => {
+                  window.print();
+                  // Fermer la fenêtre après impression
+                  setTimeout(() => window.close(), 1000);
+                }, 500);
+              };
+            </script>
           </body>
         </html>
       `);

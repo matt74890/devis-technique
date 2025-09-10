@@ -1313,23 +1313,29 @@ const DevisScreen = () => {
 
           {/* Ajouter ligne */}
           <div className="flex items-center gap-4 flex-wrap">
-            <Select value={newItemMode} onValueChange={(value: 'unique' | 'mensuel') => setNewItemMode(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unique">Unique</SelectItem>
-                <SelectItem value="mensuel">Mensuel</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={addNewItem} className="bg-primary hover:bg-primary-hover">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter ligne
-            </Button>
-            <ProductSelector 
-              onProductSelect={(item) => addQuoteItem(item)} 
-              mode={newItemMode} 
-            />
+            {newItemKind === 'TECH' && (
+              <>
+                <Select value={newItemMode} onValueChange={(value: 'unique' | 'mensuel') => setNewItemMode(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unique">Unique</SelectItem>
+                    <SelectItem value="mensuel">Mensuel</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={addNewItem} className="bg-primary hover:bg-primary-hover">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter ligne technique
+                </Button>
+              </>
+            )}
+            {newItemKind === 'AGENT' && (
+              <Button onClick={addNewItem} className="bg-amber-600 hover:bg-amber-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter vacation d'agent
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
