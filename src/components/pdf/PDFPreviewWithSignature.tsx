@@ -10,12 +10,14 @@ import { Quote, Settings } from '@/types';
 import { toast } from 'sonner';
 import ClientSignature from '@/components/signature/ClientSignature';
 import AgentServiceDescription from '@/components/agent/AgentServiceDescription';
+import { supabase } from '@/integrations/supabase/client';
 
 const PDFPreviewWithSignature = () => {
   const { currentQuote, settings } = useStore();
   const [showPreview, setShowPreview] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [showAgentDescription, setShowAgentDescription] = useState(false);
+  const [isGeneratingWord, setIsGeneratingWord] = useState(false);
 
   if (!currentQuote) return null;
 
@@ -86,7 +88,6 @@ const PDFPreviewWithSignature = () => {
       
       const opt = {
         margin: [15, 15, 15, 15],
-        filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
           scale: 1.5,
@@ -115,20 +116,34 @@ const PDFPreviewWithSignature = () => {
         }
       };
       
-      // Generate and download PDF
-      await html2pdf().set(opt).from(tempDiv).save();
+      // Generate PDF as blob instead of opening in new tab
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
+      
+      // Force download with proper filename and headers
+      const filename = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`;
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       // Cleanup
       document.body.removeChild(tempDiv);
       
-      toast.success('PDF téléchargé avec succès');
+      console.log('PDF généré - Taille:', pdfBlob.size, 'bytes');
+      toast.success('PDF téléchargé');
     } catch (error) {
       console.error('Erreur génération PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error('Échec PDF');
     }
   };
 
   const downloadWord = async () => {
+    setIsGeneratingWord(true);
     try {
       // Validation
       if (!currentQuote.ref) {
@@ -144,79 +159,117 @@ const PDFPreviewWithSignature = () => {
         return;
       }
 
+      // 1. Générer d'abord le PDF (même logique que downloadPDF)
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
-      // Create proper Word document structure
-      const wordContent = `
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-  <meta charset="UTF-8">
-  <meta name="ProgId" content="Word.Document">
-  <meta name="Generator" content="Microsoft Word 15">
-  <meta name="Originator" content="Microsoft Word 15">
-  <!--[if !mso]>
-  <style>
-    v\\:* {behavior:url(#default#VML);}
-    o\\:* {behavior:url(#default#VML);}
-    w\\:* {behavior:url(#default#VML);}
-    .shape {behavior:url(#default#VML);}
-  </style>
-  <![endif]-->
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      line-height: 1.4;
-    }
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin: 10px 0; 
-    }
-    th, td { 
-      border: 1px solid #000; 
-      padding: 8px; 
-      text-align: left; 
-      vertical-align: top;
-    }
-    th { 
-      background-color: #f5f5f5; 
-      font-weight: bold;
-    }
-    .page-break { 
-      page-break-before: always; 
-    }
-    .page-break-avoid {
-      page-break-inside: avoid;
-    }
-  </style>
-</head>
-<body>
-${htmlContent}
-</body>
-</html>
-      `;
+      const html2pdf = (await import('html2pdf.js')).default;
       
-      // Create a proper Word document blob
-      const blob = new Blob(['\ufeff', wordContent], {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      tempDiv.style.width = '180mm';
+      tempDiv.style.minHeight = '277mm';
+      tempDiv.style.padding = '10mm';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = 'black';
+      tempDiv.style.boxSizing = 'border-box';
+      tempDiv.style.margin = '0 auto';
+      tempDiv.style.maxWidth = '180mm';
+      
+      document.body.appendChild(tempDiv);
+      
+      const opt = {
+        margin: [15, 15, 15, 15],
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { 
+          scale: 1.5,
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 1200,
+          windowHeight: 1600,
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true,
+          precision: 16
+        },
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'],  
+          before: '.page-break-before',
+          after: '.page-break-after',
+          avoid: '.page-break-avoid'
+        }
+      };
+      
+      // Générer le PDF en tant que blob
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
+      document.body.removeChild(tempDiv);
+      
+      console.log('PDF généré pour conversion - Taille:', pdfBlob.size, 'bytes');
+      
+      // 2. Convertir le PDF en base64
+      const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+      const pdfUint8Array = new Uint8Array(pdfArrayBuffer);
+      const pdfBase64 = btoa(String.fromCharCode(...pdfUint8Array));
+      
+      const filename = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`;
+      
+      // 3. Appeler l'edge function de conversion
+      const { data: conversionResult, error } = await supabase.functions.invoke('convert-pdf-to-docx', {
+        body: {
+          filename,
+          file_base64: pdfBase64
+        }
+      });
+      
+      if (error) {
+        throw new Error(`Erreur de conversion: ${error.message}`);
+      }
+      
+      if (!conversionResult?.file_base64) {
+        throw new Error('Pas de fichier DOCX retourné par le service de conversion');
+      }
+      
+      // 4. Décoder le DOCX et déclencher le téléchargement
+      const docxBase64 = conversionResult.file_base64;
+      const docxBinary = atob(docxBase64);
+      const docxBytes = new Uint8Array(docxBinary.length);
+      for (let i = 0; i < docxBinary.length; i++) {
+        docxBytes[i] = docxBinary.charCodeAt(i);
+      }
+      
+      const docxBlob = new Blob([docxBytes], {
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
       
-      const url = window.URL.createObjectURL(blob);
+      const docxFilename = conversionResult.filename || filename.replace('.pdf', '.docx');
+      const url = window.URL.createObjectURL(docxBlob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .docx extension for modern Word format
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.docx`;
+      link.download = docxFilename;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success('Document Word téléchargé avec succès');
+      console.log('DOCX téléchargé - Taille:', docxBlob.size, 'bytes, Méthode:', conversionResult.conversion_method);
+      toast.success('Word téléchargé');
+      
     } catch (error) {
       console.error('Erreur génération Word:', error);
-      toast.error('Erreur lors de la génération du Word');
+      toast.error('Conversion PDF→Word impossible');
+    } finally {
+      setIsGeneratingWord(false);
     }
   };
 
@@ -285,9 +338,13 @@ ${htmlContent}
       </Button>
 
       {/* Bouton Word */}
-      <Button onClick={downloadWord} className="bg-blue-600 hover:bg-blue-700 text-white">
+      <Button 
+        onClick={downloadWord} 
+        disabled={isGeneratingWord}
+        className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+      >
         <FileDown className="h-4 w-4 mr-2" />
-        Word
+        {isGeneratingWord ? 'Conversion...' : 'Word'}
       </Button>
 
       {/* Affichage signature client si présente */}
