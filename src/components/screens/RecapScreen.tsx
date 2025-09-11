@@ -10,6 +10,7 @@ import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
 import PDFPreview from '@/components/pdf/PDFPreview';
+import html2pdf from 'html2pdf.js';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 
 const RecapScreen = () => {
@@ -231,8 +232,8 @@ const RecapScreen = () => {
       
       document.body.appendChild(tempDiv);
       
-      // Dynamically import html2pdf
-      const html2pdf = (await import('html2pdf.js')).default;
+      // Use html2pdf
+      const html2pdfLib = html2pdf;
       
       const options = {
         margin: [10, 10, 10, 10],
@@ -251,7 +252,7 @@ const RecapScreen = () => {
         }
       };
 
-      await html2pdf().set(options).from(tempDiv).save();
+      await html2pdfLib().set(options).from(tempDiv).save();
       
       // Nettoyer l'élément temporaire
       document.body.removeChild(tempDiv);
@@ -1200,36 +1201,38 @@ const RecapScreen = () => {
 
           ${groupedAgentItemsArray.length > 0 ? `
           <h3 style="color: ${colors.primary};">Prestations d'agents de sécurité</h3>
-          <table style="font-size: 8pt;">
-            <tr>
-              <th>Période</th>
-              <th>Horaires</th>
-              <th>Type Agent</th>
-              <th>Canton</th>
-              <th>H norm.</th>
-              <th>H nuit</th>
-              <th>H dim.</th>
-              <th>H JF</th>
-              <th>Total H</th>
-              <th>HT</th>
-              <th>TTC</th>
+          <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 8pt;">
+            <tr style="background: ${colors.tableHeader};">
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Type</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Date début</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Heure début</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Date fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Heure fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">H. Normal</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">H. Majorée</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">Total HT</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">Total TTC</th>
             </tr>
-            ${groupedAgentItemsArray.map(group => `
-            <tr>
-              <td>${group.dateRange}</td>
-              <td>${group.timeRange}</td>
-              <td>${group.agentType}</td>
-              <td>${group.canton}</td>
-              <td class="text-center">${group.normalHours.toFixed(1)}</td>
-              <td class="text-center">${group.nightHours.toFixed(1)}</td>
-              <td class="text-center">${group.sundayHours.toFixed(1)}</td>
-              <td class="text-center">${group.holidayHours.toFixed(1)}</td>
-              <td class="text-center"><strong>${group.totalHours.toFixed(1)}</strong></td>
-              <td class="text-right">${group.totalHT.toFixed(2)}</td>
-              <td class="text-right"><strong>${group.totalTTC.toFixed(2)}</strong></td>
-            </tr>
-            ${group.count > 1 ? `<tr><td colspan="11" style="font-size: 7pt; color: ${colors.subtitleColor}; font-style: italic;">* ${group.count} périodes identiques regroupées</td></tr>` : ''}
-            `).join('')}
+            ${groupedAgentItemsArray.map(group => {
+              const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
+              const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
+              const timeStart = group.items[0]?.timeStart || '-';
+              const timeEnd = group.items[0]?.timeEnd || '-';
+              const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
+              
+              return `
+              <tr>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${group.agentType} ${group.canton ? `(${group.canton})` : ''}${group.count > 1 ? ` x${group.count}` : ''}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${dateStart}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${timeStart}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${dateEnd}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${timeEnd}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center;">${group.normalHours.toFixed(1)}h</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center;">${majoredHours.toFixed(1)}h</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right;">${group.totalHT.toFixed(2)} CHF</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right;">${group.totalTTC.toFixed(2)} CHF</td>
+              </tr>`;
+            }).join('')}
           </table>
           ` : ''}
 
