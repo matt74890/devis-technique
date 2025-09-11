@@ -20,35 +20,42 @@ export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanva
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 400,
       height: 150,
-      backgroundColor: '#ffffff',
-      isDrawingMode: true
+      backgroundColor: '#ffffff'
     });
 
-    // Configuration du pinceau
-    canvas.freeDrawingBrush.width = 2;
-    canvas.freeDrawingBrush.color = '#000000';
+    // Activer le mode dessin
+    canvas.isDrawingMode = true;
+
+    // Attendre que le canvas soit initialisé puis configurer le pinceau
+    setTimeout(() => {
+      try {
+        if (canvas.freeDrawingBrush) {
+          canvas.freeDrawingBrush.width = 2;
+          canvas.freeDrawingBrush.color = '#000000';
+        }
+      } catch (error) {
+        console.log('Pinceau non disponible:', error);
+      }
+    }, 100);
 
     // Charger signature existante si présente
-    if (signature) {
-      try {
-        canvas.loadFromJSON(signature, () => {
-          canvas.renderAll();
-          setIsSigning(true);
-        });
-      } catch (error) {
-        console.log('Erreur lors du chargement de la signature:', error);
-      }
+    if (signature && signature.startsWith('data:image')) {
+      setIsSigning(true);
     }
 
     // Événement lors de modification
     canvas.on('path:created', () => {
       setIsSigning(true);
-      const signatureData = canvas.toDataURL({
-        format: 'png',
-        quality: 1,
-        multiplier: 2
-      });
-      onSignatureChange(signatureData);
+      try {
+        const signatureData = canvas.toDataURL({
+          format: 'png',
+          quality: 1,
+          multiplier: 2
+        });
+        onSignatureChange(signatureData);
+      } catch (error) {
+        console.log('Erreur lors de la sauvegarde:', error);
+      }
     });
 
     setFabricCanvas(canvas);
