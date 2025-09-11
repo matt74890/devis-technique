@@ -365,7 +365,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     <style>
       @page { 
         margin: 10mm 15mm 25mm 15mm; 
-        @bottom-center { 
+        @bottom-right { 
           content: "Page " counter(page) " / " counter(pages); 
           font-size: 10px; 
           color: ${colors.secondary}; 
@@ -374,27 +374,18 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       }
       .page-break { page-break-before: always; }
       .page-break-avoid { page-break-inside: avoid; }
-      .page-number { 
-        position: fixed; 
-        bottom: 10mm; 
-        left: 50%; 
-        transform: translateX(-50%); 
-        font-size: 10px; 
-        color: ${colors.secondary}; 
-      }
     </style>
     <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; box-sizing: border-box; padding: 0 2mm;">
   `;
 
   // Lettre de présentation (si activée)
   if (letterTemplate?.enabled) {
-    pageCount++;
     const letterDate = new Date().toLocaleDateString('fr-FR');
     const clientAddress = quote.addresses.contact;
     
     html += `
-      <div class="page-break">
-        ${generatePageHeader(settings, colors, pageCount, totalPages)}
+      <div style="page-break-inside: avoid;">
+        ${generatePageHeader(settings, colors, 1, totalPages)}
         <div style="margin-bottom: 40px; padding: 15px;">
           <div style="margin-bottom: 20px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${letterTemplate.companyName || settings.sellerInfo?.name || ''}</div>
@@ -424,17 +415,23 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             <strong>Objet:</strong> ${letterTemplate.subject}
           </div>
           
-            <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
-              <div style="margin-bottom: 20px;">
-                ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
-              </div>
+              <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
+                <div style="margin-bottom: 20px;">
+                  ${(() => {
+                    const lastName = quote.addresses.contact.name?.split(' ').pop() || '';
+                    return quote.clientCivility === 'Madame' ? `Chère Madame ${lastName}` : `Cher Monsieur ${lastName}`;
+                  })()},
+                </div>
               
               <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
               <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
               <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
               
               <div style="margin-top: 30px;">
-                <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
+                <p>Veuillez agréer, ${(() => {
+                    const lastName = quote.addresses.contact.name?.split(' ').pop() || '';
+                    return quote.clientCivility === 'Madame' ? `Madame ${lastName}` : `Monsieur ${lastName}`;
+                  })()}, l'expression de nos salutations distinguées.</p>
               </div>
             </div>
           
@@ -460,11 +457,10 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // Page Description de la prestation (pour les agents) - avec même template
   if (hasAgentItems && quote.agentServiceDescription) {
-    pageCount++;
     const desc = quote.agentServiceDescription;
     html += `
       <div class="page-break">
-        ${generatePageHeader(settings, colors, pageCount, totalPages)}
+        ${generatePageHeader(settings, colors, letterTemplate?.enabled ? 2 : 1, totalPages)}
         <div style="page-break-inside: avoid;">
           <!-- En-tête de la description -->
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
@@ -513,10 +509,9 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   }
 
   // DEBUT DU DEVIS PRINCIPAL - Page du devis avec toutes les informations
-  pageCount++;
   html += `
     <div class="page-break">
-      ${generatePageHeader(settings, colors, pageCount, totalPages)}
+      ${generatePageHeader(settings, colors, 2, totalPages)}
       <div style="page-break-inside: avoid;">
         <!-- En-tête du devis -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
@@ -781,7 +776,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       </div>
 
       <!-- SECTION TOTAUX ET SIGNATURE - TOUJOURS ENSEMBLE SUR LA MÊME PAGE -->
-      <div class="page-break-avoid" style="page-break-inside: avoid;">        
+      <div class="page-break-avoid" style="page-break-inside: avoid;">
+        ${generatePageHeader(settings, colors, (letterTemplate?.enabled ? 1 : 0) + (hasAgentItems && quote.agentServiceDescription ? 1 : 0) + 1, totalPages)}
         <!-- Totaux centrés -->
         <div style="display: flex; justify-content: center; margin: 30px 0;">
           <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">

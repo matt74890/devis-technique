@@ -10,7 +10,9 @@ import { toast } from 'sonner';
 
 interface Client {
   id: string;
-  name: string;
+  name?: string; // Rétrocompatibilité
+  first_name?: string;
+  last_name?: string;
   company?: string;
   email?: string;
   phone?: string;
@@ -26,7 +28,8 @@ const ClientsScreen = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<Client>>({
-    name: '',
+    first_name: '',
+    last_name: '',
     company: '',
     email: '',
     phone: '',
@@ -58,16 +61,22 @@ const ClientsScreen = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name?.trim()) {
-      toast.error('Le nom est obligatoire');
+    if (!formData.first_name?.trim() && !formData.last_name?.trim()) {
+      toast.error('Le prénom ou le nom de famille est obligatoire');
       return;
     }
+
+    // Adapter les données pour la base de données (rétrocompatibilité)
+    const clientData = {
+      ...formData,
+      name: `${formData.first_name || ''} ${formData.last_name || ''}`.trim()
+    };
 
     try {
       if (editingClient) {
         const { error } = await supabase
           .from('clients')
-          .update(formData)
+          .update(clientData)
           .eq('id', editingClient.id);
         
         if (error) throw error;
@@ -75,7 +84,7 @@ const ClientsScreen = () => {
       } else {
         const { error } = await supabase
           .from('clients')
-          .insert([formData as Client]);
+          .insert([clientData]);
         
         if (error) throw error;
         toast.success('Client créé avec succès');
@@ -111,6 +120,8 @@ const ClientsScreen = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      first_name: '',
+      last_name: '',
       company: '',
       email: '',
       phone: '',
@@ -124,19 +135,28 @@ const ClientsScreen = () => {
 
   const openEditDialog = (client: Client) => {
     setEditingClient(client);
-    setFormData(client);
+    // Extraire prénom et nom de famille depuis le champ name si pas de first_name/last_name
+    const nameParts = client.name?.split(' ') || [];
+    const formDataWithSeparatedNames = {
+      ...client,
+      first_name: client.first_name || (nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : nameParts[0] || ''),
+      last_name: client.last_name || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '')
+    };
+    setFormData(formDataWithSeparatedNames);
     setIsDialogOpen(true);
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients.filter(client => {
+    const fullName = client.name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  // Grouper les clients par première lettre
+  // Grouper les clients par première lettre du nom de famille
   const groupedClients = filteredClients.reduce((acc, client) => {
-    const firstLetter = client.name.charAt(0).toUpperCase();
+    const lastName = client.last_name || client.name?.split(' ').pop() || '';
+    const firstLetter = lastName.charAt(0).toUpperCase();
     if (!acc[firstLetter]) {
       acc[firstLetter] = [];
     }
@@ -174,24 +194,34 @@ const ClientsScreen = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Nom *</Label>
+                  <Label htmlFor="first_name">Prénom</Label>
                   <Input
-                    id="name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Nom du client"
-                    required
+                    id="first_name"
+                    value={formData.first_name || ''}
+                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                    placeholder="Prénom du client"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="company">Entreprise</Label>
+                  <Label htmlFor="last_name">Nom de famille *</Label>
                   <Input
-                    id="company"
-                    value={formData.company || ''}
-                    onChange={(e) => setFormData({...formData, company: e.target.value})}
-                    placeholder="Nom de l'entreprise"
+                    id="last_name"
+                    value={formData.last_name || ''}
+                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                    placeholder="Nom de famille"
+                    required
                   />
                 </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="company">Entreprise</Label>
+                <Input
+                  id="company"
+                  value={formData.company || ''}
+                  onChange={(e) => setFormData({...formData, company: e.target.value})}
+                  placeholder="Nom de l'entreprise"
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -297,7 +327,11 @@ const ClientsScreen = () => {
                     <CardTitle className="text-lg flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <User className="h-5 w-5 text-primary" />
-                        <span>{client.name}</span>
+                        <span>
+                          {client.first_name && client.last_name 
+                            ? `${client.first_name} ${client.last_name}` 
+                            : client.name || ''}
+                        </span>
                       </div>
                       <div className="flex space-x-1">
                         <Button
