@@ -4,7 +4,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { FileDown, Calculator, Euro } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { calculateQuoteTotals } from '@/utils/calculations';
+import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
+import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
 import PDFPreview from '@/components/pdf/PDFPreview';
 
@@ -16,10 +17,8 @@ const RecapScreen = () => {
   // Ensure all items have calculated values
   const calculatedItems = currentQuote.items.map(item => {
     if (item.kind === 'AGENT') {
-      const { calculateAgentVacation } = require('@/utils/agentCalculations');
       return calculateAgentVacation(item, settings);
     } else {
-      const { calculateQuoteItem } = require('@/utils/calculations');
       return calculateQuoteItem(item, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
     }
   });
