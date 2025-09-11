@@ -364,20 +364,23 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   let html = `
     <style>
       @page { 
-        margin: 10mm; 
+        margin: 10mm 15mm 25mm 15mm; 
         @bottom-center { 
-          content: counter(page) " / " counter(pages); 
-          font-size: 9px; 
+          content: "Page " counter(page) " / " counter(pages); 
+          font-size: 10px; 
           color: ${colors.secondary}; 
+          font-family: Arial, sans-serif;
         }
       }
       .page-break { page-break-before: always; }
       .page-break-avoid { page-break-inside: avoid; }
-      .page-header { 
-        position: running(header); 
-      }
-      @page :first { 
-        @top-center { content: element(header); } 
+      .page-number { 
+        position: fixed; 
+        bottom: 10mm; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        font-size: 10px; 
+        color: ${colors.secondary}; 
       }
     </style>
     <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; box-sizing: border-box; padding: 0 2mm;">
@@ -767,13 +770,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         </table>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 11px;">
-          <h4 style="color: ${colors.primary}; margin-bottom: 10px;">Informations importantes</h4>
-          <p style="margin-bottom: 10px; font-weight: bold;">${settings.agentSettings?.majorationNote || `Les heures entre ${settings.agentSettings?.nightStartTime || '23:00'} et ${settings.agentSettings?.nightEndTime || '06:00'} ainsi que les dimanches et jours fériés sont majorées de ${settings.agentSettings?.nightMarkupPct || 10}%.`}</p>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-            <div><strong>Heures de nuit:</strong> ${settings.agentSettings?.nightStartTime || '23:00'} → ${settings.agentSettings?.nightEndTime || '06:00'} (+${settings.agentSettings?.nightMarkupPct || 10}%)</div>
-            <div><strong>Dimanche/JF:</strong> ${settings.agentSettings?.sundayStartTime || '06:00'} → ${settings.agentSettings?.sundayEndTime || '23:00'} (+${settings.agentSettings?.sundayMarkupPct || 10}%)</div>
-            <div><strong>Jours fériés:</strong> +${settings.agentSettings?.holidayMarkupPct || 10}%</div>
-          </div>
+          <p style="margin: 0; font-weight: bold; color: ${colors.primary};">${settings.agentSettings?.majorationNote || `Les heures entre ${settings.agentSettings?.nightStartTime || '23:00'} et ${settings.agentSettings?.nightEndTime || '06:00'} ainsi que les dimanches et jours fériés sont majorées de ${settings.agentSettings?.nightMarkupPct || 10}%.`}</p>
         </div>
       </div>
     `;
@@ -784,9 +781,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       </div>
 
       <!-- SECTION TOTAUX ET SIGNATURE - TOUJOURS ENSEMBLE SUR LA MÊME PAGE -->
-      <div class="page-break-avoid" style="page-break-inside: avoid;">
-        ${generatePageHeader(settings, colors, pageCount, totalPages)}
-        
+      <div class="page-break-avoid" style="page-break-inside: avoid;">        
         <!-- Totaux centrés -->
         <div style="display: flex; justify-content: center; margin: 30px 0;">
           <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">
