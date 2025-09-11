@@ -69,32 +69,33 @@ const PDFPreviewWithSignature = () => {
       // Create a temporary div for PDF generation
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = htmlContent;
-      tempDiv.style.width = '210mm';
-      tempDiv.style.minHeight = '297mm';
-      tempDiv.style.padding = '10mm';
+      tempDiv.style.width = '190mm';
+      tempDiv.style.minHeight = '277mm';
+      tempDiv.style.padding = '5mm';
       tempDiv.style.backgroundColor = 'white';
       tempDiv.style.fontFamily = 'Arial, sans-serif';
       tempDiv.style.fontSize = '12px';
       tempDiv.style.lineHeight = '1.4';
       tempDiv.style.color = 'black';
+      tempDiv.style.boxSizing = 'border-box';
       
       // Add to DOM temporarily
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [18, 18, 18, 18],
+        margin: [10, 10, 10, 10],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-          scale: 1.1,
+          scale: 1.0,
           useCORS: true,
           letterRendering: true,
           allowTaint: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          windowWidth: 1200,
-          windowHeight: 1600,
+          windowWidth: 1000,
+          windowHeight: 1400,
           logging: false
         },
         jsPDF: { 
@@ -313,14 +314,14 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       }
       .page-number { 
         position: fixed; 
-        bottom: 10mm; 
-        right: 15mm; 
+        bottom: 5mm; 
+        right: 10mm; 
         font-size: 10px; 
         color: ${colors.secondary}; 
         z-index: 1000; 
       }
     </style>
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; overflow: visible;">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 190mm; margin: 0 auto; overflow: visible; box-sizing: border-box;">
   `;
 
   // Lettre de présentation (si activée)
@@ -361,26 +362,26 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           <strong>Objet:</strong> ${letterTemplate.subject}
         </div>
         
-        <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
-          <div style="margin-bottom: 20px;">
-            ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
+          <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
+            <div style="margin-bottom: 20px;">
+              ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`},
+            </div>
+            
+            <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
+            <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
+            <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
+            
+            <div style="margin-top: 30px;">
+              <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`}, l'expression de nos salutations distinguées.</p>
+            </div>
           </div>
-          
-          <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
-          <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
-          <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
-          
-          <div style="margin-top: 30px;">
-            <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
-          </div>
-        </div>
         
         <!-- Signature vendeur sur lettre -->
         <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
           <div style="text-align: right;">
             ${settings.sellerInfo?.signature ? `
               <div style="margin-bottom: 10px;">
-                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px;">
               </div>
             ` : `
               <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
@@ -841,7 +842,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           
           ${settings.sellerInfo?.signature ? `
             <div style="margin: 10px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px;">
             </div>
           ` : `
             <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin: 15px 0;"></div>
@@ -864,7 +865,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           
           ${quote.clientSignature ? `
             <div style="margin: 10px 0;">
-              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px;">
             </div>
             <div style="font-size: 12px; color: ${colors.textColor};">
               ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
