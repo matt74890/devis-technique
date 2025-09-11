@@ -255,15 +255,20 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
             lineHeight: 1.2,
             padding: 2
           },
-          columns: [
-            { label: 'Référence', dataKey: 'reference', width: 20, align: 'left' },
-            { label: 'Désignation', dataKey: 'label', width: 80, align: 'left' },
-            { label: 'Qté', dataKey: 'quantity', width: 15, align: 'center' },
-            { label: 'PU HT', dataKey: 'unitPrice', width: 25, align: 'right', format: 'currency' },
-            { label: 'Total HT', dataKey: 'totalHT', width: 25, align: 'right', format: 'currency' }
-          ],
-          repeatHeader: true,
-          conditions: { visible: 'hasTech' }
+          bindings: {},
+          tableConfig: {
+            dataset: 'items.tech',
+            columns: [
+              { id: 'ref', order: 0, label: 'Référence', binding: 'reference', width: 20, widthUnit: 'mm' as const, align: 'left' as const, visible: true },
+              { id: 'label', order: 1, label: 'Désignation', binding: 'label', width: 80, widthUnit: 'mm' as const, align: 'left' as const, visible: true },
+              { id: 'qty', order: 2, label: 'Qté', binding: 'quantity', width: 15, widthUnit: 'mm' as const, align: 'center' as const, visible: true },
+              { id: 'price', order: 3, label: 'PU HT', binding: 'unitPrice', width: 25, widthUnit: 'mm' as const, align: 'right' as const, format: 'currency' as const, visible: true },
+              { id: 'total', order: 4, label: 'Total HT', binding: 'totalHT', width: 25, widthUnit: 'mm' as const, align: 'right' as const, format: 'currency' as const, visible: true }
+            ],
+            repeatHeader: true,
+            showTotals: true
+          },
+          visibleIf: 'hasTech'
         });
       }
     }
@@ -291,9 +296,9 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
           backgroundColor: 'transparent',
           borderWidth: 0,
           borderColor: '#000000',
-          
           borderRadius: 0,
-          lineHeight: 1.2
+          lineHeight: 1.2,
+          padding: 0
         },
         bindings: {
           left: 'GPA SA – Sécurité privée',
