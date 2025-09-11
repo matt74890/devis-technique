@@ -82,28 +82,33 @@ const PDFPreviewWithSignature = () => {
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [5, 5, 5, 5],
+        margin: [10, 10, 10, 10],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
           letterRendering: true,
           allowTaint: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          width: 800,
-          height: 1120
+          windowWidth: 1200,
+          windowHeight: 1600
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true,
+          compress: false,
           precision: 16
         },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'],
+          before: '.page-break-before',
+          after: '.page-break-after',
+          avoid: '.page-break-avoid'
+        }
       };
       
       await html2pdf().set(opt).from(tempDiv).save();
@@ -205,16 +210,16 @@ const PDFPreviewWithSignature = () => {
         </html>
       `;
       
-      // Use correct MIME type for Word
+      // Use correct MIME type for Word - HTML format is better recognized
       const blob = new Blob([wordHTML], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        type: 'application/msword'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .docx extension
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.docx`;
+      // Use .doc extension for better compatibility
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -346,7 +351,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     : settings.letterTemplate;
 
   let html = `
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; page-break-inside: avoid;">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; overflow: visible;">
   `;
 
   // Lettre de présentation (si activée)
@@ -550,7 +555,18 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           <tbody>
     `;
 
-    quote.items.filter(item => item.kind === 'AGENT').forEach((item, index) => {
+    // Filtrer les items agents qui ont des valeurs (heures > 0 ou déplacement > 0)
+    const agentItemsWithValues = quote.items.filter(item => 
+      item.kind === 'AGENT' && (
+        (item.hoursNormal || 0) > 0 || 
+        (item.hoursNight || 0) > 0 || 
+        (item.hoursSunday || 0) > 0 || 
+        (item.hoursHoliday || 0) > 0 ||
+        (item.travelCHF || 0) > 0
+      )
+    );
+
+    agentItemsWithValues.forEach((item, index) => {
       const nightRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.nightMarkupPct || 10) / 100));
       const sundayHolidayRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.sundayMarkupPct || 10) / 100));
       
@@ -566,16 +582,16 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.timeEnd || '-'}</td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
-            ${(item.hoursNormal || 0).toFixed(1)}
+            ${(item.hoursNormal || 0) > 0 ? (item.hoursNormal || 0).toFixed(1) : ''}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
-            ${(item.hoursNight || 0).toFixed(1)}
+            ${(item.hoursNight || 0) > 0 ? (item.hoursNight || 0).toFixed(1) : ''}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
-            ${(item.hoursSunday || 0).toFixed(1)}
+            ${(item.hoursSunday || 0) > 0 ? (item.hoursSunday || 0).toFixed(1) : ''}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
-            ${(item.hoursHoliday || 0).toFixed(1)}
+            ${(item.hoursHoliday || 0) > 0 ? (item.hoursHoliday || 0).toFixed(1) : ''}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
             ${(item.rateCHFh || 0).toFixed(2)}
@@ -587,7 +603,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             ${sundayHolidayRate.toFixed(2)}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
-            ${(item.travelCHF || 0).toFixed(2)}
+            ${(item.travelCHF || 0) > 0 ? (item.travelCHF || 0).toFixed(2) : ''}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px; font-weight: bold;">
             ${(item.lineHT || 0).toFixed(2)}
