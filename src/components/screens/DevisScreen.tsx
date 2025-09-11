@@ -651,25 +651,49 @@ const DevisScreen = () => {
                   placeholder="Nom de la société"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact-name">Contact</Label>
-                <Input
-                  id="contact-name"
-                  value={currentQuote.addresses.contact.name}
-                  onChange={(e) => {
-                    const newAddress = { ...currentQuote.addresses.contact, name: e.target.value };
-                    updateQuote({ 
-                      client: e.target.value,
-                      addresses: { 
-                        ...currentQuote.addresses, 
-                        contact: newAddress,
-                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
-                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
-                      } 
-                    });
-                  }}
-                  placeholder="Nom et prénom"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact-first-name">Prénom</Label>
+                  <Input
+                    id="contact-first-name"
+                    value={currentQuote.addresses.contact.first_name || ''}
+                    onChange={(e) => {
+                      const newAddress = { ...currentQuote.addresses.contact, first_name: e.target.value };
+                      const fullName = `${e.target.value} ${newAddress.last_name || ''}`.trim();
+                      updateQuote({ 
+                        client: fullName,
+                        addresses: { 
+                          ...currentQuote.addresses, 
+                          contact: { ...newAddress, name: fullName },
+                          billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : { ...newAddress, name: fullName },
+                          installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : { ...newAddress, name: fullName }
+                        } 
+                      });
+                    }}
+                    placeholder="Prénom"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact-last-name">Nom de famille</Label>
+                  <Input
+                    id="contact-last-name"
+                    value={currentQuote.addresses.contact.last_name || ''}
+                    onChange={(e) => {
+                      const newAddress = { ...currentQuote.addresses.contact, last_name: e.target.value };
+                      const fullName = `${newAddress.first_name || ''} ${e.target.value}`.trim();
+                      updateQuote({ 
+                        client: fullName,
+                        addresses: { 
+                          ...currentQuote.addresses, 
+                          contact: { ...newAddress, name: fullName },
+                          billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : { ...newAddress, name: fullName },
+                          installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : { ...newAddress, name: fullName }
+                        } 
+                      });
+                    }}
+                    placeholder="Nom de famille"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact-email">Email</Label>
