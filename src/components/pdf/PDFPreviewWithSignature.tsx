@@ -82,25 +82,26 @@ const PDFPreviewWithSignature = () => {
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [8, 8, 8, 8],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-          scale: 1.5,
+          scale: 1.2,
           useCORS: true,
           letterRendering: true,
           allowTaint: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          windowWidth: 1200,
-          windowHeight: 1600
+          windowWidth: 1400,
+          windowHeight: 1800,
+          logging: false
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: false,
+          compress: true,
           precision: 16
         },
         pagebreak: { 
@@ -141,85 +142,23 @@ const PDFPreviewWithSignature = () => {
 
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
-      // Create Word-compatible HTML with RTF-like structure
-      const wordHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset='utf-8'>
-          <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-          <title>${quoteType} ${currentQuote.ref}</title>
-          <style>
-            body { 
-              font-family: 'Times New Roman', Times, serif; 
-              font-size: 12pt; 
-              line-height: 1.4; 
-              margin: 2cm; 
-              color: black;
-            }
-            table { 
-              border-collapse: collapse; 
-              width: 100%; 
-              margin: 10pt 0; 
-              font-size: 10pt;
-            }
-            th, td { 
-              border: 1px solid black; 
-              padding: 6pt; 
-              text-align: left; 
-              vertical-align: top;
-            }
-            th { 
-              background-color: #f0f0f0; 
-              font-weight: bold; 
-            }
-            h1 { 
-              font-size: 18pt; 
-              text-align: center; 
-              margin: 20pt 0; 
-              font-weight: bold;
-            }
-            h2 { 
-              font-size: 14pt; 
-              margin: 15pt 0 10pt 0; 
-              font-weight: bold;
-            }
-            h3 { 
-              font-size: 12pt; 
-              margin: 12pt 0 8pt 0; 
-              font-weight: bold;
-            }
-            .signature-section { 
-              margin-top: 30pt; 
-            }
-            .signature-box { 
-              border: 1px solid black; 
-              padding: 10pt; 
-              margin: 10pt 0; 
-              min-height: 60pt; 
-            }
-            img {
-              max-width: 100%;
-              height: auto;
-            }
-          </style>
-        </head>
-        <body>
-          ${htmlContent}
-        </body>
-        </html>
-      `;
       
-      // Use correct MIME type for Word - HTML format is better recognized
-      const blob = new Blob([wordHTML], {
-        type: 'application/msword'
+      // Create Word-compatible RTF document
+      const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+\\f0\\fs24 
+${htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&[a-z]+;/g, '')}
+}`;
+      
+      // Use RTF MIME type for better Word compatibility
+      const blob = new Blob([rtfContent], {
+        type: 'application/rtf'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .doc extension for better compatibility
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
+      // Use .rtf extension for best Word compatibility
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.rtf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -266,12 +205,12 @@ const PDFPreviewWithSignature = () => {
             <span>Signature Client</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Signature du client</DialogTitle>
-          </DialogHeader>
-          <ClientSignature onCancel={() => setShowSignature(false)} />
-        </DialogContent>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Signature du client</DialogTitle>
+            </DialogHeader>
+            <ClientSignature onCancel={() => setShowSignature(false)} />
+          </DialogContent>
       </Dialog>
 
       {/* Bouton Aperçu */}
@@ -405,62 +344,74 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           </div>
         </div>
         
-        <!-- Signatures de la lettre -->
-        <div style="margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-          <div>
+        <!-- Signature vendeur uniquement sur lettre -->
+        <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
+          <div style="text-align: right;">
             <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
             <div style="font-size: 12px; color: ${colors.textColor};">
-              Date et lieu: ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+              ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
             </div>
             <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
               Signature du vendeur
             </div>
-          </div>
-          
-          <div>
-            ${quote.clientSignature ? `
-              <div style="margin-bottom: 10px;">
-                <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
-              </div>
-              <div style="font-size: 12px; color: ${colors.textColor};">
-                ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
-              </div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
-                Signature du client
-              </div>
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
-              <div style="font-size: 12px; color: ${colors.textColor};">
-                Date et lieu:
-              </div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
-                Signature du client
-              </div>
-            `}
           </div>
         </div>
       </div>
     `;
   }
 
-  // Page Description de la prestation (pour les agents)
+  // Page Description de la prestation (pour les agents) - avec même template
   if (hasAgentItems && quote.agentServiceDescription) {
     const desc = quote.agentServiceDescription;
     html += `
-      <div style="margin-bottom: 40px; padding: 20px; background: ${colors.cardBackground}; border-radius: 8px; page-break-after: always;">
-        <h2 style="text-align: center; color: ${colors.titleColor}; margin-bottom: 30px; font-size: 24px;">Description de la prestation</h2>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-          <div><strong>Nature de la prestation:</strong> ${desc.naturePrestation || ''}</div>
-          <div><strong>Lieu de prestation:</strong> ${desc.lieuPrestation || ''}</div>
-          <div><strong>Période:</strong> ${desc.periode || ''}</div>
-          <div><strong>Horaires:</strong> ${desc.horaires || ''}</div>
-          <div><strong>Tenue:</strong> ${desc.tenue || ''}</div>
-          <div><strong>Pause:</strong> ${desc.pause || ''}</div>
-          <div><strong>Déplacement:</strong> ${desc.deplacement || ''}</div>
+      <div style="page-break-inside: avoid; page-break-after: always;">
+        <!-- En-tête de la description -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+          <div style="flex: 1;">
+            ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">` : ''}
+            ${settings.sellerInfo?.name ? `
+              <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${settings.sellerInfo.name}</div>
+              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
+              ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
+              ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
+            ` : ''}
+          </div>
+          
+          <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
+            <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
+            <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
+              ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
+              <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
+              ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
+              ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Titre -->
+        <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary}; margin: 20px 0;">
+          <h1 style="color: ${colors.primary}; font-size: 28px; margin: 0; font-weight: bold;">Description de la prestation</h1>
         </div>
         
-        ${desc.remarque ? `<div><strong>Remarque:</strong><br>${desc.remarque}</div>` : ''}
+        <!-- Contenu description -->
+        <div style="margin: 30px 0; padding: 20px; background: ${colors.cardBackground}; border-radius: 8px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div><strong>Nature de la prestation:</strong> ${desc.naturePrestation || ''}</div>
+            <div><strong>Lieu de prestation:</strong> ${desc.lieuPrestation || ''}</div>
+            <div><strong>Période:</strong> ${desc.periode || ''}</div>
+            <div><strong>Horaires:</strong> ${desc.horaires || ''}</div>
+            <div><strong>Tenue:</strong> ${desc.tenue || ''}</div>
+            <div><strong>Pause:</strong> ${desc.pause || ''}</div>
+            <div><strong>Déplacement:</strong> ${desc.deplacement || ''}</div>
+          </div>
+          
+          ${desc.remarque ? `<div><strong>Remarque:</strong><br>${desc.remarque}</div>` : ''}
+        </div>
       </div>
     `;
   }
@@ -738,10 +689,11 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Totaux
+  // Totaux - CENTRÉS AU MILIEU DE LA PAGE
   html += `
-      <!-- Totaux -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
+      <!-- Totaux centrés -->
+      <div style="display: flex; justify-content: center; margin: 30px 0;">
+        <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 20px; max-width: 900px;">
   `;
 
   // Total TECH unique
@@ -776,15 +728,16 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Total AGENT
+  // Total AGENT avec couleur personnalisable
   if (totals.agents.totalTTC > 0) {
+    const agentTableColor = settings.templateColors?.agentTableColor || '#f59e0b';
     html += `
-      <div style="border: 2px solid #f59e0b; background: #fefbf3; padding: 15px; border-radius: 8px;">
-        <h4 style="color: #f59e0b; margin-bottom: 15px; font-weight: bold;">${isMixed ? 'Agents de sécurité' : 'Prestations d\'agents'}</h4>
+      <div style="border: 2px solid ${agentTableColor}; background: #fefbf3; padding: 15px; border-radius: 8px;">
+        <h4 style="color: ${agentTableColor}; margin-bottom: 15px; font-weight: bold;">${isMixed ? 'Agents de sécurité' : 'Prestations d\'agents'}</h4>
         <div>
           <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>Sous-total HT:</span><span>${totals.agents.subtotalHT.toFixed(2)} CHF</span></div>
           <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.agents.tva.toFixed(2)} CHF</span></div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid #f59e0b; padding-top: 8px; color: #f59e0b;">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${agentTableColor}; padding-top: 8px; color: ${agentTableColor};">
             <span>Total TTC:</span><span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
           </div>
         </div>
@@ -792,30 +745,33 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  html += `      </div>
+  html += `        </div>
+      </div>
 
-      <!-- Total général -->
-      <div style="text-align: center; padding: 25px; border: 3px solid ${colors.primary}; border-radius: 8px; margin: 30px 0; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08);">
-        <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
-          <div>
-            <p style="color: ${colors.secondary}; margin-bottom: 5px;">Total HT</p>
-            <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+      <!-- Total général centré -->
+      <div style="display: flex; justify-content: center; margin: 30px 0;">
+        <div style="text-align: center; padding: 25px; border: 3px solid ${colors.primary}; border-radius: 8px; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); max-width: 600px; width: 100%;">
+          <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
+            <div>
+              <p style="color: ${colors.secondary}; margin-bottom: 5px;">Total HT</p>
+              <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+            </div>
+            <div>
+              <p style="color: ${colors.secondary}; margin-bottom: 5px;">TVA totale</p>
+              <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+            </div>
           </div>
-          <div>
-            <p style="color: ${colors.secondary}; margin-bottom: 5px;">TVA totale</p>
-            <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-          </div>
-        </div>
-        <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
-          <p style="font-size: 32px; font-weight: bold; color: ${colors.primary}; margin: 0;">
-            ${totals.global.totalTTC.toFixed(2)} CHF
-          </p>
-          ${totals.mensuel.totalTTC > 0 ? `
-            <p style="font-size: 20px; font-weight: bold; color: ${colors.accent}; margin-top: 10px;">
-              + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+          <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
+            <p style="font-size: 32px; font-weight: bold; color: ${colors.primary}; margin: 0;">
+              ${totals.global.totalTTC.toFixed(2)} CHF
             </p>
-          ` : ''}
+            ${totals.mensuel.totalTTC > 0 ? `
+              <p style="font-size: 20px; font-weight: bold; color: ${colors.accent}; margin-top: 10px;">
+                + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+              </p>
+            ` : ''}
+          </div>
         </div>
       </div>
   `;

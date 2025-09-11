@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Shield, Calendar, FileText } from 'lucide-react';
+import { Plus, Trash2, Shield, Calendar, FileText, Palette } from 'lucide-react';
 import { useSettings } from '@/components/SettingsProvider';
 
 const AgentSettings = () => {
@@ -237,6 +237,39 @@ const AgentSettings = () => {
             />
             <p className="text-sm text-gray-500">
               Ce texte sera affiché dans le PDF et Word pour expliquer les règles de majoration.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Couleur du tableau agent */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Palette className="h-5 w-5 text-primary" />
+            <span>Couleur du tableau agent</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="agentTableColor">Couleur du tableau des totaux agents</Label>
+            <Input
+              id="agentTableColor"
+              type="color"
+              value={settings.templateColors?.agentTableColor || '#f59e0b'}
+              onChange={(e) => {
+                const updatedSettings = {
+                  ...settings,
+                  templateColors: {
+                    ...settings.templateColors,
+                    agentTableColor: e.target.value
+                  }
+                };
+                updateSettings(updatedSettings);
+              }}
+            />
+            <p className="text-sm text-gray-500">
+              Cette couleur sera utilisée pour les bordures et titres du tableau des totaux agents dans le PDF.
             </p>
           </div>
         </CardContent>

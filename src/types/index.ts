@@ -75,6 +75,9 @@ export interface TemplateColors {
   signatureBoxBackground: string;
   signatureTitleColor: string;
   signatureTextColor: string;
+  
+  // Couleur spécifique agent
+  agentTableColor?: string;
 }
 
 export interface LetterTemplate {
