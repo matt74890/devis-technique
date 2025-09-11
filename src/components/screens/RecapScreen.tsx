@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +29,64 @@ const RecapScreen = () => {
       return calculateQuoteItem(item, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
     }
   });
+
+  // Group identical agent items
+  const agentItems = calculatedItems.filter(item => item.kind === 'AGENT');
+  
+  interface GroupedAgentItem {
+    title: string;
+    agentType: string;
+    canton: string;
+    dateRange: string;
+    timeRange: string;
+    totalHours: number;
+    normalHours: number;
+    nightHours: number;
+    sundayHours: number;
+    holidayHours: number;
+    totalHT: number;
+    totalTTC: number;
+    count: number;
+    items: any[];
+  }
+  
+  const groupedAgentItems: Record<string, GroupedAgentItem> = agentItems.reduce((groups, item) => {
+    // Create a key based on identical parameters
+    const key = `${item.dateStart}-${item.timeStart}-${item.dateEnd}-${item.timeEnd}-${item.agentType}-${item.canton}-${item.rateCHFh}`;
+    
+    if (!groups[key]) {
+      groups[key] = {
+        title: `Agent ${item.agentType || 'Sécurité'}`,
+        agentType: item.agentType || 'Agent',
+        canton: item.canton || '',
+        dateRange: `${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : ''} - ${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : ''}`,
+        timeRange: `${item.timeStart || ''} - ${item.timeEnd || ''}`,
+        totalHours: 0,
+        normalHours: 0,
+        nightHours: 0,
+        sundayHours: 0,
+        holidayHours: 0,
+        totalHT: 0,
+        totalTTC: 0,
+        count: 0,
+        items: []
+      };
+    }
+    
+    groups[key].totalHours += (item.hoursTotal || 0);
+    groups[key].normalHours += (item.hoursNormal || 0);
+    groups[key].nightHours += (item.hoursNight || 0);
+    groups[key].sundayHours += (item.hoursSunday || 0);
+    groups[key].holidayHours += (item.hoursHoliday || 0);
+    groups[key].totalHT += (item.lineHT || 0);
+    groups[key].totalTTC += (item.lineTTC || 0);
+    groups[key].count += 1;
+    groups[key].items.push(item);
+    
+    return groups;
+  }, {} as Record<string, GroupedAgentItem>);
+
+  const groupedAgentItemsArray: GroupedAgentItem[] = Object.values(groupedAgentItems);
 
   const quoteWithCalculatedItems = { ...currentQuote, items: calculatedItems };
   const totals = calculateQuoteTotals(quoteWithCalculatedItems, settings.tvaPct);
@@ -1194,54 +1254,45 @@ const RecapScreen = () => {
               </div>
             )}
 
-            {/* Prestations AGENT */}
-            {calculatedItems.some(item => item.kind === 'AGENT') && (
+            {/* Prestations AGENT groupées */}
+            {groupedAgentItemsArray.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 text-primary">Prestations d'agents de sécurité</h4>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-1">Date début</th>
-                      <th className="text-left p-1">H début</th>
-                      <th className="text-left p-1">Date fin</th>
-                      <th className="text-left p-1">H fin</th>
-                      <th className="text-left p-1">Type</th>
-                      <th className="text-center p-1">H norm.</th>
-                      <th className="text-center p-1">H nuit</th>
-                      <th className="text-center p-1">H dim.</th>
-                      <th className="text-center p-1">H JF</th>
-                      <th className="text-right p-1">Tarif CHF/h</th>
-                      <th className="text-right p-1">Dépl.</th>
-                      <th className="text-right p-1">HT</th>
-                      <th className="text-right p-1">TTC</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {calculatedItems.filter(item => item.kind === 'AGENT').map((item) => (
-                      <tr key={item.id} className="border-b">
-                        <td className="p-1">
-                          {item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
-                        </td>
-                        <td className="p-1">{item.timeStart || '-'}</td>
-                        <td className="p-1">
-                          {item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
-                        </td>
-                        <td className="p-1">{item.timeEnd || '-'}</td>
-                        <td className="p-1">
-                          <Badge variant="outline" className="text-xs">{item.agentType || 'Agent'}</Badge>
-                        </td>
-                        <td className="p-1 text-center">{(item.hoursNormal || 0).toFixed(1)}</td>
-                        <td className="p-1 text-center">{(item.hoursNight || 0).toFixed(1)}</td>
-                        <td className="p-1 text-center">{(item.hoursSunday || 0).toFixed(1)}</td>
-                        <td className="p-1 text-center">{(item.hoursHoliday || 0).toFixed(1)}</td>
-                        <td className="p-1 text-right font-medium">{(item.rateCHFh || 0).toFixed(2)}</td>
-                        <td className="p-1 text-right">{(item.travelCHF || 0).toFixed(2)}</td>
-                        <td className="p-1 text-right font-medium">{(item.lineHT || 0).toFixed(2)}</td>
-                        <td className="p-1 text-right font-bold text-primary">{(item.lineTTC || 0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="space-y-3">
+                  {groupedAgentItemsArray.map((group, index) => (
+                    <div key={index} className="flex justify-between items-start border border-muted rounded-lg p-3">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{group.title}</div>
+                        <div className="text-xs text-muted-foreground space-y-1 mt-1">
+                          <div><span className="font-medium">Agent:</span> {group.agentType}</div>
+                          <div><span className="font-medium">Canton:</span> {group.canton}</div>
+                          <div><span className="font-medium">Période:</span> {group.dateRange}</div>
+                          <div><span className="font-medium">Horaires:</span> {group.timeRange}</div>
+                          <div className="font-medium text-foreground text-sm mt-2">
+                            <span className="text-primary">{group.totalHours.toFixed(1)}h total</span>
+                            {group.normalHours > 0 && <span className="ml-2 text-xs">({group.normalHours.toFixed(1)}h norm.)</span>}
+                            {group.nightHours > 0 && <span className="ml-2 text-xs">({group.nightHours.toFixed(1)}h nuit)</span>}
+                            {group.sundayHours > 0 && <span className="ml-2 text-xs">({group.sundayHours.toFixed(1)}h dim.)</span>}
+                            {group.holidayHours > 0 && <span className="ml-2 text-xs">({group.holidayHours.toFixed(1)}h férié)</span>}
+                          </div>
+                          {group.count > 1 && (
+                            <div className="text-xs text-muted-foreground italic">
+                              {group.count} périodes identiques regroupées
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <div className="font-semibold text-sm">
+                          {group.totalHT.toFixed(2)} CHF HT
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {group.totalTTC.toFixed(2)} CHF TTC
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 
                 {/* Règles appliquées */}
                 <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs">
@@ -1387,11 +1438,71 @@ const RecapScreen = () => {
         </Card>
       )}
 
-      {/* Signature client */}
-      <SignatureCanvas
-        onSignatureChange={handleSignatureChange}
-        signature={currentQuote.clientSignature}
-      />
+      {/* Signatures alignées */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Signature vendeur */}
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>Signature du vendeur</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {settings.sellerInfo?.signature ? (
+              <div className="space-y-4">
+                <div className="bg-background border rounded-lg p-4 h-[150px] flex items-center justify-center">
+                  <img 
+                    src={settings.sellerInfo.signature} 
+                    alt="Signature du vendeur" 
+                    className="max-h-20 mx-auto"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <strong>Nom:</strong> {settings.sellerInfo?.name || 'Non renseigné'}
+                  </div>
+                  <div className="text-sm">
+                    <strong>Fonction:</strong> {settings.sellerInfo?.title || 'Non renseigné'}
+                  </div>
+                  <div className="text-sm">
+                    <strong>Date:</strong> {new Date().toLocaleDateString('fr-CH')}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-8 h-[150px] flex flex-col items-center justify-center border rounded-lg">
+                <p>Aucune signature configurée</p>
+                <p className="text-xs mt-1">Configurez votre signature dans les paramètres</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Signature client */}
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span>Signature du client</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="h-[150px]">
+              <SignatureCanvas 
+                onSignatureChange={handleSignatureChange}
+                signature={currentQuote.clientSignature}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm">
+                <strong>Client:</strong> {currentQuote.addresses?.contact?.name || currentQuote.client || 'Non renseigné'}
+              </div>
+              <div className="text-sm">
+                <strong>Date:</strong> {new Date().toLocaleDateString('fr-CH')}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

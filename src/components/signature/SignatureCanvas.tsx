@@ -144,7 +144,7 @@ export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanva
         <div className="border border-input rounded-lg p-2 bg-background">
           <canvas
             ref={canvasRef}
-            className="border border-dashed border-muted-foreground/30 rounded w-full cursor-crosshair touch-none"
+            className="w-full cursor-crosshair touch-none"
             style={{ maxWidth: '100%', height: 'auto' }}
           />
         </div>
