@@ -1288,7 +1288,7 @@ const RecapScreen = () => {
               <span>Récapitulatif du devis</span>
             </div>
             <div className="flex space-x-2">
-              <PDFPreview />
+              <PDFPreview quote={currentQuote} settings={settings} />
               <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
                 <FileDown className="h-4 w-4 mr-2" />
                 Générer PDF

@@ -108,7 +108,7 @@ const Layout = () => {
           </TabsContent>
           
           <TabsContent value="layout" className="mt-6">
-            <PDFLayoutScreen />
+            <PDFLayoutEditor />
           </TabsContent>
           
           <TabsContent value="settings" className="mt-6">

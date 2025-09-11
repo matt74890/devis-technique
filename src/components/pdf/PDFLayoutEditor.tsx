@@ -357,7 +357,20 @@ const PDFLayoutEditor: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Configurateur de tableaux</DialogTitle>
           </DialogHeader>
-          <TableDesigner />
+          <TableDesigner
+            config={{
+              columns: [],
+              width: 100,
+              widthType: '%' as const,
+              showHeader: true,
+              showTotals: false,
+              repeatHeaderOnNewPage: false,
+              preventRowBreak: false
+            }}
+            onChange={() => {}}
+            tableName="default"
+            availableTokens={[]}
+          />
         </DialogContent>
       </Dialog>
     </div>

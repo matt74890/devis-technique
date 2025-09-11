@@ -286,7 +286,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <div>
             <Label className="text-xs">Liaisons de données</Label>
             <div className="text-xs text-muted-foreground mb-2">
-              Utilisez des tokens comme {{quoteRef}}, {{client.name}}
+              Utilisez des tokens comme {`{{quoteRef}}, {{client.name}}`}
             </div>
             {Object.entries(selectedBlock.bindings).map(([key, value]) => (
               <div key={key} className="mb-2">
