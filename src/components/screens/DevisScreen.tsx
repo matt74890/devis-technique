@@ -573,14 +573,35 @@ const DevisScreen = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="contact">Contact sur site</Label>
+              <Label htmlFor="contactFirstName">Prénom du contact</Label>
               <Input
-                id="contact"
-                value={currentQuote.contact}
-                onChange={(e) => updateQuote({ contact: e.target.value })}
-                placeholder="Nom du contact"
+                id="contactFirstName"
+                value={currentQuote.contactFirstName || ''}
+                onChange={(e) => {
+                  const contactFirstName = e.target.value;
+                  updateQuote({ 
+                    contactFirstName,
+                    contact: `${contactFirstName} ${currentQuote.contactLastName || ''}`.trim()
+                  });
+                }}
+                placeholder="Prénom"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactLastName">Nom du contact</Label>
+              <Input
+                id="contactLastName"
+                value={currentQuote.contactLastName || ''}
+                onChange={(e) => {
+                  const contactLastName = e.target.value;
+                  updateQuote({ 
+                    contactLastName,
+                    contact: `${currentQuote.contactFirstName || ''} ${contactLastName}`.trim()
+                  });
+                }}
+                placeholder="Nom"
               />
             </div>
             <div className="space-y-2">

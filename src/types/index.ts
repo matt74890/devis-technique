@@ -247,7 +247,9 @@ export interface Quote {
   client: string;
   clientCivility: 'Monsieur' | 'Madame';
   site: string;
-  contact: string;
+  contact: string; // Deprecated - keep for backwards compatibility
+  contactFirstName: string;
+  contactLastName: string;
   canton: string;
   comment: string;
   discountMode: 'per_line' | 'global';
