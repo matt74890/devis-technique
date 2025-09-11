@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Canvas as FabricCanvas } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Pen } from 'lucide-react';
@@ -11,68 +10,126 @@ interface SignatureCanvasProps {
 
 export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: 400,
-      height: 150,
-      backgroundColor: '#ffffff'
-    });
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    // Activer le mode dessin
-    canvas.isDrawingMode = true;
-
-    // Attendre que le canvas soit initialisé puis configurer le pinceau
-    setTimeout(() => {
-      try {
-        if (canvas.freeDrawingBrush) {
-          canvas.freeDrawingBrush.width = 2;
-          canvas.freeDrawingBrush.color = '#000000';
-        }
-      } catch (error) {
-        console.log('Pinceau non disponible:', error);
-      }
-    }, 100);
+    // Configuration du canvas
+    canvas.width = 400;
+    canvas.height = 150;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     // Charger signature existante si présente
     if (signature && signature.startsWith('data:image')) {
-      setIsSigning(true);
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setIsSigning(true);
+      };
+      img.src = signature;
     }
 
-    // Événement lors de modification
-    canvas.on('path:created', () => {
-      setIsSigning(true);
-      try {
-        const signatureData = canvas.toDataURL({
-          format: 'png',
-          quality: 1,
-          multiplier: 2
-        });
-        onSignatureChange(signatureData);
-      } catch (error) {
-        console.log('Erreur lors de la sauvegarde:', error);
+    // Fonction pour obtenir les coordonnées de l'événement
+    const getEventPos = (e: MouseEvent | TouchEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      if (e.type.includes('touch')) {
+        const touch = (e as TouchEvent).touches[0] || (e as TouchEvent).changedTouches[0];
+        return {
+          x: (touch.clientX - rect.left) * scaleX,
+          y: (touch.clientY - rect.top) * scaleY
+        };
+      } else {
+        const mouse = e as MouseEvent;
+        return {
+          x: (mouse.clientX - rect.left) * scaleX,
+          y: (mouse.clientY - rect.top) * scaleY
+        };
       }
-    });
+    };
 
-    setFabricCanvas(canvas);
+    // Fonction de début de dessin
+    const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      setIsDrawing(true);
+      const pos = getEventPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    };
+
+    // Fonction de dessin
+    const draw = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      
+      const pos = getEventPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      
+      setIsSigning(true);
+    };
+
+    // Fonction de fin de dessin
+    const stopDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      
+      setIsDrawing(false);
+      ctx.closePath();
+      
+      // Sauvegarder la signature
+      const signatureData = canvas.toDataURL('image/png');
+      onSignatureChange(signatureData);
+    };
+
+    // Événements souris
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // Événements tactiles (mobile)
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
 
     return () => {
-      canvas.dispose();
+      canvas.removeEventListener('mousedown', startDrawing);
+      canvas.removeEventListener('mousemove', draw);
+      canvas.removeEventListener('mouseup', stopDrawing);
+      canvas.removeEventListener('mouseout', stopDrawing);
+      canvas.removeEventListener('touchstart', startDrawing);
+      canvas.removeEventListener('touchmove', draw);
+      canvas.removeEventListener('touchend', stopDrawing);
+      canvas.removeEventListener('touchcancel', stopDrawing);
     };
-  }, []);
+  }, [signature, onSignatureChange, isDrawing]);
 
   const clearSignature = () => {
-    if (fabricCanvas) {
-      fabricCanvas.clear();
-      fabricCanvas.backgroundColor = '#ffffff';
-      fabricCanvas.renderAll();
-      setIsSigning(false);
-      onSignatureChange('');
-    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setIsSigning(false);
+    onSignatureChange('');
   };
 
   return (
@@ -87,7 +144,8 @@ export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanva
         <div className="border border-input rounded-lg p-2 bg-background">
           <canvas
             ref={canvasRef}
-            className="border border-dashed border-muted-foreground/30 rounded w-full cursor-crosshair"
+            className="border border-dashed border-muted-foreground/30 rounded w-full cursor-crosshair touch-none"
+            style={{ maxWidth: '100%', height: 'auto' }}
           />
         </div>
         
@@ -109,6 +167,10 @@ export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanva
               ✓ Signature enregistrée
             </p>
           )}
+          
+          <p className="text-xs text-muted-foreground ml-auto">
+            Dessinez votre signature ci-dessus
+          </p>
         </div>
       </CardContent>
     </Card>
