@@ -336,13 +336,17 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   const isAgentOnly = hasAgentItems && !hasTechItems;
   const isMixed = hasTechItems && hasAgentItems;
 
+  console.log('Génération PDF - Items:', quote.items?.length || 0, 'Tech:', hasTechItems, 'Agent:', hasAgentItems);
+  console.log('Génération PDF - Totaux:', totals);
+  console.log('Génération PDF - QuoteType:', quoteType);
+
   // Choisir la bonne lettre de présentation
   const letterTemplate = (isAgentOnly || isMixed) && settings.agentSettings?.agentLetterTemplate?.enabled
     ? settings.agentSettings.agentLetterTemplate
     : settings.letterTemplate;
 
   let html = `
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background};">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; page-break-inside: avoid;">
   `;
 
   // Lettre de présentation (si activée)
@@ -351,7 +355,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     const clientAddress = quote.addresses.contact;
     
     html += `
-      <div style="margin-bottom: 30px; padding: 20px; background: ${colors.headerBackground}; border-radius: 8px;">
+      <div style="margin-bottom: 40px; padding: 20px; background: ${colors.headerBackground}; border-radius: 8px; page-break-after: always;">
         ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px;">` : ''}
         
         <div style="margin-bottom: 20px;">
@@ -392,8 +396,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
         </div>
       </div>
-      
-      <div style="page-break-before: always;"></div>
     `;
   }
 
@@ -401,8 +403,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   if (hasAgentItems && quote.agentServiceDescription) {
     const desc = quote.agentServiceDescription;
     html += `
-      <div style="margin-bottom: 30px; padding: 20px; background: ${colors.cardBackground}; border-radius: 8px;">
-        <h2 style="text-align: center; color: ${colors.titleColor}; margin-bottom: 30px;">Description de la prestation</h2>
+      <div style="margin-bottom: 40px; padding: 20px; background: ${colors.cardBackground}; border-radius: 8px; page-break-after: always;">
+        <h2 style="text-align: center; color: ${colors.titleColor}; margin-bottom: 30px; font-size: 24px;">Description de la prestation</h2>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
           <div><strong>Nature de la prestation:</strong> ${desc.naturePrestation || ''}</div>
@@ -416,43 +418,44 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         
         ${desc.remarque ? `<div><strong>Remarque:</strong><br>${desc.remarque}</div>` : ''}
       </div>
-      
-      <div style="page-break-before: always;"></div>
     `;
   }
 
-  // En-tête du devis
+  // DEBUT DU DEVIS PRINCIPAL - Page du devis avec toutes les informations
   html += `
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-      <div style="flex: 1;">
-        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">` : ''}
-        ${settings.sellerInfo?.name ? `
-          <div style="font-weight: bold; color: ${colors.titleColor};">${settings.sellerInfo.name}</div>
-          ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
-          ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
-          ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
-        ` : ''}
+    <div style="page-break-inside: avoid;">
+      <!-- En-tête du devis -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+        <div style="flex: 1;">
+          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">` : ''}
+          ${settings.sellerInfo?.name ? `
+            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${settings.sellerInfo.name}</div>
+            ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
+            ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
+            ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
+          ` : ''}
+        </div>
+        
+        <div style="text-align: right;">
+          ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 16px;">${quote.addresses.contact.company}</div>` : ''}
+          <div>${quote.addresses.contact.name}</div>
+          <div>${quote.addresses.contact.street}</div>
+          <div>${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
+          <div>${quote.addresses.contact.country}</div>
+          ${quote.addresses.contact.email ? `<div style="color: ${colors.subtitleColor};">${quote.addresses.contact.email}</div>` : ''}
+          ${quote.addresses.contact.phone ? `<div>${quote.addresses.contact.phone}</div>` : ''}
+        </div>
       </div>
-      
-      <div style="text-align: right;">
-        ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 16px;">${quote.addresses.contact.company}</div>` : ''}
-        <div>${quote.addresses.contact.name}</div>
-        <div>${quote.addresses.contact.street}</div>
-        <div>${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
-        <div>${quote.addresses.contact.country}</div>
-        ${quote.addresses.contact.email ? `<div style="color: ${colors.subtitleColor};">${quote.addresses.contact.email}</div>` : ''}
-        ${quote.addresses.contact.phone ? `<div>${quote.addresses.contact.phone}</div>` : ''}
-      </div>
-    </div>
   `;
 
   // Titre du devis
   html += `
-    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary}; margin: 20px 0;">
-      <h1 style="color: ${colors.primary}; font-size: 24px; margin: 0;">${quoteType}</h1>
-      <p style="color: ${colors.subtitleColor}; font-size: 16px; margin: 5px 0;">Devis N° ${quote.ref}</p>
-      <p style="color: ${colors.mutedTextColor};">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
-    </div>
+      <!-- Titre du devis -->
+      <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary}; margin: 20px 0;">
+        <h1 style="color: ${colors.primary}; font-size: 28px; margin: 0; font-weight: bold;">${quoteType}</h1>
+        <p style="color: ${colors.subtitleColor}; font-size: 18px; margin: 5px 0; font-weight: 600;">Devis N° ${quote.ref}</p>
+        <p style="color: ${colors.mutedTextColor}; font-size: 14px;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
+      </div>
   `;
 
   // Informations complémentaires
@@ -607,7 +610,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // Totaux
   html += `
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
+      <!-- Totaux -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
   `;
 
   // Total TECH unique
@@ -616,8 +620,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       <div style="border: 2px solid ${colors.secondary}; background: #f8fafc; padding: 15px; border-radius: 8px;">
         <h4 style="color: ${colors.primary}; margin-bottom: 15px; font-weight: bold;">Achat unique</h4>
         <div style="space-y: 8px;">
-          <div style="display: flex; justify-content: space-between;"><span>Sous-total HT:</span><span>${totals.unique.subtotalHT.toFixed(2)} CHF</span></div>
-          <div style="display: flex; justify-content: space-between;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.unique.tva.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>Sous-total HT:</span><span>${totals.unique.subtotalHT.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.unique.tva.toFixed(2)} CHF</span></div>
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.secondary}; padding-top: 8px; color: ${colors.primary};">
             <span>Total TTC:</span><span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -632,8 +636,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       <div style="border: 2px solid ${colors.accent}; background: #f0fdf4; padding: 15px; border-radius: 8px;">
         <h4 style="color: ${colors.accent}; margin-bottom: 15px; font-weight: bold;">Abonnement mensuel</h4>
         <div>
-          <div style="display: flex; justify-content: space-between;"><span>Sous-total HT:</span><span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span></div>
-          <div style="display: flex; justify-content: space-between;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.mensuel.tva.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>Sous-total HT:</span><span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.mensuel.tva.toFixed(2)} CHF</span></div>
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
             <span>Total TTC:</span><span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
           </div>
@@ -648,8 +652,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       <div style="border: 2px solid #f59e0b; background: #fefbf3; padding: 15px; border-radius: 8px;">
         <h4 style="color: #f59e0b; margin-bottom: 15px; font-weight: bold;">${isMixed ? 'Agents de sécurité' : 'Prestations d\'agents'}</h4>
         <div>
-          <div style="display: flex; justify-content: space-between;"><span>Sous-total HT:</span><span>${totals.agents.subtotalHT.toFixed(2)} CHF</span></div>
-          <div style="display: flex; justify-content: space-between;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.agents.tva.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>Sous-total HT:</span><span>${totals.agents.subtotalHT.toFixed(2)} CHF</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;"><span>TVA (${settings.tvaPct}%):</span><span>${totals.agents.tva.toFixed(2)} CHF</span></div>
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid #f59e0b; padding-top: 8px; color: #f59e0b;">
             <span>Total TTC:</span><span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -658,33 +662,32 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  html += `</div>`;
+  html += `      </div>
 
-  // Total général
-  html += `
-    <div style="text-align: center; padding: 25px; border: 3px solid ${colors.primary}; border-radius: 8px; margin: 30px 0; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08);">
-      <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
-        <div>
-          <p style="color: ${colors.secondary}; margin-bottom: 5px;">Total HT</p>
-          <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+      <!-- Total général -->
+      <div style="text-align: center; padding: 25px; border: 3px solid ${colors.primary}; border-radius: 8px; margin: 30px 0; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08);">
+        <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
+          <div>
+            <p style="color: ${colors.secondary}; margin-bottom: 5px;">Total HT</p>
+            <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+          </div>
+          <div>
+            <p style="color: ${colors.secondary}; margin-bottom: 5px;">TVA totale</p>
+            <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+          </div>
         </div>
-        <div>
-          <p style="color: ${colors.secondary}; margin-bottom: 5px;">TVA totale</p>
-          <p style="font-size: 20px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-        </div>
-      </div>
-      <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
-        <p style="font-size: 32px; font-weight: bold; color: ${colors.primary}; margin: 0;">
-          ${totals.global.totalTTC.toFixed(2)} CHF
-        </p>
-        ${totals.mensuel.totalTTC > 0 ? `
-          <p style="font-size: 20px; font-weight: bold; color: ${colors.accent}; margin-top: 10px;">
-            + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+        <div style="border-top: 2px solid ${colors.primary}; padding-top: 15px;">
+          <p style="font-size: 32px; font-weight: bold; color: ${colors.primary}; margin: 0;">
+            ${totals.global.totalTTC.toFixed(2)} CHF
           </p>
-        ` : ''}
+          ${totals.mensuel.totalTTC > 0 ? `
+            <p style="font-size: 20px; font-weight: bold; color: ${colors.accent}; margin-top: 10px;">
+              + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+            </p>
+          ` : ''}
+        </div>
       </div>
-    </div>
   `;
 
   // Commentaire
@@ -739,15 +742,68 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     </div>
   `;
 
-  // Pied de page
+  // Commentaire
+  if (quote.comment) {
+    html += `
+      <!-- Commentaires -->
+      <div style="margin: 30px 0;">
+        <h4 style="color: ${colors.primary}; font-size: 16px; margin-bottom: 15px;">Commentaires</h4>
+        <div style="border: 1px solid ${colors.secondary}; background: #f8fafc; padding: 15px; border-radius: 8px;">
+          <p style="white-space: pre-wrap; margin: 0;">${quote.comment}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // Signatures
   html += `
+    <!-- Signatures -->
+    <div style="margin-top: 50px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
+          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
+            ${settings.sellerInfo?.name || ''}<br>
+            ${settings.sellerInfo?.title || ''}<br>
+            ${settings.sellerInfo?.phone || ''}
+          </div>
+          <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
+            Date et signature
+          </div>
+        </div>
+        
+        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CLIENT</div>
+          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
+            ${quote.addresses.contact.name}<br>
+            ${quote.addresses.contact.company || ''}
+          </div>
+          
+          ${quote.clientSignature ? `
+            <div style="margin: 10px 0;">
+              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+            </div>
+            <div style="font-size: 12px; color: ${colors.textColor};">
+              ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
+            </div>
+          ` : `
+            <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
+              Date et signature
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pied de page -->
     <div style="text-align: center; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 2px solid ${colors.primary}; color: ${colors.secondary};">
       <p style="font-weight: bold;">${settings.pdfFooter}</p>
       <p style="margin-top: 10px;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
     </div>
-  `;
 
-  html += `</div>`;
+    </div> <!-- Fin du devis principal -->
+  </div> <!-- Fin du conteneur principal -->
+  `;
 
   return html;
 };
