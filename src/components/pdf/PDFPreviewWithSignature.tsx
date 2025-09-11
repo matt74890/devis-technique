@@ -69,21 +69,23 @@ const PDFPreviewWithSignature = () => {
       // Create a temporary div for PDF generation
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = htmlContent;
-      tempDiv.style.width = '190mm';
+      tempDiv.style.width = '180mm';
       tempDiv.style.minHeight = '277mm';
-      tempDiv.style.padding = '5mm';
+      tempDiv.style.padding = '10mm';
       tempDiv.style.backgroundColor = 'white';
       tempDiv.style.fontFamily = 'Arial, sans-serif';
       tempDiv.style.fontSize = '12px';
       tempDiv.style.lineHeight = '1.4';
       tempDiv.style.color = 'black';
       tempDiv.style.boxSizing = 'border-box';
+      tempDiv.style.margin = '0 auto';
+      tempDiv.style.maxWidth = '180mm';
       
       // Add to DOM temporarily
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [15, 15, 15, 15],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
@@ -321,7 +323,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         z-index: 1000; 
       }
     </style>
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 190mm; margin: 0 auto; overflow: visible; box-sizing: border-box;">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; overflow: hidden; box-sizing: border-box; padding: 0 5mm;">
   `;
 
   // Lettre de présentation (si activée)
@@ -364,7 +366,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         
           <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
             <div style="margin-bottom: 20px;">
-              ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`},
+              ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
             </div>
             
             <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
@@ -372,7 +374,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
             
             <div style="margin-top: 30px;">
-              <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`}, l'expression de nos salutations distinguées.</p>
+              <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
             </div>
           </div>
         
@@ -388,9 +390,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             `}
             <div style="font-size: 12px; color: ${colors.textColor};">
               ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-            </div>
-            <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
-              Signature du vendeur
             </div>
           </div>
         </div>
@@ -729,11 +728,11 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Totaux - CENTRÉS AU MILIEU DE LA PAGE
+  // Totaux - CENTRÉS AU MILIEU DE LA PAGE avec break-avoid pour rester ensemble
   html += `
       <!-- Totaux centrés -->
-      <div style="display: flex; justify-content: center; margin: 30px 0;">
-        <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 20px; max-width: 900px;">
+      <div class="page-break-avoid" style="display: flex; justify-content: center; margin: 30px 0; page-break-inside: avoid;">
+        <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">
   `;
 
   // Total TECH unique
@@ -770,7 +769,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // Total AGENT avec couleur personnalisable
   if (totals.agents.totalTTC > 0) {
-    const agentTableColor = settings.templateColors?.agentTableColor || '#f59e0b';
+    const agentTableColor = settings.templateColors?.agentTableColor || settings.templateColors?.primary || '#f59e0b';
     html += `
       <div style="border: 2px solid ${agentTableColor}; background: #fefbf3; padding: 15px; border-radius: 8px;">
         <h4 style="color: ${agentTableColor}; margin-bottom: 15px; font-weight: bold;">${isMixed ? 'Agents de sécurité' : 'Prestations d\'agents'}</h4>
@@ -789,8 +788,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       </div>
 
       <!-- Total général centré -->
-      <div style="display: flex; justify-content: center; margin: 30px 0;">
-        <div style="text-align: center; padding: 25px; border: 3px solid ${colors.primary}; border-radius: 8px; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); max-width: 600px; width: 100%;">
+      <div class="page-break-avoid" style="display: flex; justify-content: center; margin: 30px 0; page-break-inside: avoid;">
+        <div style="text-align: center; padding: 20px; border: 3px solid ${colors.primary}; border-radius: 8px; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); max-width: 140mm; width: 100%;">
           <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
             <div>
@@ -828,56 +827,63 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE
+  // Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE - PARFAITEMENT ALIGNÉS
   html += `
-    <div style="margin-top: 50px;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${settings.sellerInfo?.name || ''}<br>
-            ${settings.sellerInfo?.title || ''}<br>
-            ${settings.sellerInfo?.phone || ''}
-          </div>
-          
-          ${settings.sellerInfo?.signature ? `
-            <div style="margin: 10px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px;">
+    <div class="page-break-avoid" style="margin-top: 40px; page-break-inside: avoid;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 160mm; margin: 0 auto;">
+        <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">VENDEUR</div>
+            <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
+              <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
+              <div>${settings.sellerInfo?.title || ''}</div>
+              <div>${settings.sellerInfo?.phone || ''}</div>
             </div>
-          ` : `
-            <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin: 15px 0;"></div>
-          `}
-          
-          <div style="font-size: 12px; color: ${colors.textColor};">
-            ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
-          <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
-            Signature du vendeur
+          
+          <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            ${settings.sellerInfo?.signature ? `
+              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.primary}; width: 150px; height: 40px;"></div>
+            `}
+          </div>
+          
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: ${colors.textColor};">
+              ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+            </div>
           </div>
         </div>
         
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CLIENT</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${quote.addresses.contact.name}<br>
-            ${quote.addresses.contact.company || ''}
+        <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">CLIENT</div>
+            <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
+              <div style="font-weight: bold;">${quote.addresses.contact.name}</div>
+              <div>${quote.addresses.contact.company || ''}</div>
+            </div>
           </div>
           
-          ${quote.clientSignature ? `
-            <div style="margin: 10px 0;">
-              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px;">
-            </div>
-            <div style="font-size: 12px; color: ${colors.textColor};">
-              ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
-            </div>
-          ` : `
-            <div style="border-top: 1px solid ${colors.primary}; margin-top: 20px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-              Date et lieu: _______________
-            </div>
-            <div style="margin-top: 10px; font-size: 12px; color: ${colors.textColor};">
-              Signature du client
-            </div>
-          `}
+          <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            ${quote.clientSignature ? `
+              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.primary}; width: 150px; height: 40px;"></div>
+            `}
+          </div>
+          
+          <div style="text-align: center;">
+            ${quote.clientSignature ? `
+              <div style="font-size: 11px; color: ${colors.textColor};">
+                ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
+              </div>
+            ` : `
+              <div style="font-size: 11px; color: ${colors.textColor};">
+                Date et lieu: _______________
+              </div>
+            `}
+          </div>
         </div>
       </div>
     </div>
