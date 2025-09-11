@@ -114,13 +114,122 @@ const RecapScreen = () => {
     }
     
     try {
-      // Générer d'abord le HTML complet du PDF
-      generatePDF(); // Cela génère le HTML
+      // Créer le contenu HTML pour le PDF directement ici
+      const colors = settings.templateColors || { 
+        primary: '#000000',
+        secondary: '#666666', 
+        accent: '#333333',
+        titleColor: '#000000',
+        subtitleColor: '#666666',
+        textColor: '#000000',
+        mutedTextColor: '#999999',
+        background: '#ffffff',
+        cardBackground: '#ffffff',
+        headerBackground: '#ffffff',
+        tableHeader: '#f5f5f5',
+        tableHeaderText: '#000000',
+        tableRow: '#ffffff',
+        tableRowAlt: '#f9f9f9',
+        tableBorder: '#cccccc',
+        badgeUnique: '#666666',
+        badgeMensuel: '#666666',
+        badgeText: '#ffffff',
+        totalCardBorder: '#cccccc',
+        totalUniqueBackground: '#ffffff',
+        totalMensuelBackground: '#ffffff',
+        grandTotalBackground: '#f5f5f5',
+        grandTotalBorder: '#000000',
+        borderPrimary: '#000000',
+        borderSecondary: '#cccccc',
+        separatorColor: '#e0e0e0',
+        letterHeaderColor: '#000000',
+        letterDateColor: '#000000',
+        letterSubjectColor: '#000000',
+        letterSignatureColor: '#000000',
+        signatureBoxBorder: '#000000',
+        signatureBoxBackground: '#ffffff',
+        signatureTitleColor: '#000000',
+        signatureTextColor: '#666666'
+      };
       
-      // Attendre un petit délai pour que le HTML soit généré
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const getFontFamily = () => {
+        const fontMap: { [key: string]: string } = {
+          'inter': 'Inter, sans-serif',
+          'dm-sans': 'DM Sans, sans-serif',
+          'nunito-sans': 'Nunito Sans, sans-serif',
+          'source-sans-pro': 'Source Sans Pro, sans-serif',
+          'work-sans': 'Work Sans, sans-serif',
+          'lato': 'Lato, sans-serif',
+          'rubik': 'Rubik, sans-serif',
+          'open-sans': 'Open Sans, sans-serif'
+        };
+        return fontMap[settings.selectedFont || 'dm-sans'] || 'DM Sans, sans-serif';
+      };
+
+      // Créer un élément temporaire invisible pour le contenu PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.innerHTML = `
+        <div style="font-family: ${getFontFamily()}; color: ${colors.textColor}; background: ${colors.background}; padding: 20px; max-width: 800px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: ${colors.titleColor}; font-size: 24px; margin: 0;">${settings.pdfTitle || 'DEVIS'}</h1>
+            <p style="color: ${colors.subtitleColor}; font-size: 16px; margin: 10px 0;">N° ${currentQuote.ref}</p>
+          </div>
+          
+          <div style="margin: 20px 0;">
+            <p><strong>Client:</strong> ${currentQuote.client}</p>
+            <p><strong>Date:</strong> ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
+          </div>
+
+          ${groupedAgentItemsArray.length > 0 ? `
+          <h3 style="color: ${colors.primary}; margin: 20px 0 10px 0;">Prestations d'agents de sécurité</h3>
+          <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px;">
+            <tr style="background: ${colors.tableHeader};">
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Type</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Date début</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Heure début</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Date fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Heure fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">H. Normal</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">H. Majorée</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right;">Total HT</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right;">Total TTC</th>
+            </tr>
+            ${groupedAgentItemsArray.map(group => {
+              const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
+              const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
+              const timeStart = group.items[0]?.timeStart || '-';
+              const timeEnd = group.items[0]?.timeEnd || '-';
+              const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
+              
+              return `
+              <tr>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${group.agentType} ${group.canton ? `(${group.canton})` : ''}${group.count > 1 ? ` x${group.count}` : ''}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${dateStart}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${timeStart}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${dateEnd}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${timeEnd}</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">${group.normalHours.toFixed(1)}h</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">${majoredHours.toFixed(1)}h</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">${group.totalHT.toFixed(2)} CHF</td>
+                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">${group.totalTTC.toFixed(2)} CHF</td>
+              </tr>`;
+            }).join('')}
+          </table>
+          ` : ''}
+
+          <div style="margin-top: 30px; text-align: center; border: 2px solid ${colors.primary}; padding: 15px;">
+            <h3>TOTAL GÉNÉRAL</h3>
+            <p style="font-size: 18px;"><strong>Total HT: ${totals.global.htAfterDiscount.toFixed(2)} CHF</strong></p>
+            <p style="font-size: 18px;"><strong>TVA (${settings.tvaPct}%): ${totals.global.tva.toFixed(2)} CHF</strong></p>
+            <p style="font-size: 20px; color: ${colors.primary};"><strong>TOTAL TTC: ${totals.global.totalTTC.toFixed(2)} CHF</strong></p>
+          </div>
+        </div>
+      `;
       
-      const element = document.querySelector('#pdf-content') || document.body;
+      document.body.appendChild(tempDiv);
       
       // Dynamically import html2pdf
       const html2pdf = (await import('html2pdf.js')).default;
@@ -142,7 +251,10 @@ const RecapScreen = () => {
         }
       };
 
-      await html2pdf().set(options).from(element).save();
+      await html2pdf().set(options).from(tempDiv).save();
+      
+      // Nettoyer l'élément temporaire
+      document.body.removeChild(tempDiv);
       
       console.log('PDF téléchargé avec succès');
       toast.success('PDF téléchargé avec succès');
@@ -1318,44 +1430,65 @@ const RecapScreen = () => {
               </div>
             )}
 
-            {/* Prestations AGENT groupées */}
+            {/* Prestations AGENT en tableau */}
             {groupedAgentItemsArray.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 text-primary">Prestations d'agents de sécurité</h4>
-                <div className="space-y-3">
-                  {groupedAgentItemsArray.map((group, index) => (
-                    <div key={index} className="flex justify-between items-start border border-muted rounded-lg p-3">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{group.title}</div>
-                        <div className="text-xs text-muted-foreground space-y-1 mt-1">
-                          <div><span className="font-medium">Agent:</span> {group.agentType}</div>
-                          <div><span className="font-medium">Canton:</span> {group.canton}</div>
-                          <div><span className="font-medium">Période:</span> {group.dateRange}</div>
-                          <div><span className="font-medium">Horaires:</span> {group.timeRange}</div>
-                          <div className="font-medium text-foreground text-sm mt-2">
-                            <span className="text-primary">{group.totalHours.toFixed(1)}h total</span>
-                            {group.normalHours > 0 && <span className="ml-2 text-xs">({group.normalHours.toFixed(1)}h norm.)</span>}
-                            {group.nightHours > 0 && <span className="ml-2 text-xs">({group.nightHours.toFixed(1)}h nuit)</span>}
-                            {group.sundayHours > 0 && <span className="ml-2 text-xs">({group.sundayHours.toFixed(1)}h dim.)</span>}
-                            {group.holidayHours > 0 && <span className="ml-2 text-xs">({group.holidayHours.toFixed(1)}h férié)</span>}
-                          </div>
-                          {group.count > 1 && (
-                            <div className="text-xs text-muted-foreground italic">
-                              {group.count} périodes identiques regroupées
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right ml-4">
-                        <div className="font-semibold text-sm">
-                          {group.totalHT.toFixed(2)} CHF HT
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {group.totalTTC.toFixed(2)} CHF TTC
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-border">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="border border-border p-2 text-left text-xs font-medium">Type</th>
+                        <th className="border border-border p-2 text-left text-xs font-medium">Date début</th>
+                        <th className="border border-border p-2 text-left text-xs font-medium">Heure début</th>
+                        <th className="border border-border p-2 text-left text-xs font-medium">Date fin</th>
+                        <th className="border border-border p-2 text-left text-xs font-medium">Heure fin</th>
+                        <th className="border border-border p-2 text-center text-xs font-medium">H. Normal</th>
+                        <th className="border border-border p-2 text-center text-xs font-medium">H. Majorée</th>
+                        <th className="border border-border p-2 text-right text-xs font-medium">Total HT</th>
+                        <th className="border border-border p-2 text-right text-xs font-medium">Total TTC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupedAgentItemsArray.map((group, index) => {
+                        const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
+                        const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
+                        const timeStart = group.items[0]?.timeStart || '-';
+                        const timeEnd = group.items[0]?.timeEnd || '-';
+                        const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
+                        
+                        return (
+                          <tr key={index} className="hover:bg-muted/50">
+                            <td className="border border-border p-2 text-xs">
+                              {group.agentType} {group.canton && `(${group.canton})`}
+                              {group.count > 1 && (
+                                <div className="text-muted-foreground text-xs italic">
+                                  x{group.count} périodes
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-border p-2 text-xs">{dateStart}</td>
+                            <td className="border border-border p-2 text-xs">{timeStart}</td>
+                            <td className="border border-border p-2 text-xs">{dateEnd}</td>
+                            <td className="border border-border p-2 text-xs">{timeEnd}</td>
+                            <td className="border border-border p-2 text-center text-xs">{group.normalHours.toFixed(1)}h</td>
+                            <td className="border border-border p-2 text-center text-xs">
+                              {majoredHours.toFixed(1)}h
+                              {(group.nightHours > 0 || group.sundayHours > 0 || group.holidayHours > 0) && (
+                                <div className="text-muted-foreground text-xs">
+                                  {group.nightHours > 0 && `${group.nightHours.toFixed(1)}h nuit `}
+                                  {group.sundayHours > 0 && `${group.sundayHours.toFixed(1)}h dim `}
+                                  {group.holidayHours > 0 && `${group.holidayHours.toFixed(1)}h férié`}
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-border p-2 text-right text-xs font-medium">{group.totalHT.toFixed(2)} CHF</td>
+                            <td className="border border-border p-2 text-right text-xs font-medium">{group.totalTTC.toFixed(2)} CHF</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
                 
                 {/* Règles appliquées */}

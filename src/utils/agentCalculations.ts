@@ -16,8 +16,24 @@ export const calculateAgentVacation = (
     return item;
   }
 
-  const startDateTime = new Date(`${item.dateStart}T${item.timeStart}`);
-  const endDateTime = new Date(`${item.dateEnd}T${item.timeEnd}`);
+  // Parse dates more safely to handle 00:00 times
+  const startDateTime = new Date(`${item.dateStart}T${item.timeStart}:00`);
+  const endDateTime = new Date(`${item.dateEnd}T${item.timeEnd}:00`);
+  
+  // If parsing failed, try without seconds
+  if (isNaN(startDateTime.getTime())) {
+    const startDateTime2 = new Date(`${item.dateStart}T${item.timeStart}`);
+    if (!isNaN(startDateTime2.getTime())) {
+      startDateTime.setTime(startDateTime2.getTime());
+    }
+  }
+  
+  if (isNaN(endDateTime.getTime())) {
+    const endDateTime2 = new Date(`${item.dateEnd}T${item.timeEnd}`);
+    if (!isNaN(endDateTime2.getTime())) {
+      endDateTime.setTime(endDateTime2.getTime());
+    }
+  }
   
   if (endDateTime <= startDateTime) {
     return { ...item, hoursTotal: 0, hoursNormal: 0, hoursNight: 0, hoursSunday: 0, hoursHoliday: 0 };

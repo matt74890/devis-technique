@@ -141,7 +141,7 @@ export const SignatureCanvas = ({ onSignatureChange, signature }: SignatureCanva
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border border-input rounded-lg p-2 bg-background">
+        <div className="rounded-lg p-2 bg-background">
           <canvas
             ref={canvasRef}
             className="w-full cursor-crosshair touch-none"
