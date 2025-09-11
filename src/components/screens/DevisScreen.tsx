@@ -536,7 +536,7 @@ const DevisScreen = () => {
           <CardTitle className="flex items-center justify-between">
             <span>Informations client</span>
             <div className="flex items-center space-x-2">
-              <ClientSelector onClientSelect={handleClientSelect} />
+              <ClientSelector onSelect={handleClientSelect} />
               <Button onClick={saveClientToDatabase} variant="outline" size="sm">
                 Sauvegarder client
               </Button>
@@ -1159,7 +1159,8 @@ const DevisScreen = () => {
                 
                 {showVacationGenerator && (
                 <VacationSeriesGenerator
-                  onGenerate={addVacationSeries}
+                  settings={settings}
+                  onAddVacations={addVacationSeries}
                 />
                 )}
               </div>
@@ -1358,7 +1359,8 @@ const DevisScreen = () => {
                     <AgentVacationRow
                       key={item.id}
                       item={item}
-                      onUpdate={(updates) => updateItem(item.id, updates)}
+                      settings={settings}
+                      onUpdate={(id, updates) => updateQuoteItem(id, updates)}
                       onDuplicate={() => duplicateQuoteItem(item.id)}
                       onDelete={() => deleteQuoteItem(item.id)}
                     />
