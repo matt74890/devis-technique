@@ -69,25 +69,41 @@ const PDFPreviewWithSignature = () => {
       // Create a temporary div for PDF generation
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = htmlContent;
+      tempDiv.style.width = '210mm';
+      tempDiv.style.minHeight = '297mm';
+      tempDiv.style.padding = '10mm';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = 'black';
+      
+      // Add to DOM temporarily
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [5, 5, 5, 5],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
+        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
           letterRendering: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
           width: 800,
-          height: 1200
+          height: 1120
         },
         jsPDF: { 
           unit: 'mm', 
           format: 'a4', 
           orientation: 'portrait',
-          compress: true
-        }
+          compress: true,
+          precision: 16
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
       
       await html2pdf().set(opt).from(tempDiv).save();
@@ -120,33 +136,67 @@ const PDFPreviewWithSignature = () => {
 
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
-      // Create Word-compatible HTML with proper structure
+      // Create Word-compatible HTML with RTF-like structure
       const wordHTML = `
         <!DOCTYPE html>
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+        <html>
         <head>
           <meta charset='utf-8'>
+          <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
           <title>${quoteType} ${currentQuote.ref}</title>
-          <!--[if gte mso 9]>
-          <xml>
-            <w:WordDocument>
-              <w:View>Print</w:View>
-              <w:Zoom>90</w:Zoom>
-              <w:DoNotPromptForConvert/>
-              <w:DoNotShowInsertionsAndDeletions/>
-            </w:WordDocument>
-          </xml>
-          <![endif]-->
           <style>
-            body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.2; margin: 20mm; }
-            table { border-collapse: collapse; width: 100%; margin: 10pt 0; }
-            th, td { border: 1px solid black; padding: 6pt; text-align: left; font-size: 10pt; }
-            th { background-color: #f0f0f0; font-weight: bold; }
-            h1 { font-size: 18pt; text-align: center; margin: 20pt 0; }
-            h2 { font-size: 14pt; margin: 15pt 0 10pt 0; }
-            h3 { font-size: 12pt; margin: 12pt 0 8pt 0; }
-            .signature-section { margin-top: 30pt; }
-            .signature-box { border: 1px solid black; padding: 10pt; margin: 10pt 0; min-height: 60pt; }
+            body { 
+              font-family: 'Times New Roman', Times, serif; 
+              font-size: 12pt; 
+              line-height: 1.4; 
+              margin: 2cm; 
+              color: black;
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              margin: 10pt 0; 
+              font-size: 10pt;
+            }
+            th, td { 
+              border: 1px solid black; 
+              padding: 6pt; 
+              text-align: left; 
+              vertical-align: top;
+            }
+            th { 
+              background-color: #f0f0f0; 
+              font-weight: bold; 
+            }
+            h1 { 
+              font-size: 18pt; 
+              text-align: center; 
+              margin: 20pt 0; 
+              font-weight: bold;
+            }
+            h2 { 
+              font-size: 14pt; 
+              margin: 15pt 0 10pt 0; 
+              font-weight: bold;
+            }
+            h3 { 
+              font-size: 12pt; 
+              margin: 12pt 0 8pt 0; 
+              font-weight: bold;
+            }
+            .signature-section { 
+              margin-top: 30pt; 
+            }
+            .signature-box { 
+              border: 1px solid black; 
+              padding: 10pt; 
+              margin: 10pt 0; 
+              min-height: 60pt; 
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
           </style>
         </head>
         <body>
@@ -155,14 +205,16 @@ const PDFPreviewWithSignature = () => {
         </html>
       `;
       
+      // Use correct MIME type for Word HTML format
       const blob = new Blob([wordHTML], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        type: 'application/msword'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.docx`;
+      // Use .doc extension for HTML-based Word document
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
