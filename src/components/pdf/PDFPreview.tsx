@@ -310,63 +310,107 @@ const PDFPreview = () => {
 
   const downloadPDF = async () => {
     try {
-      // Generate the same HTML used for preview
-      const htmlContent = renderDevisHTML(currentQuote, settings);
+      console.log('=== DÉBUT GÉNÉRATION PDF ===');
       
-      // Create a temporary div to render the HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      document.body.appendChild(tempDiv);
+      // Force récupération des données les plus récentes du store
+      const storeState = useStore.getState();
+      const freshQuote = storeState.currentQuote;
+      const freshSettings = storeState.settings;
+      
+      console.log('Quote utilisée pour PDF:', {
+        ref: freshQuote?.ref,
+        itemsCount: freshQuote?.items.length,
+        client: freshQuote?.client,
+        items: freshQuote?.items.map(i => ({ id: i.id, type: i.type, reference: i.reference, kind: i.kind }))
+      });
+      
+      if (!freshQuote) {
+        throw new Error('Aucun devis disponible');
+      }
+      
+      // Générer le HTML avec les données fraîches
+      const htmlContent = renderDevisHTML(freshQuote, freshSettings);
+      console.log('HTML généré, taille:', htmlContent.length);
+      
+      // Créer un conteneur temporaire EXACTEMENT comme dans la prévisualisation
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.width = '210mm';
+      tempContainer.style.backgroundColor = '#ffffff';
+      tempContainer.innerHTML = htmlContent;
+      document.body.appendChild(tempContainer);
 
-      // Dynamically import html2pdf
+      // Attendre que le contenu soit complètement rendu
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Import dynamique de html2pdf avec configuration optimisée
       const html2pdf = (await import('html2pdf.js')).default;
       
       const options = {
         margin: [10, 10, 10, 10],
-        filename: `devis-${currentQuote.ref}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        filename: `devis-${freshQuote.ref}-${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { 
+          type: 'jpeg', 
+          quality: 0.95 
+        },
         html2canvas: { 
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false,
           letterRendering: true,
           allowTaint: false,
-          removeContainer: true
+          removeContainer: true,
+          width: 794, // A4 width in pixels at 96 DPI
+          height: 1123 // A4 height in pixels at 96 DPI
         },
         jsPDF: {
           unit: 'mm',
           format: 'a4',
-          orientation: 'portrait'
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'] 
         }
       };
 
-      // Generate PDF as blob and force download
-      const pdfBlob = await html2pdf().set(options).from(tempDiv).outputPdf('blob');
+      console.log('Début conversion PDF...');
       
-      // Clean up temporary element
-      document.body.removeChild(tempDiv);
+      // Générer le PDF
+      const pdfBlob = await html2pdf()
+        .set(options)
+        .from(tempContainer)
+        .outputPdf('blob');
       
-      // Create download link
+      console.log('PDF généré, taille blob:', pdfBlob.size);
+      
+      // Nettoyage du conteneur temporaire
+      document.body.removeChild(tempContainer);
+      
+      // Vérifier que le PDF n'est pas vide
+      if (pdfBlob.size < 1000) {
+        throw new Error('PDF généré semble vide ou corrompu');
+      }
+      
+      // Forcer le téléchargement
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `devis-${currentQuote.ref}.pdf`;
+      link.download = `devis-${freshQuote.ref}-${new Date().toISOString().split('T')[0]}.pdf`;
       link.style.display = 'none';
       
-      // Force download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      console.log('PDF téléchargé avec succès');
+      console.log('=== PDF TÉLÉCHARGÉ AVEC SUCCÈS ===');
     } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      alert('Erreur lors du téléchargement du PDF. Veuillez réessayer.');
+      console.error('=== ERREUR GÉNÉRATION PDF ===', error);
+      alert(`Erreur lors de la génération du PDF: ${error.message}`);
     }
   };
 
