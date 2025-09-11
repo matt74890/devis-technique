@@ -161,9 +161,15 @@ const DevisScreen = () => {
   };
 
   const addVacationSeries = (vacations: QuoteItem[]) => {
-    vacations.forEach(vacation => {
-      const calculatedItem = calculateQuoteItem(vacation, settings.tvaPct, false);
-      addQuoteItem(calculatedItem);
+    // Import du calcul d'agent pour calculer correctement les heures et prix
+    import('@/utils/agentCalculations').then(({ calculateAgentVacation }) => {
+      vacations.forEach(vacation => {
+        // Pour les items AGENT, utiliser le calcul spécialisé
+        const calculatedItem = vacation.kind === 'AGENT' 
+          ? calculateAgentVacation(vacation, settings)
+          : calculateQuoteItem(vacation, settings.tvaPct, false);
+        addQuoteItem(calculatedItem);
+      });
     });
     
     toast({

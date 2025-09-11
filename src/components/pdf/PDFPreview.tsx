@@ -309,25 +309,24 @@ const PDFPreview = () => {
 
   const downloadPDF = async () => {
     try {
-      const { default: html2pdf } = await import('html2pdf.js');
-      const element = document.getElementById('pdf-content');
+      const element = document.querySelector('.pdf-preview-content');
       if (!element) {
         console.error('Element PDF non trouvé');
         return;
       }
 
+      // Dynamically import html2pdf
+      const html2pdf = (await import('html2pdf.js')).default;
+      
       const options = {
         margin: [10, 10, 10, 10],
         filename: `devis-${currentQuote.ref}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
           backgroundColor: '#ffffff',
-          width: 794,
-          height: 1123,
-          scrollX: 0,
-          scrollY: 0
+          logging: false
         },
         jsPDF: {
           unit: 'mm',
@@ -337,47 +336,98 @@ const PDFPreview = () => {
       };
 
       await html2pdf().set(options).from(element).save();
+      
+      console.log('PDF généré avec succès');
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
+      alert('Erreur lors du téléchargement du PDF. Veuillez réessayer.');
     }
   };
 
   const downloadWord = () => {
-    const element = document.getElementById('pdf-content');
-    if (!element) return;
+    try {
+      const element = document.querySelector('.pdf-preview-content');
+      if (!element) {
+        console.error('Element PDF non trouvé pour Word');
+        return;
+      }
 
-    // Créer un document HTML complet
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Devis ${currentQuote.ref}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-          th { background-color: #f5f5f5; }
-          .text-center { text-align: center; }
-          .text-right { text-align: right; }
-          .font-bold { font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        ${element.innerHTML}
-      </body>
-      </html>
-    `;
+      // Créer un document HTML complet avec styles Word-compatibles
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <meta name="ProgId" content="Word.Document">
+          <meta name="Generator" content="Microsoft Word">
+          <meta name="Originator" content="Microsoft Word">
+          <title>Devis ${currentQuote.ref}</title>
+          <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotPromptForConvert/><w:DoNotShowInsertionsAndDeletions/></w:WordDocument></xml><![endif]-->
+          <style>
+            @page { 
+              margin: 2cm;
+              size: A4 portrait; 
+            }
+            body { 
+              font-family: 'Arial', sans-serif; 
+              font-size: 11pt;
+              line-height: 1.2;
+              margin: 0;
+              color: black;
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              margin: 10px 0;
+              mso-table-lspace: 0pt;
+              mso-table-rspace: 0pt;
+            }
+            th, td { 
+              border: 1pt solid #666; 
+              padding: 6pt; 
+              vertical-align: top;
+              mso-border-alt: solid #666 0.5pt;
+            }
+            th { 
+              background-color: #f0f0f0; 
+              font-weight: bold;
+            }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            h1 { font-size: 18pt; margin: 20pt 0 10pt 0; }
+            h3 { font-size: 14pt; margin: 15pt 0 8pt 0; }
+            h4 { font-size: 12pt; margin: 12pt 0 6pt 0; }
+            p { margin: 6pt 0; }
+            .space-y-4 > * + * { margin-top: 12pt; }
+            .grid { display: table; width: 100%; }
+            .grid > div { display: table-cell; padding: 6pt; }
+          </style>
+        </head>
+        <body>
+          ${element.innerHTML.replace(/class="[^"]*"/g, '')}
+        </body>
+        </html>
+      `;
 
-    const blob = new Blob([htmlContent], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `devis-${currentQuote.ref}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([htmlContent], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `devis-${currentQuote.ref}.doc`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log('Document Word téléchargé avec succès');
+    } catch (error) {
+      console.error('Erreur lors du téléchargement Word:', error);
+      alert('Erreur lors du téléchargement du document Word. Veuillez réessayer.');
+    }
   };
 
   return (
@@ -408,7 +458,7 @@ const PDFPreview = () => {
             </Button>
           </div>
           
-          <div id="pdf-content" className="pdf-preview-content border rounded-lg p-4 bg-white max-h-[70vh] overflow-y-auto">
+          <div className="pdf-preview-content border rounded-lg p-4 bg-white max-h-[70vh] overflow-y-auto">
             <PDFPreviewContent quote={currentQuote} settings={settings} />
           </div>
         </div>
