@@ -60,8 +60,6 @@ const PDFPreviewWithSignature = () => {
         return;
       }
 
-      toast.loading('Génération du PDF...');
-
       // Créer le contenu HTML complet
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
@@ -96,10 +94,10 @@ const PDFPreviewWithSignature = () => {
       // Cleanup
       document.body.removeChild(tempDiv);
       
-      toast.success('PDF téléchargé avec succès');
+      toast.success('PDF téléchargé');
     } catch (error) {
       console.error('Erreur génération PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error('Erreur PDF');
     }
   };
 
@@ -156,23 +154,11 @@ const PDFPreviewWithSignature = () => {
     }
   };
 
-  const PreviewContent = () => {
-    try {
-      const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
-      return (
-        <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
-          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-        </div>
-      );
-    } catch (error) {
-      console.error('Erreur génération aperçu PDF:', error);
-      return (
-        <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6" style={{ fontFamily: 'Arial, sans-serif' }}>
-          <p>Erreur lors de la génération de l'aperçu</p>
-        </div>
-      );
-    }
-  };
+  const PreviewContent = () => (
+    <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div dangerouslySetInnerHTML={{ __html: generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType) }} />
+    </div>
+  );
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -254,35 +240,27 @@ const PDFPreviewWithSignature = () => {
 
 // Fonction pour générer le HTML du PDF
 const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteType: string): string => {
-  try {
-    const colors = settings.templateColors || {
-      primary: '#000000',
-      secondary: '#666666',
-      accent: '#333333',
-      titleColor: '#000000',
-      subtitleColor: '#666666',
-      textColor: '#000000'
-    };
+  const colors = settings.templateColors || {
+    primary: '#000000',
+    secondary: '#666666',
+    accent: '#333333',
+    titleColor: '#000000',
+    subtitleColor: '#666666',
+    textColor: '#000000'
+  };
 
-    const hasTechItems = quote.items?.some(item => item.kind === 'TECH') || false;
-    const hasAgentItems = quote.items?.some(item => item.kind === 'AGENT') || false;
+  const hasTechItems = quote.items.some(item => item.kind === 'TECH');
+  const hasAgentItems = quote.items.some(item => item.kind === 'AGENT');
 
-    // Obtenir le nom d'affichage du client avec protection contre les valeurs nulles
-    const contactInfo = quote.addresses?.contact || {};
-    const clientDisplayName = (contactInfo as any).first_name && (contactInfo as any).last_name 
-      ? `${(contactInfo as any).first_name} ${(contactInfo as any).last_name}`
-      : (contactInfo as any).name || quote.client || 'Client non défini';
+  // Obtenir le nom d'affichage du client
+  const clientDisplayName = quote.addresses?.contact?.first_name && quote.addresses?.contact?.last_name 
+    ? `${quote.addresses.contact.first_name} ${quote.addresses.contact.last_name}`
+    : quote.addresses?.contact?.name || quote.client || '';
 
   let html = `
     <style>
       @page { size: A4; margin: 10mm; }
-      body { 
-        font-family: Arial, sans-serif; 
-        color: ${colors.textColor}; 
-        line-height: 1.4; 
-        margin: 0;
-        padding: 0;
-      }
+      body { font-family: Arial, sans-serif; color: ${colors.textColor}; line-height: 1.4; }
       .page-break { page-break-before: always; }
       .avoid-break { page-break-inside: avoid; }
       table { width: 100%; border-collapse: collapse; margin: 15px 0; }
@@ -387,7 +365,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       const startDate = item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-FR') : '';
       const endDate = item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-FR') : '';
       const period = startDate && endDate ? `${startDate} - ${endDate}` : 'À définir';
-      const hoursPerDay = 8; // Estimation
+      const hoursPerDay = 8;
       const totalDays = Math.ceil((item.hoursTotal || 0) / hoursPerDay);
       
       html += `
@@ -460,10 +438,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   html += `</div>`;
   
   return html;
-  } catch (error) {
-    console.error('Erreur génération HTML PDF:', error);
-    return '<div>Erreur lors de la génération du PDF</div>';
-  }
 };
 
 export default PDFPreviewWithSignature;
