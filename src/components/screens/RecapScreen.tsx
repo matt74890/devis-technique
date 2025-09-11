@@ -8,11 +8,16 @@ import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
 import PDFPreview from '@/components/pdf/PDFPreview';
+import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 
 const RecapScreen = () => {
-  const { currentQuote, settings } = useStore();
+  const { currentQuote, settings, updateQuote } = useStore();
 
   if (!currentQuote) return null;
+
+  const handleSignatureChange = (signature: string) => {
+    updateQuote({ clientSignature: signature });
+  };
 
   // Ensure all items have calculated values
   const calculatedItems = currentQuote.items.map(item => {
@@ -399,7 +404,7 @@ const RecapScreen = () => {
           
           <div class="letter-content">
             <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.name || currentQuote.client || 'Client'},
+              ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.lastName || clientAddress.name || currentQuote.client || 'Client'},
             </div>
             
             <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
@@ -799,13 +804,20 @@ const RecapScreen = () => {
         </div>
         
         <div class="signature-box">
-          <div class="signature-title">SIGNATURE DU CLIENT</div>
+          <div class="signature-title">SIGNATURE CLIENT</div>
           <div class="signature-content">
-            <div>${currentQuote.addresses.contact.name}</div>
+            <div><strong>${currentQuote.addresses.contact.lastName || currentQuote.addresses.contact.name || currentQuote.client}</strong></div>
+            ${currentQuote.addresses.contact.company ? `<div>${currentQuote.addresses.contact.company}</div>` : ''}
           </div>
+          ${currentQuote.clientSignature ? `
+            <div style="margin: 5px 0; text-align: center;">
+              <img src="${currentQuote.clientSignature}" 
+                   style="max-width: 150px; max-height: 50px; border: 1px solid #ccc;" 
+                   alt="Signature client" />
+            </div>
+          ` : ''}
           <div class="signature-line">
-            <strong>Bon pour accord</strong><br>
-            Date et lieu : _________________
+            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
         </div>
       </div>
@@ -1374,6 +1386,12 @@ const RecapScreen = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Signature client */}
+      <SignatureCanvas
+        onSignatureChange={handleSignatureChange}
+        signature={currentQuote.clientSignature}
+      />
     </div>
   );
 };

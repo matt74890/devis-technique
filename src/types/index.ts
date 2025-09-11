@@ -255,6 +255,7 @@ export interface Quote {
     installation: Address;
     useSeparateAddresses: boolean;
   };
+  clientSignature?: string; // Données JSON de la signature client
 }
 
 export interface QuoteItem {
