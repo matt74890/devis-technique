@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import ClientSignature from '@/components/signature/ClientSignature';
 import AgentServiceDescription from '@/components/agent/AgentServiceDescription';
 import { supabase } from '@/integrations/supabase/client';
+import html2pdf from 'html2pdf.js';
 
 const PDFPreviewWithSignature = () => {
   const { currentQuote, settings } = useStore();
@@ -63,9 +64,6 @@ const PDFPreviewWithSignature = () => {
 
       // Créer le contenu HTML complet avec les nouvelles spécifications
       const htmlContent = generateOptimizedPDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
-      
-      // Dynamically import html2pdf
-      const html2pdf = (await import('html2pdf.js')).default;
       
       // Create a temporary div for PDF generation
       const tempDiv = document.createElement('div');
