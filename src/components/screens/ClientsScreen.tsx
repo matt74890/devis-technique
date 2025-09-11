@@ -10,9 +10,7 @@ import { toast } from 'sonner';
 
 interface Client {
   id: string;
-  name?: string; // Rétrocompatibilité
-  first_name?: string;
-  last_name?: string;
+  name: string;
   company?: string;
   email?: string;
   phone?: string;
@@ -28,8 +26,7 @@ const ClientsScreen = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<Partial<Client>>({
-    first_name: '',
-    last_name: '',
+    name: '',
     company: '',
     email: '',
     phone: '',
@@ -48,7 +45,7 @@ const ClientsScreen = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('last_name', { nullsFirst: false });
+        .order('name');
       
       if (error) throw error;
       setClients(data || []);
@@ -61,22 +58,16 @@ const ClientsScreen = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.last_name?.trim()) {
-      toast.error('Le nom de famille est obligatoire');
+    if (!formData.name?.trim()) {
+      toast.error('Le nom est obligatoire');
       return;
     }
-
-    // Préparer les données pour la base de données
-    const clientData = {
-      ...formData,
-      name: `${formData.first_name || ''} ${formData.last_name || ''}`.trim()
-    };
 
     try {
       if (editingClient) {
         const { error } = await supabase
           .from('clients')
-          .update(clientData)
+          .update(formData)
           .eq('id', editingClient.id);
         
         if (error) throw error;
@@ -84,7 +75,7 @@ const ClientsScreen = () => {
       } else {
         const { error } = await supabase
           .from('clients')
-          .insert([clientData]);
+          .insert([formData as Client]);
         
         if (error) throw error;
         toast.success('Client créé avec succès');
@@ -119,8 +110,7 @@ const ClientsScreen = () => {
 
   const resetForm = () => {
     setFormData({
-      first_name: '',
-      last_name: '',
+      name: '',
       company: '',
       email: '',
       phone: '',
@@ -134,28 +124,19 @@ const ClientsScreen = () => {
 
   const openEditDialog = (client: Client) => {
     setEditingClient(client);
-    // Extraire prénom et nom de famille depuis le champ name si pas de first_name/last_name
-    const nameParts = client.name?.split(' ') || [];
-    const formDataWithSeparatedNames = {
-      ...client,
-      first_name: client.first_name || (nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : nameParts[0] || ''),
-      last_name: client.last_name || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '')
-    };
-    setFormData(formDataWithSeparatedNames);
+    setFormData(client);
     setIsDialogOpen(true);
   };
 
-  const filteredClients = clients.filter(client => {
-    const fullName = client.name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
-    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Grouper les clients par première lettre du nom de famille
+  // Grouper les clients par première lettre
   const groupedClients = filteredClients.reduce((acc, client) => {
-    const lastName = client.last_name || client.name?.split(' ').pop() || '';
-    const firstLetter = lastName.charAt(0).toUpperCase();
+    const firstLetter = client.name.charAt(0).toUpperCase();
     if (!acc[firstLetter]) {
       acc[firstLetter] = [];
     }
@@ -193,34 +174,24 @@ const ClientsScreen = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="first_name">Prénom</Label>
+                  <Label htmlFor="name">Nom *</Label>
                   <Input
-                    id="first_name"
-                    value={formData.first_name || ''}
-                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                    placeholder="Prénom du client"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="last_name">Nom de famille *</Label>
-                  <Input
-                    id="last_name"
-                    value={formData.last_name || ''}
-                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                    placeholder="Nom de famille"
+                    id="name"
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Nom du client"
                     required
                   />
                 </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="company">Entreprise</Label>
-                <Input
-                  id="company"
-                  value={formData.company || ''}
-                  onChange={(e) => setFormData({...formData, company: e.target.value})}
-                  placeholder="Nom de l'entreprise"
-                />
+                <div>
+                  <Label htmlFor="company">Entreprise</Label>
+                  <Input
+                    id="company"
+                    value={formData.company || ''}
+                    onChange={(e) => setFormData({...formData, company: e.target.value})}
+                    placeholder="Nom de l'entreprise"
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -326,11 +297,7 @@ const ClientsScreen = () => {
                     <CardTitle className="text-lg flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <User className="h-5 w-5 text-primary" />
-                        <span>
-                          {client.first_name && client.last_name 
-                            ? `${client.first_name} ${client.last_name}` 
-                            : client.name || ''}
-                        </span>
+                        <span>{client.name}</span>
                       </div>
                       <div className="flex space-x-1">
                         <Button

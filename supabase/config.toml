@@ -1,7 +1,1 @@
 project_id = "kwtdirfmdakbwwjxdynu"
-
-[functions.extract-email-to-quote]
-verify_jwt = false
-
-[functions.convert-pdf-to-docx]
-verify_jwt = false

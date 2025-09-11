@@ -8,9 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Client {
   id: string;
-  name?: string; // Rétrocompatibilité
-  first_name?: string;
-  last_name?: string;
+  name: string;
   company?: string;
   email?: string;
   phone?: string;
@@ -49,7 +47,7 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('last_name', { nullsFirst: false });
+        .order('name');
       
       if (error) throw error;
       setClients(data || []);
@@ -58,10 +56,9 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
     }
   };
 
-  // Grouper les clients par première lettre du nom de famille
+  // Grouper les clients par première lettre
   const groupedClients = clients.reduce((acc, client) => {
-    const lastName = client.last_name || client.name?.split(' ').pop() || '';
-    const firstLetter = lastName.charAt(0).toUpperCase();
+    const firstLetter = client.name.charAt(0).toUpperCase();
     if (!acc[firstLetter]) {
       acc[firstLetter] = [];
     }
@@ -100,9 +97,7 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
                 <User className="h-4 w-4 text-primary" />
               )}
               <span className="truncate">
-                {selectedClient.first_name && selectedClient.last_name 
-                  ? `${selectedClient.first_name} ${selectedClient.last_name}` 
-                  : selectedClient.name || ''}
+                {selectedClient.name}
                 {selectedClient.company && (
                   <span className="text-muted-foreground ml-1">
                     - {selectedClient.company}
@@ -137,7 +132,7 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
                 {groupedClients[letter].map((client) => (
                   <CommandItem
                     key={client.id}
-                    value={`${client.first_name || ''} ${client.last_name || ''} ${client.name || ''} ${client.company || ''} ${client.email || ''}`}
+                    value={`${client.name} ${client.company || ''} ${client.email || ''}`}
                     onSelect={() => handleSelect(client)}
                   >
                     <Check
@@ -153,11 +148,7 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
                         <User className="h-4 w-4 text-primary" />
                       )}
                       <div className="flex flex-col">
-                        <span className="font-medium">
-                          {client.first_name && client.last_name 
-                            ? `${client.first_name} ${client.last_name}` 
-                            : client.name || ''}
-                        </span>
+                        <span className="font-medium">{client.name}</span>
                         {client.company && (
                           <span className="text-sm text-muted-foreground">
                             {client.company}
