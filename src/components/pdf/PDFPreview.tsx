@@ -13,292 +13,293 @@ interface PDFPreviewProps {
   settings: Settings;
 }
 
-const PDFPreviewContent = ({ quote, settings }: PDFPreviewProps) => {
+// Fonction unifiée qui génère le HTML complet du devis avec styles inline
+const renderDevisHTML = (quote: Quote, settings: Settings): string => {
   const totals = calculateQuoteTotals(quote, settings.tvaPct);
   const colors = settings.templateColors || { primary: '#2563eb', secondary: '#64748b', accent: '#059669' };
   
-  return (
-    <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* En-tête avec logo et adresses */}
-      <div className="flex justify-between items-start mb-8">
-        {/* Logo et vendeur (gauche) */}
-        <div className="flex-1">
-          {settings.logoUrl && (
-            <img src={settings.logoUrl} alt="Logo" className="h-20 mb-4" />
-          )}
-          {settings.sellerInfo?.name && (
-            <div className="space-y-1 text-sm">
-              <p className="font-semibold" style={{ color: colors.primary }}>{settings.sellerInfo.name}</p>
-              {settings.sellerInfo.title && <p className="text-gray-600">{settings.sellerInfo.title}</p>}
-              {settings.sellerInfo.email && <p>{settings.sellerInfo.email}</p>}
-              {settings.sellerInfo.phone && <p>{settings.sellerInfo.phone}</p>}
+  return `
+    <div style="max-width: 210mm; margin: 0 auto; background: white; color: black; padding: 20mm; font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.4;">
+      <!-- En-tête avec logo et adresses -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+        <!-- Logo et vendeur (gauche) -->
+        <div style="flex: 1;">
+          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;" />` : ''}
+          ${settings.sellerInfo?.name ? `
+            <div style="font-size: 11pt;">
+              <p style="font-weight: bold; color: ${colors.primary}; margin: 4px 0;">${settings.sellerInfo.name}</p>
+              ${settings.sellerInfo.title ? `<p style="color: #666; margin: 2px 0;">${settings.sellerInfo.title}</p>` : ''}
+              ${settings.sellerInfo.email ? `<p style="margin: 2px 0;">${settings.sellerInfo.email}</p>` : ''}
+              ${settings.sellerInfo.phone ? `<p style="margin: 2px 0;">${settings.sellerInfo.phone}</p>` : ''}
             </div>
-          )}
+          ` : ''}
         </div>
         
-        {/* Adresse client (droite) */}
-        <div className="text-right">
-          <div className="space-y-1">
-            <p className="font-semibold text-lg">{quote.addresses.contact.company}</p>
-            <p>{quote.addresses.contact.name}</p>
-            <p>{quote.addresses.contact.street}</p>
-            <p>{quote.addresses.contact.postalCode} {quote.addresses.contact.city}</p>
-            <p>{quote.addresses.contact.country}</p>
-            {quote.addresses.contact.email && <p className="text-sm" style={{ color: colors.secondary }}>{quote.addresses.contact.email}</p>}
-            {quote.addresses.contact.phone && <p className="text-sm">{quote.addresses.contact.phone}</p>}
+        <!-- Adresse client (droite) -->
+        <div style="text-align: right;">
+          <div>
+            <p style="font-weight: bold; font-size: 14pt; margin: 4px 0;">${quote.addresses.contact.company}</p>
+            <p style="margin: 2px 0;">${quote.addresses.contact.name}</p>
+            <p style="margin: 2px 0;">${quote.addresses.contact.street}</p>
+            <p style="margin: 2px 0;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</p>
+            <p style="margin: 2px 0;">${quote.addresses.contact.country}</p>
+            ${quote.addresses.contact.email ? `<p style="font-size: 10pt; color: ${colors.secondary}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
+            ${quote.addresses.contact.phone ? `<p style="font-size: 10pt; margin: 2px 0;">${quote.addresses.contact.phone}</p>` : ''}
           </div>
         </div>
       </div>
 
-      {/* Titre du devis */}
-      <div className="text-center py-6" style={{ borderTop: `3px solid ${colors.primary}`, borderBottom: `1px solid ${colors.secondary}` }}>
-        <h1 className="text-3xl font-bold" style={{ color: colors.primary }}>{settings.pdfTitle}</h1>
-        <p className="text-lg mt-2" style={{ color: colors.secondary }}>Devis N° {quote.ref}</p>
-        <p className="text-gray-500">Date: {new Date(quote.date).toLocaleDateString('fr-CH')}</p>
+      <!-- Titre du devis -->
+      <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary};">
+        <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.primary}; margin: 0 0 8px 0;">${settings.pdfTitle}</h1>
+        <p style="font-size: 14pt; margin: 4px 0; color: ${colors.secondary};">Devis N° ${quote.ref}</p>
+        <p style="color: #666; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
       </div>
 
-      {/* Informations complémentaires */}
-      {(quote.site || quote.contact || quote.canton) && (
-        <div className="bg-gray-50 p-4 rounded">
-          <h3 className="font-semibold mb-2" style={{ color: colors.primary }}>Détails du projet</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            {quote.site && <p><span className="font-medium">Site:</span> {quote.site}</p>}
-            {quote.contact && <p><span className="font-medium">Contact:</span> {quote.contact}</p>}
-            {quote.canton && <p><span className="font-medium">Canton:</span> {quote.canton}</p>}
+      ${(quote.site || quote.contact || quote.canton) ? `
+        <!-- Informations complémentaires -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary}; font-size: 12pt;">Détails du projet</h3>
+          <div style="font-size: 10pt;">
+            ${quote.site ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Site:</span> ${quote.site}</p>` : ''}
+            ${quote.contact ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Contact:</span> ${quote.contact}</p>` : ''}
+            ${quote.canton ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Canton:</span> ${quote.canton}</p>` : ''}
           </div>
         </div>
-      )}
+      ` : ''}
 
-      {/* Prestations TECH */}
-      {quote.items.some(item => item.kind === 'TECH') && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg" style={{ color: colors.primary }}>Prestations techniques</h3>
-          <table className="w-full border-collapse" style={{ border: `1px solid ${colors.secondary}` }}>
+      ${quote.items.some(item => item.kind === 'TECH') ? `
+        <!-- Prestations TECH -->
+        <div style="margin: 20px 0;">
+          <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations techniques</h3>
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary};">
             <thead>
-              <tr style={{ backgroundColor: colors.primary, color: 'white' }}>
-                <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Type</th>
-                <th className="px-3 py-3 text-left font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Référence</th>
-                <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Mode</th>
-                <th className="px-3 py-3 text-center font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Qté</th>
-                <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>PU TTC</th>
-                <th className="px-3 py-3 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>Total TTC</th>
+              <tr style="background: ${colors.primary}; color: white;">
+                <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Type</th>
+                <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Référence</th>
+                <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Mode</th>
+                <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Qté</th>
+                <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">PU TTC</th>
+                <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Total TTC</th>
               </tr>
             </thead>
             <tbody>
-              {quote.items.filter(item => item.kind === 'TECH').map((item, index) => (
-                <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#f8fafc' : 'white' }}>
-                  <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.type}</td>
-                  <td className="px-3 py-2" style={{ border: `1px solid ${colors.secondary}` }}>{item.reference}</td>
-                  <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>
-                    <span className="px-2 py-1 rounded text-xs" style={{ 
-                      backgroundColor: item.mode === 'mensuel' ? colors.accent : colors.secondary,
-                      color: 'white'
-                    }}>
-                      {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+              ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
+                <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
+                  <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.type}</td>
+                  <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.reference}</td>
+                  <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">
+                    <span style="padding: 2px 6px; border-radius: 3px; font-size: 9pt; background: ${item.mode === 'mensuel' ? colors.accent : colors.secondary}; color: white;">
+                      ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-center" style={{ border: `1px solid ${colors.secondary}` }}>{item.qty}</td>
-                  <td className="px-3 py-2 text-right" style={{ border: `1px solid ${colors.secondary}` }}>{item.puTTC?.toFixed(2)} CHF</td>
-                  <td className="px-3 py-2 text-right font-semibold" style={{ border: `1px solid ${colors.secondary}`, color: colors.primary }}>
-                    {item.totalTTC?.toFixed(2)} CHF{item.mode === 'mensuel' ? '/mois' : ''}
+                  <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty}</td>
+                  <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${item.puTTC?.toFixed(2)} CHF</td>
+                  <td style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary}; color: ${colors.primary};">
+                    ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
                   </td>
                 </tr>
-              ))}
+              `).join('')}
             </tbody>
           </table>
         </div>
-      )}
+      ` : ''}
 
-      {/* Prestations AGENT */}
-      {quote.items.some(item => item.kind === 'AGENT') && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg" style={{ color: colors.primary }}>Prestations d'agents de sécurité</h3>
-          <table className="w-full border-collapse" style={{ border: `1px solid ${colors.secondary}` }}>
+      ${quote.items.some(item => item.kind === 'AGENT') ? `
+        <!-- Prestations AGENT -->
+        <div style="margin: 20px 0;">
+          <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations d'agents de sécurité</h3>
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary}; font-size: 9pt;">
             <thead>
-              <tr style={{ backgroundColor: colors.primary, color: 'white' }}>
-                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Date début</th>
-                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Heure début</th>
-                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Date fin</th>
-                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Heure fin</th>
-                <th className="px-2 py-3 text-left font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Type</th>
-                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H norm.</th>
-                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H nuit</th>
-                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H dim.</th>
-                <th className="px-2 py-3 text-center font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>H JF</th>
-                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Tarif CHF/h</th>
-                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>Dépl.</th>
-                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>HT</th>
-                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>TVA</th>
-                <th className="px-2 py-3 text-right font-semibold text-xs" style={{ border: `1px solid ${colors.secondary}` }}>TTC</th>
+              <tr style="background: ${colors.primary}; color: white;">
+                <th style="padding: 6px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Date début</th>
+                <th style="padding: 6px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Heure début</th>
+                <th style="padding: 6px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Date fin</th>
+                <th style="padding: 6px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Heure fin</th>
+                <th style="padding: 6px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Type</th>
+                <th style="padding: 6px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">H norm.</th>
+                <th style="padding: 6px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">H nuit</th>
+                <th style="padding: 6px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">H dim.</th>
+                <th style="padding: 6px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">H JF</th>
+                <th style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Tarif CHF/h</th>
+                <th style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Dépl.</th>
+                <th style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">HT</th>
+                <th style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">TVA</th>
+                <th style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">TTC</th>
               </tr>
             </thead>
             <tbody>
-              {quote.items.filter(item => item.kind === 'AGENT').map((item, index) => (
-                <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#f8fafc' : 'white' }}>
-                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
+              ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
+                <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
+                  <td style="padding: 4px; border: 1px solid ${colors.secondary};">
+                    ${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
                   </td>
-                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.timeStart || '-'}</td>
-                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
+                  <td style="padding: 4px; border: 1px solid ${colors.secondary};">${item.timeStart || '-'}</td>
+                  <td style="padding: 4px; border: 1px solid ${colors.secondary};">
+                    ${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
                   </td>
-                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.timeEnd || '-'}</td>
-                  <td className="px-2 py-2 text-xs" style={{ border: `1px solid ${colors.secondary}` }}>{item.agentType || '-'}</td>
-                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.hoursNormal?.toFixed(1) || '0.0'}
+                  <td style="padding: 4px; border: 1px solid ${colors.secondary};">${item.timeEnd || '-'}</td>
+                  <td style="padding: 4px; border: 1px solid ${colors.secondary};">${item.agentType || '-'}</td>
+                  <td style="padding: 4px; text-align: center; border: 1px solid ${colors.secondary};">
+                    ${item.hoursNormal?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.hoursNight?.toFixed(1) || '0.0'}
+                  <td style="padding: 4px; text-align: center; border: 1px solid ${colors.secondary};">
+                    ${item.hoursNight?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.hoursSunday?.toFixed(1) || '0.0'}
+                  <td style="padding: 4px; text-align: center; border: 1px solid ${colors.secondary};">
+                    ${item.hoursSunday?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-2 py-2 text-center text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.hoursHoliday?.toFixed(1) || '0.0'}
+                  <td style="padding: 4px; text-align: center; border: 1px solid ${colors.secondary};">
+                    ${item.hoursHoliday?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.rateCHFh?.toFixed(2) || '0.00'}
+                  <td style="padding: 4px; text-align: right; border: 1px solid ${colors.secondary};">
+                    ${item.rateCHFh?.toFixed(2) || '0.00'}
                   </td>
-                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.travelCHF?.toFixed(2) || '0.00'}
+                  <td style="padding: 4px; text-align: right; border: 1px solid ${colors.secondary};">
+                    ${item.travelCHF?.toFixed(2) || '0.00'}
                   </td>
-                  <td className="px-2 py-2 text-right text-xs font-semibold" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.lineHT?.toFixed(2) || '0.00'}
+                  <td style="padding: 4px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">
+                    ${item.lineHT?.toFixed(2) || '0.00'}
                   </td>
-                  <td className="px-2 py-2 text-right text-xs" style={{ border: `1px solid ${colors.secondary}` }}>
-                    {item.lineTVA?.toFixed(2) || '0.00'}
+                  <td style="padding: 4px; text-align: right; border: 1px solid ${colors.secondary};">
+                    ${item.lineTVA?.toFixed(2) || '0.00'}
                   </td>
-                  <td className="px-2 py-2 text-right text-xs font-semibold" style={{ border: `1px solid ${colors.secondary}`, color: colors.primary }}>
-                    {item.lineTTC?.toFixed(2) || '0.00'}
+                  <td style="padding: 4px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary}; color: ${colors.primary};">
+                    ${item.lineTTC?.toFixed(2) || '0.00'}
                   </td>
                 </tr>
-              ))}
+              `).join('')}
             </tbody>
           </table>
           
-          {/* Règles appliquées pour les agents */}
-          <div className="bg-gray-50 p-4 rounded text-sm">
-            <h4 className="font-semibold mb-2" style={{ color: colors.primary }}>Règles appliquées</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <p><span className="font-medium">Heures de nuit:</span> {settings.agentSettings?.nightStartTime || '23:00'} → {settings.agentSettings?.nightEndTime || '06:00'} (+{settings.agentSettings?.nightMarkupPct || 10}%)</p>
-              <p><span className="font-medium">Dimanche/JF:</span> {settings.agentSettings?.sundayStartTime || '06:00'} → {settings.agentSettings?.sundayEndTime || '23:00'} (+{settings.agentSettings?.sundayMarkupPct || 10}%)</p>
-              <p><span className="font-medium">Jours fériés:</span> +{settings.agentSettings?.holidayMarkupPct || 10}%</p>
-              <p><span className="font-medium">Règle spéciale:</span> Passage à 23h/06h pile = 1h pleine</p>
+          <!-- Règles appliquées pour les agents -->
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 10pt; margin-top: 10px;">
+            <h4 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary};">Règles appliquées</h4>
+            <div>
+              <p style="margin: 4px 0;"><span style="font-weight: bold;">Heures de nuit:</span> ${settings.agentSettings?.nightStartTime || '23:00'} → ${settings.agentSettings?.nightEndTime || '06:00'} (+${settings.agentSettings?.nightMarkupPct || 10}%)</p>
+              <p style="margin: 4px 0;"><span style="font-weight: bold;">Dimanche/JF:</span> ${settings.agentSettings?.sundayStartTime || '06:00'} → ${settings.agentSettings?.sundayEndTime || '23:00'} (+${settings.agentSettings?.sundayMarkupPct || 10}%)</p>
+              <p style="margin: 4px 0;"><span style="font-weight: bold;">Jours fériés:</span> +${settings.agentSettings?.holidayMarkupPct || 10}%</p>
+              <p style="margin: 4px 0;"><span style="font-weight: bold;">Règle spéciale:</span> Passage à 23h/06h pile = 1h pleine</p>
             </div>
           </div>
         </div>
-      )}
+      ` : ''}
 
-      {/* Totaux */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Unique */}
-        {totals.unique.totalTTC > 0 && (
-          <div className="p-4 rounded-lg" style={{ border: `2px solid ${colors.secondary}`, backgroundColor: '#f8fafc' }}>
-            <h4 className="font-semibold mb-3" style={{ color: colors.primary }}>Achat unique</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
+      <!-- Totaux -->
+      <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+        ${totals.unique.totalTTC > 0 ? `
+          <!-- Unique -->
+          <div style="flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; border: 2px solid ${colors.secondary}; background: #f8fafc;">
+            <h4 style="font-weight: bold; margin-bottom: 10px; color: ${colors.primary};">Achat unique</h4>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
                 <span>Sous-total HT:</span>
-                <span>{totals.unique.subtotalHT.toFixed(2)} CHF</span>
+                <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between">
-                <span>TVA ({settings.tvaPct}%):</span>
-                <span>{totals.unique.tva.toFixed(2)} CHF</span>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.unique.tva.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between font-bold text-lg pt-2" style={{ borderTop: `1px solid ${colors.secondary}`, color: colors.primary }}>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14pt; padding-top: 8px; border-top: 1px solid ${colors.secondary}; color: ${colors.primary};">
                 <span>Total TTC:</span>
-                <span>{totals.unique.totalTTC.toFixed(2)} CHF</span>
+                <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
               </div>
             </div>
           </div>
-        )}
+        ` : ''}
 
-        {/* Mensuel */}
-        {totals.mensuel.totalTTC > 0 && (
-          <div className="p-4 rounded-lg" style={{ border: `2px solid ${colors.accent}`, backgroundColor: '#f0fdf4' }}>
-            <h4 className="font-semibold mb-3" style={{ color: colors.accent }}>Abonnement mensuel</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
+        ${totals.mensuel.totalTTC > 0 ? `
+          <!-- Mensuel -->
+          <div style="flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; border: 2px solid ${colors.accent}; background: #f0fdf4;">
+            <h4 style="font-weight: bold; margin-bottom: 10px; color: ${colors.accent};">Abonnement mensuel</h4>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
                 <span>Sous-total HT:</span>
-                <span>{totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+                <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between">
-                <span>TVA ({settings.tvaPct}%):</span>
-                <span>{totals.mensuel.tva.toFixed(2)} CHF</span>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between font-bold text-lg pt-2" style={{ borderTop: `1px solid ${colors.accent}`, color: colors.accent }}>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14pt; padding-top: 8px; border-top: 1px solid ${colors.accent}; color: ${colors.accent};">
                 <span>Total TTC:</span>
-                <span>{totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
+                <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
               </div>
             </div>
           </div>
-        )}
+        ` : ''}
 
-        {/* Agents */}
-        {totals.agents.totalTTC > 0 && (
-          <div className="p-4 rounded-lg" style={{ border: `2px solid #f59e0b`, backgroundColor: '#fefbf3' }}>
-            <h4 className="font-semibold mb-3" style={{ color: '#f59e0b' }}>Agents de sécurité</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
+        ${totals.agents.totalTTC > 0 ? `
+          <!-- Agents -->
+          <div style="flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; border: 2px solid #f59e0b; background: #fefbf3;">
+            <h4 style="font-weight: bold; margin-bottom: 10px; color: #f59e0b;">Agents de sécurité</h4>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
                 <span>Sous-total HT:</span>
-                <span>{totals.agents.subtotalHT.toFixed(2)} CHF</span>
+                <span>${totals.agents.subtotalHT.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between">
-                <span>TVA ({settings.tvaPct}%):</span>
-                <span>{totals.agents.tva.toFixed(2)} CHF</span>
+              <div style="display: flex; justify-content: space-between; margin: 6px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.agents.tva.toFixed(2)} CHF</span>
               </div>
-              <div className="flex justify-between font-bold text-lg pt-2" style={{ borderTop: `1px solid #f59e0b`, color: '#f59e0b' }}>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14pt; padding-top: 8px; border-top: 1px solid #f59e0b; color: #f59e0b;">
                 <span>Total TTC:</span>
-                <span>{totals.agents.totalTTC.toFixed(2)} CHF</span>
+                <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
               </div>
             </div>
           </div>
-        )}
+        ` : ''}
       </div>
 
-      {/* Total général */}
-      <div className="p-6 rounded-lg text-center" style={{ 
-        border: `3px solid ${colors.primary}`, 
-        background: `linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08)` 
-      }}>
-        <h4 className="font-bold text-2xl mb-4" style={{ color: colors.primary }}>TOTAL GÉNÉRAL</h4>
-        <div className="grid grid-cols-2 gap-6 mb-4">
+      <!-- Total général -->
+      <div style="padding: 20px; border-radius: 8px; text-align: center; border: 3px solid ${colors.primary}; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); margin: 20px 0;">
+        <h4 style="font-weight: bold; font-size: 18pt; margin-bottom: 15px; color: ${colors.primary};">TOTAL GÉNÉRAL</h4>
+        <div style="display: flex; gap: 20px; margin-bottom: 15px; justify-content: center;">
           <div>
-            <p className="text-sm" style={{ color: colors.secondary }}>Total HT</p>
-            <p className="text-xl font-semibold" style={{ color: colors.primary }}>{totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+            <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">Total HT</p>
+            <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
           </div>
           <div>
-            <p className="text-sm" style={{ color: colors.secondary }}>TVA totale</p>
-            <p className="text-xl font-semibold" style={{ color: colors.primary }}>{totals.global.tva.toFixed(2)} CHF</p>
+            <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">TVA totale</p>
+            <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
           </div>
         </div>
-        <div className="pt-4" style={{ borderTop: `2px solid ${colors.primary}` }}>
-          <p className="text-3xl font-bold" style={{ color: colors.primary }}>
-            {totals.global.totalTTC.toFixed(2)} CHF
+        <div style="padding-top: 15px; border-top: 2px solid ${colors.primary};">
+          <p style="font-size: 24pt; font-weight: bold; color: ${colors.primary};">
+            ${totals.global.totalTTC.toFixed(2)} CHF
           </p>
-          {totals.mensuel.totalTTC > 0 && (
-            <p className="text-xl font-semibold mt-2" style={{ color: colors.accent }}>
-              + {totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+          ${totals.mensuel.totalTTC > 0 ? `
+            <p style="font-size: 16pt; font-weight: bold; margin-top: 8px; color: ${colors.accent};">
+              + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
             </p>
-          )}
+          ` : ''}
         </div>
       </div>
 
-      {/* Commentaire */}
-      {quote.comment && (
-        <div>
-          <h4 className="font-semibold text-lg mb-3" style={{ color: colors.primary }}>Commentaires</h4>
-          <div className="p-4 rounded-lg" style={{ border: `1px solid ${colors.secondary}`, backgroundColor: '#f8fafc' }}>
-            <p className="whitespace-pre-wrap">{quote.comment}</p>
+      ${quote.comment ? `
+        <!-- Commentaire -->
+        <div style="margin: 20px 0;">
+          <h4 style="font-weight: bold; font-size: 14pt; margin-bottom: 10px; color: ${colors.primary};">Commentaires</h4>
+          <div style="padding: 15px; border-radius: 8px; border: 1px solid ${colors.secondary}; background: #f8fafc;">
+            <p style="white-space: pre-wrap;">${quote.comment}</p>
           </div>
         </div>
-      )}
+      ` : ''}
 
-      {/* Pied de page */}
-      <div className="text-center text-sm pt-6 mt-8" style={{ borderTop: `2px solid ${colors.primary}`, color: colors.secondary }}>
-        <p className="font-medium">{settings.pdfFooter}</p>
-        <p className="mt-2">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
+      <!-- Pied de page -->
+      <div style="text-align: center; font-size: 10pt; padding-top: 20px; margin-top: 30px; border-top: 2px solid ${colors.primary}; color: ${colors.secondary};">
+        <p style="font-weight: bold;">${settings.pdfFooter}</p>
+        <p style="margin-top: 8px;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
       </div>
     </div>
+  `;
+};
+
+const PDFPreviewContent = ({ quote, settings }: PDFPreviewProps) => {
+  const htmlContent = renderDevisHTML(quote, settings);
+  
+  return (
+    <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
   );
 };
 
@@ -309,11 +310,16 @@ const PDFPreview = () => {
 
   const downloadPDF = async () => {
     try {
-      const element = document.querySelector('.pdf-preview-content');
-      if (!element) {
-        console.error('Element PDF non trouvé');
-        return;
-      }
+      // Generate the same HTML used for preview
+      const htmlContent = renderDevisHTML(currentQuote, settings);
+      
+      // Create a temporary div to render the HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      document.body.appendChild(tempDiv);
 
       // Dynamically import html2pdf
       const html2pdf = (await import('html2pdf.js')).default;
@@ -321,12 +327,15 @@ const PDFPreview = () => {
       const options = {
         margin: [10, 10, 10, 10],
         filename: `devis-${currentQuote.ref}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
+        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           backgroundColor: '#ffffff',
-          logging: false
+          logging: false,
+          letterRendering: true,
+          allowTaint: false,
+          removeContainer: true
         },
         jsPDF: {
           unit: 'mm',
@@ -336,7 +345,10 @@ const PDFPreview = () => {
       };
 
       // Generate PDF as blob and force download
-      const pdfBlob = await html2pdf().set(options).from(element).outputPdf('blob');
+      const pdfBlob = await html2pdf().set(options).from(tempDiv).outputPdf('blob');
+      
+      // Clean up temporary element
+      document.body.removeChild(tempDiv);
       
       // Create download link
       const url = URL.createObjectURL(pdfBlob);
@@ -360,14 +372,11 @@ const PDFPreview = () => {
 
   const downloadWord = () => {
     try {
-      const element = document.querySelector('.pdf-preview-content');
-      if (!element) {
-        console.error('Element PDF non trouvé pour Word');
-        return;
-      }
+      // Generate the same HTML used for preview
+      const htmlContent = renderDevisHTML(currentQuote, settings);
 
       // Créer un document HTML complet avec styles Word-compatibles
-      const htmlContent = `
+      const wordHtmlContent = `
         <!DOCTYPE html>
         <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head>
@@ -413,18 +422,16 @@ const PDFPreview = () => {
             h3 { font-size: 14pt; margin: 15pt 0 8pt 0; }
             h4 { font-size: 12pt; margin: 12pt 0 6pt 0; }
             p { margin: 6pt 0; }
-            .space-y-4 > * + * { margin-top: 12pt; }
-            .grid { display: table; width: 100%; }
-            .grid > div { display: table-cell; padding: 6pt; }
+            div { margin: 6pt 0; }
           </style>
         </head>
         <body>
-          ${element.innerHTML.replace(/class="[^"]*"/g, '')}
+          ${htmlContent.replace(/style="[^"]*"/g, '')}
         </body>
         </html>
       `;
 
-      const blob = new Blob([htmlContent], { 
+      const blob = new Blob([wordHtmlContent], { 
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
       const url = URL.createObjectURL(blob);
