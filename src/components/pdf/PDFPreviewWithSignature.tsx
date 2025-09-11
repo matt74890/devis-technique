@@ -82,19 +82,19 @@ const PDFPreviewWithSignature = () => {
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [12, 12, 12, 12],
+        margin: [18, 18, 18, 18],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-          scale: 1.2,
+          scale: 1.1,
           useCORS: true,
           letterRendering: true,
           allowTaint: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          windowWidth: 1400,
-          windowHeight: 1800,
+          windowWidth: 1200,
+          windowHeight: 1600,
           logging: false
         },
         jsPDF: { 
@@ -378,7 +378,13 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         <!-- Signature vendeur sur lettre -->
         <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
           <div style="text-align: right;">
-            <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
+            ${settings.sellerInfo?.signature ? `
+              <div style="margin-bottom: 10px;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+              </div>
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
+            `}
             <div style="font-size: 12px; color: ${colors.textColor};">
               ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
             </div>
@@ -821,10 +827,34 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Signatures - AVEC LA SIGNATURE DU VENDEUR À DROITE
+  // Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE
   html += `
     <div style="margin-top: 50px;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
+          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
+            ${settings.sellerInfo?.name || ''}<br>
+            ${settings.sellerInfo?.title || ''}<br>
+            ${settings.sellerInfo?.phone || ''}
+          </div>
+          
+          ${settings.sellerInfo?.signature ? `
+            <div style="margin: 10px 0;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+            </div>
+          ` : `
+            <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin: 15px 0;"></div>
+          `}
+          
+          <div style="font-size: 12px; color: ${colors.textColor};">
+            ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+          </div>
+          <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
+            Signature du vendeur
+          </div>
+        </div>
+        
         <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
           <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CLIENT</div>
           <div style="color: ${colors.textColor}; margin-bottom: 15px;">
@@ -847,22 +877,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
               Signature du client
             </div>
           `}
-        </div>
-        
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${settings.sellerInfo?.name || ''}<br>
-            ${settings.sellerInfo?.title || ''}<br>
-            ${settings.sellerInfo?.phone || ''}
-          </div>
-          <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin: 15px 0;"></div>
-          <div style="font-size: 12px; color: ${colors.textColor};">
-            ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-          </div>
-          <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
-            Signature du vendeur
-          </div>
         </div>
       </div>
     </div>
