@@ -118,6 +118,8 @@ export interface Settings {
   catalog: Product[];
   pdfConfig: PDFConfig;
   pdfLayout?: PDFLayout;
+  pdfLayouts?: { [variant: string]: import('./layout').PDFLayoutConfig[] };
+  activePDFLayouts?: { [variant: string]: string };
   letterTemplate: LetterTemplate;
   sellerInfo: SellerInfo;
   templateColors: TemplateColors;

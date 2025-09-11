@@ -1,100 +1,74 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Eye, EyeOff, Plus, Trash2, Type } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Settings, Download, Upload } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { PDFField, PDFSection } from '@/types';
+import { LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
+import { toast } from 'sonner';
 
 const PDFConfiguration = () => {
-  const { settings, updatePDFConfig, updateSettings } = useStore();
+  const { settings, updateSettings } = useStore();
 
-  const updateSection = (sectionKey: keyof typeof settings.pdfConfig.sections, updates: Partial<PDFSection>) => {
-    const updatedConfig = {
-      ...settings.pdfConfig,
-      sections: {
-        ...settings.pdfConfig.sections,
-        [sectionKey]: {
-          ...settings.pdfConfig.sections[sectionKey],
-          ...updates
-        }
+  // Obtenir les layouts disponibles
+  const layouts = settings.pdfLayouts || {};
+  const activePDFLayouts = settings.activePDFLayouts || {};
+
+  const handleVariantChange = (variant: LayoutVariant, layoutId: string) => {
+    updateSettings({
+      activePDFLayouts: {
+        ...activePDFLayouts,
+        [variant]: layoutId
+      }
+    });
+    toast.success(`Disposition ${variant} mise à jour`);
+  };
+
+  const exportSettings = () => {
+    const exportData = {
+      pdfLayouts: layouts,
+      activePDFLayouts: activePDFLayouts,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'dispositions_pdf.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Dispositions PDF exportées');
+  };
+
+  const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importData = JSON.parse(e.target?.result as string);
+        
+        updateSettings({
+          pdfLayouts: importData.pdfLayouts || {},
+          activePDFLayouts: importData.activePDFLayouts || {}
+        });
+        
+        toast.success('Dispositions PDF importées');
+      } catch (error) {
+        toast.error('Erreur lors de l\'importation - fichier JSON invalide');
       }
     };
-    updatePDFConfig(updatedConfig);
+    reader.readAsText(file);
   };
 
-  const updateField = (sectionKey: keyof typeof settings.pdfConfig.sections, fieldId: string, updates: Partial<PDFField>) => {
-    const section = settings.pdfConfig.sections[sectionKey];
-    const updatedFields = section.fields.map(field => 
-      field.id === fieldId ? { ...field, ...updates } : field
-    );
-    
-    updateSection(sectionKey, { fields: updatedFields });
-  };
-
-  const addField = (sectionKey: keyof typeof settings.pdfConfig.sections) => {
-    const section = settings.pdfConfig.sections[sectionKey];
-    const newField: PDFField = {
-      id: crypto.randomUUID(),
-      label: 'Nouveau champ',
-      enabled: true,
-      text: '',
-      order: section.fields.length
-    };
-    
-    updateSection(sectionKey, { 
-      fields: [...section.fields, newField] 
-    });
-  };
-
-  const removeField = (sectionKey: keyof typeof settings.pdfConfig.sections, fieldId: string) => {
-    const section = settings.pdfConfig.sections[sectionKey];
-    const updatedFields = section.fields.filter(field => field.id !== fieldId);
-    
-    updateSection(sectionKey, { fields: updatedFields });
-  };
-
-  const moveField = (sectionKey: keyof typeof settings.pdfConfig.sections, fieldId: string, direction: 'up' | 'down') => {
-    const section = settings.pdfConfig.sections[sectionKey];
-    const fieldIndex = section.fields.findIndex(f => f.id === fieldId);
-    
-    if (
-      (direction === 'up' && fieldIndex === 0) ||
-      (direction === 'down' && fieldIndex === section.fields.length - 1)
-    ) return;
-
-    const newFields = [...section.fields];
-    const targetIndex = direction === 'up' ? fieldIndex - 1 : fieldIndex + 1;
-    
-    [newFields[fieldIndex], newFields[targetIndex]] = [newFields[targetIndex], newFields[fieldIndex]];
-    
-    updateSection(sectionKey, { fields: newFields });
-  };
-
-  const sectionLabels = {
-    header: 'En-tête PDF',
-    clientInfo: 'Informations Client',
-    itemsTable: 'Tableau des Articles',
-    totals: 'Totaux et Calculs',
-    comments: 'Commentaires',
-    footer: 'Pied de page'
-  };
-
-  const fontOptions = [
-    { value: 'Arial, sans-serif', label: 'Arial' },
-    { value: '"Helvetica Neue", Helvetica, sans-serif', label: 'Helvetica' },
-    { value: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif', label: 'Segoe UI' },
-    { value: 'Georgia, serif', label: 'Georgia' },
-    { value: '"Times New Roman", serif', label: 'Times New Roman' },
-    { value: '"Courier New", monospace', label: 'Courier New' },
-    { value: 'Calibri, sans-serif', label: 'Calibri' },
-    { value: '"Open Sans", sans-serif', label: 'Open Sans' },
-    { value: 'Roboto, sans-serif', label: 'Roboto' }
+  const variants: Array<{ key: LayoutVariant; label: string; description: string }> = [
+    { key: 'technique', label: 'Devis Technique', description: 'Matériel et prestations techniques uniquement' },
+    { key: 'agent', label: 'Devis Agent', description: 'Vacations d\'agents de sécurité uniquement' },
+    { key: 'mixte', label: 'Devis Mixte', description: 'Technique + Agents de sécurité' }
   ];
 
   return (
@@ -103,216 +77,92 @@ const PDFConfiguration = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <FileText className="h-5 w-5 text-primary" />
-            <span>Configuration PDF Complète</span>
+            <span>Disposition PDF</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            Personnalisez entièrement votre PDF en activant/désactivant et modifiant chaque section et champ.
+            Sélectionnez la disposition PDF active pour chaque type de devis. 
+            Utilisez l'éditeur de disposition pour créer vos propres modèles.
           </p>
+          
+          <div className="space-y-4">
+            {variants.map((variant) => {
+              const availableLayouts = layouts[variant.key] || [];
+              const activeLayoutId = activePDFLayouts[variant.key] || 'default';
+              const currentLayout = availableLayouts.find(l => l.id === activeLayoutId) || getDefaultLayoutForVariant(variant.key);
+              
+              return (
+                <div key={variant.key} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{variant.label}</h4>
+                      <p className="text-sm text-muted-foreground">{variant.description}</p>
+                    </div>
+                    {currentLayout.metadata.isDefault && (
+                      <Badge variant="secondary">Par défaut</Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm">Disposition active:</Label>
+                    <Select 
+                      value={activeLayoutId} 
+                      onValueChange={(value) => handleVariantChange(variant.key, value)}
+                    >
+                      <SelectTrigger className="w-64">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Par défaut</SelectItem>
+                        {availableLayouts.map((layout) => (
+                          <SelectItem key={layout.id} value={layout.id}>
+                            {layout.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Police du PDF */}
+      {/* Actions d'import/export */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Type className="h-5 w-5 text-primary" />
-            <span>Police du PDF</span>
+            <Settings className="h-5 w-5 text-primary" />
+            <span>Gestion des dispositions</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="font-family">Police de caractères</Label>
-            <Select
-              value={settings.pdfFontFamily}
-              onValueChange={(value) => updateSettings({ pdfFontFamily: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une police" />
-              </SelectTrigger>
-              <SelectContent>
-                {fontOptions.map((font) => (
-                  <SelectItem key={font.value} value={font.value}>
-                    <span style={{ fontFamily: font.value }}>{font.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sections PDF */}
-      {Object.entries(settings.pdfConfig.sections).map(([sectionKey, section]) => (
-        <Card key={sectionKey} className="shadow-soft">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                {sectionLabels[sectionKey as keyof typeof sectionLabels]}
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={section.enabled}
-                  onCheckedChange={(checked) => updateSection(sectionKey as keyof typeof settings.pdfConfig.sections, { enabled: checked })}
-                />
-                <Label className="text-sm">
-                  {section.enabled ? 'Activé' : 'Désactivé'}
-                </Label>
-              </div>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={exportSettings}>
+              <Download className="h-4 w-4 mr-2" />
+              Exporter toutes les dispositions
+            </Button>
+            
+            <div className="relative">
+              <input
+                type="file"
+                accept=".json"
+                onChange={importSettings}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              <Button variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Importer dispositions
+              </Button>
             </div>
-          </CardHeader>
-          
-          {section.enabled && (
-            <CardContent className="space-y-4">
-              {/* Titre de section personnalisable */}
-              {section.title !== undefined && (
-                <div className="space-y-2">
-                  <Label htmlFor={`${sectionKey}-title`}>Titre de la section</Label>
-                  <Input
-                    id={`${sectionKey}-title`}
-                    value={section.title}
-                    onChange={(e) => updateSection(sectionKey as keyof typeof settings.pdfConfig.sections, { title: e.target.value })}
-                    placeholder="Titre personnalisé"
-                  />
-                </div>
-              )}
-
-              {/* Contenu global de section */}
-              {section.content !== undefined && (
-                <div className="space-y-2">
-                  <Label htmlFor={`${sectionKey}-content`}>Contenu de la section</Label>
-                  <Textarea
-                    id={`${sectionKey}-content`}
-                    value={section.content}
-                    onChange={(e) => updateSection(sectionKey as keyof typeof settings.pdfConfig.sections, { content: e.target.value })}
-                    placeholder="Contenu personnalisé"
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              <Separator />
-
-              {/* Champs de la section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="font-medium">Champs de la section</Label>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => addField(sectionKey as keyof typeof settings.pdfConfig.sections)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ajouter un champ
-                  </Button>
-                </div>
-
-                {section.fields.map((field, index) => (
-                  <Card key={field.id} className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                      <div className="space-y-2">
-                        <Label htmlFor={`${field.id}-label`}>Libellé</Label>
-                        <Input
-                          id={`${field.id}-label`}
-                          value={field.label}
-                          onChange={(e) => updateField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id, { label: e.target.value })}
-                          placeholder="Libellé du champ"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2 space-y-2">
-                        <Label htmlFor={`${field.id}-text`}>Texte/Contenu</Label>
-                        <Textarea
-                          id={`${field.id}-text`}
-                          value={field.text}
-                          onChange={(e) => updateField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id, { text: e.target.value })}
-                          placeholder="Contenu du champ"
-                          rows={2}
-                        />
-                      </div>
-
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={field.enabled}
-                            onCheckedChange={(checked) => updateField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id, { enabled: checked })}
-                          />
-                          <Badge variant={field.enabled ? "default" : "secondary"}>
-                            {field.enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                          </Badge>
-                        </div>
-
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moveField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id, 'up')}
-                            disabled={index === 0}
-                          >
-                            ↑
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => moveField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id, 'down')}
-                            disabled={index === section.fields.length - 1}
-                          >
-                            ↓
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeField(sectionKey as keyof typeof settings.pdfConfig.sections, field.id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-
-                {section.fields.length === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    Aucun champ dans cette section. Cliquez sur "Ajouter un champ" pour commencer.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
-
-      {/* Textes personnalisés */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Textes Personnalisés</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Object.entries(settings.pdfConfig.customTexts).map(([key, value]) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}</Label>
-                <Textarea
-                  id={key}
-                  value={value}
-                  onChange={(e) => {
-                    const updatedTexts = {
-                      ...settings.pdfConfig.customTexts,
-                      [key]: e.target.value
-                    };
-                    updatePDFConfig({
-                      ...settings.pdfConfig,
-                      customTexts: updatedTexts
-                    });
-                  }}
-                  placeholder={`Texte personnalisé pour ${key}`}
-                  rows={2}
-                />
-              </div>
-            ))}
           </div>
+          
+          <p className="text-sm text-muted-foreground mt-2">
+            Exportez vos dispositions pour les sauvegarder ou les partager. 
+            Importez des dispositions depuis un fichier JSON.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -7,7 +7,7 @@ import DevisScreen from './screens/DevisScreen';
 import RecapScreen from './screens/RecapScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ClientsScreen from './screens/ClientsScreen';
-import PDFLayoutScreen from './screens/PDFLayoutScreen';
+import PDFLayoutEditor from './pdf/PDFLayoutEditor';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('devis');
