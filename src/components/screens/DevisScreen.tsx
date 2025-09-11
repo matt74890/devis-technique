@@ -14,7 +14,7 @@ import { calculateQuoteItem, calculateQuoteTotals } from '@/utils/calculations';
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
-import PDFPreview from '@/components/pdf/PDFPreview';
+import PDFPreviewWithSignature from '@/components/pdf/PDFPreviewWithSignature';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
@@ -176,12 +176,6 @@ const DevisScreen = () => {
       title: "Série créée",
       description: `${vacations.length} vacations ajoutées avec succès.`,
     });
-  };
-
-  const downloadPDF = () => {
-    // Déclencher le téléchargement depuis le composant PDFPreview
-    const downloadEvent = new CustomEvent('downloadPDF');
-    document.dispatchEvent(downloadEvent);
   };
 
   const handleItemUpdate = (itemId: string, field: string, value: any) => {
@@ -510,10 +504,6 @@ const DevisScreen = () => {
             </div>
             <div className="flex items-center space-x-2">
               <PDFPreviewWithSignature />
-              <Button onClick={downloadPDF} variant="outline">
-                <FileDown className="h-4 w-4 mr-2" />
-                Télécharger PDF
-              </Button>
             </div>
           </CardTitle>
         </CardHeader>
