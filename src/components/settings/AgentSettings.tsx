@@ -208,6 +208,40 @@ const AgentSettings = () => {
         </CardContent>
       </Card>
 
+      {/* Note de majoration personnalisable */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <span>Note explicative des majorations</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="majorationNote">Texte affiché dans le PDF/Word</Label>
+            <Textarea
+              id="majorationNote"
+              value={settings.agentSettings.majorationNote || ''}
+              onChange={(e) => {
+                const updatedSettings = {
+                  ...settings,
+                  agentSettings: {
+                    ...settings.agentSettings,
+                    majorationNote: e.target.value
+                  }
+                };
+                updateSettings(updatedSettings);
+              }}
+              placeholder={`Les heures entre ${settings.agentSettings?.nightStartTime || '23:00'} et ${settings.agentSettings?.nightEndTime || '06:00'} ainsi que les dimanches et jours fériés sont majorées de ${settings.agentSettings?.nightMarkupPct || 10}%.`}
+              rows={3}
+            />
+            <p className="text-sm text-gray-500">
+              Ce texte sera affiché dans le PDF et Word pour expliquer les règles de majoration.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Lettre de présentation Agent */}
       <Card className="shadow-soft">
         <CardHeader>

@@ -205,16 +205,16 @@ const PDFPreviewWithSignature = () => {
         </html>
       `;
       
-      // Use correct MIME type for Word HTML format
+      // Use correct MIME type for Word
       const blob = new Blob([wordHTML], {
-        type: 'application/msword'
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .doc extension for HTML-based Word document
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
+      // Use .docx extension
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.docx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -529,16 +529,18 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder};">
           <thead>
             <tr style="background: ${colors.tableHeader}; color: ${colors.tableHeaderText};">
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Type</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Date début</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Heure début</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Date fin</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Heure fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Type</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H norm.</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H nuit</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H dim.</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H JF</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Tarif CHF/h</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Nuit</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Dim/JF</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Dépl.</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">HT</th>
               <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">TVA</th>
@@ -549,8 +551,12 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
 
     quote.items.filter(item => item.kind === 'AGENT').forEach((item, index) => {
+      const nightRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.nightMarkupPct || 10) / 100));
+      const sundayHolidayRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.sundayMarkupPct || 10) / 100));
+      
       html += `
         <tr style="background: ${index % 2 === 0 ? colors.tableRowAlt : colors.tableRow};">
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.agentType || '-'}</td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
             ${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
           </td>
@@ -559,7 +565,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             ${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.timeEnd || '-'}</td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.agentType || '-'}</td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
             ${(item.hoursNormal || 0).toFixed(1)}
           </td>
@@ -574,6 +579,12 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
             ${(item.rateCHFh || 0).toFixed(2)}
+          </td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
+            ${nightRate.toFixed(2)}
+          </td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
+            ${sundayHolidayRate.toFixed(2)}
           </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-size: 9px;">
             ${(item.travelCHF || 0).toFixed(2)}
@@ -596,7 +607,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         </table>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 11px;">
-          <h4 style="color: ${colors.primary}; margin-bottom: 10px;">Règles appliquées</h4>
+          <h4 style="color: ${colors.primary}; margin-bottom: 10px;">Informations importantes</h4>
+          <p style="margin-bottom: 10px; font-weight: bold;">${settings.agentSettings?.majorationNote || `Les heures entre ${settings.agentSettings?.nightStartTime || '23:00'} et ${settings.agentSettings?.nightEndTime || '06:00'} ainsi que les dimanches et jours fériés sont majorées de ${settings.agentSettings?.nightMarkupPct || 10}%.`}</p>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <div><strong>Heures de nuit:</strong> ${settings.agentSettings?.nightStartTime || '23:00'} → ${settings.agentSettings?.nightEndTime || '06:00'} (+${settings.agentSettings?.nightMarkupPct || 10}%)</div>
             <div><strong>Dimanche/JF:</strong> ${settings.agentSettings?.sundayStartTime || '06:00'} → ${settings.agentSettings?.sundayEndTime || '23:00'} (+${settings.agentSettings?.sundayMarkupPct || 10}%)</div>
@@ -740,69 +752,13 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         </div>
       </div>
     </div>
-  `;
-
-  // Commentaire
-  if (quote.comment) {
-    html += `
-      <!-- Commentaires -->
-      <div style="margin: 30px 0;">
-        <h4 style="color: ${colors.primary}; font-size: 16px; margin-bottom: 15px;">Commentaires</h4>
-        <div style="border: 1px solid ${colors.secondary}; background: #f8fafc; padding: 15px; border-radius: 8px;">
-          <p style="white-space: pre-wrap; margin: 0;">${quote.comment}</p>
-        </div>
-      </div>
-    `;
-  }
-
-  // Signatures
-  html += `
-    <!-- Signatures -->
-    <div style="margin-top: 50px;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${settings.sellerInfo?.name || ''}<br>
-            ${settings.sellerInfo?.title || ''}<br>
-            ${settings.sellerInfo?.phone || ''}
-          </div>
-          <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-            Date et signature
-          </div>
-        </div>
-        
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CLIENT</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${quote.addresses.contact.name}<br>
-            ${quote.addresses.contact.company || ''}
-          </div>
-          
-          ${quote.clientSignature ? `
-            <div style="margin: 10px 0;">
-              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
-            </div>
-            <div style="font-size: 12px; color: ${colors.textColor};">
-              ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
-            </div>
-          ` : `
-            <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-              Date et signature
-            </div>
-          `}
-        </div>
-      </div>
-    </div>
 
     <!-- Pied de page -->
     <div style="text-align: center; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 2px solid ${colors.primary}; color: ${colors.secondary};">
-      <p style="font-weight: bold;">${settings.pdfFooter}</p>
-      <p style="margin-top: 10px;">Devis valable 30 jours - Conditions générales disponibles sur demande</p>
+      Document généré le ${new Date().toLocaleDateString('fr-CH')} par ${settings.sellerInfo?.name || ''}
     </div>
 
     </div> <!-- Fin du devis principal -->
-  </div> <!-- Fin du conteneur principal -->
   `;
 
   return html;

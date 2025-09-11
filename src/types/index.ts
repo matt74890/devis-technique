@@ -141,6 +141,7 @@ export interface Settings {
     agentTypes: AgentTypeRate[];
     serviceCategories: string[];
     agentLetterTemplate: LetterTemplate;
+    majorationNote?: string;
   };
 }
 
