@@ -13,7 +13,19 @@ const RecapScreen = () => {
 
   if (!currentQuote) return null;
 
-  const totals = calculateQuoteTotals(currentQuote, settings.tvaPct);
+  // Ensure all items have calculated values
+  const calculatedItems = currentQuote.items.map(item => {
+    if (item.kind === 'AGENT') {
+      const { calculateAgentVacation } = require('@/utils/agentCalculations');
+      return calculateAgentVacation(item, settings);
+    } else {
+      const { calculateQuoteItem } = require('@/utils/calculations');
+      return calculateQuoteItem(item, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
+    }
+  });
+
+  const quoteWithCalculatedItems = { ...currentQuote, items: calculatedItems };
+  const totals = calculateQuoteTotals(quoteWithCalculatedItems, settings.tvaPct);
   
   const generatePDF = () => {
     console.log('Début génération PDF');
@@ -947,7 +959,7 @@ const RecapScreen = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentQuote.items.map((item) => (
+                {calculatedItems.map((item) => (
                   <tr key={item.id} className="border-b">
                     <td className="p-2">
                       <Badge variant="outline">{item.type}</Badge>
@@ -958,15 +970,15 @@ const RecapScreen = () => {
                         {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
                       </Badge>
                     </td>
-                    <td className="p-2">{item.qty}</td>
-                    <td className="p-2">{item.puTTC.toFixed(2)} CHF</td>
+                    <td className="p-2">{item.qty || 1}</td>
+                    <td className="p-2">{(item.puTTC || 0).toFixed(2)} CHF</td>
                     <td className="p-2">
                       {currentQuote.discountMode === 'per_line' 
-                        ? `${item.lineDiscountPct}%` 
+                        ? `${item.lineDiscountPct || 0}%` 
                         : 'Globale'
                       }
                     </td>
-                    <td className="p-2 font-medium">{item.totalTTC.toFixed(2)} CHF</td>
+                    <td className="p-2 font-medium">{(item.totalTTC || 0).toFixed(2)} CHF</td>
                   </tr>
                 ))}
               </tbody>
