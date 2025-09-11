@@ -253,21 +253,39 @@ const AgentSettings = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="agentTableColor">Couleur du tableau des totaux agents</Label>
-            <Input
-              id="agentTableColor"
-              type="color"
-              value={settings.templateColors?.agentTableColor || '#f59e0b'}
-              onChange={(e) => {
-                const updatedSettings = {
-                  ...settings,
-                  templateColors: {
-                    ...settings.templateColors,
-                    agentTableColor: e.target.value
-                  }
-                };
-                updateSettings(updatedSettings);
-              }}
-            />
+            <div className="flex items-center space-x-2">
+              <Input
+                id="agentTableColor"
+                type="color"
+                value={settings.templateColors?.agentTableColor || '#f59e0b'}
+                onChange={(e) => {
+                  const updatedSettings = {
+                    ...settings,
+                    templateColors: {
+                      ...settings.templateColors,
+                      agentTableColor: e.target.value
+                    }
+                  };
+                  updateSettings(updatedSettings);
+                }}
+                className="w-16 h-10 p-1 border rounded"
+              />
+              <Input
+                value={settings.templateColors?.agentTableColor || '#f59e0b'}
+                onChange={(e) => {
+                  const updatedSettings = {
+                    ...settings,
+                    templateColors: {
+                      ...settings.templateColors,
+                      agentTableColor: e.target.value
+                    }
+                  };
+                  updateSettings(updatedSettings);
+                }}
+                placeholder="#f59e0b"
+                className="font-mono text-sm"
+              />
+            </div>
             <p className="text-sm text-gray-500">
               Cette couleur sera utilisée pour les bordures et titres du tableau des totaux agents dans le PDF.
             </p>

@@ -154,23 +154,36 @@ const PDFPreviewWithSignature = () => {
 
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
+      // Create proper HTML document for Word
+      const wordContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+    th { background-color: #f5f5f5; }
+    .page-break { page-break-before: always; }
+  </style>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>
+      `;
       
-      // Create Word-compatible RTF document
-      const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
-\\f0\\fs24 
-${htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&[a-z]+;/g, '')}
-}`;
-      
-      // Use RTF MIME type for better Word compatibility
-      const blob = new Blob([rtfContent], {
-        type: 'application/rtf'
+      // Use HTML MIME type for better Word compatibility  
+      const blob = new Blob([wordContent], {
+        type: 'application/vnd.ms-word'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .rtf extension for best Word compatibility
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.rtf`;
+      // Use .doc extension for Word compatibility
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -267,6 +280,26 @@ ${htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&[a-z]+;/
   );
 };
 
+// Fonction pour générer une en-tête standardisée
+const generatePageHeader = (settings: Settings, colors: any, pageNumber: number, totalPages: number): string => {
+  return `
+    <div class="page-header" style="margin-bottom: 30px; padding: 15px 0; border-bottom: 1px solid ${colors.secondary};">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 50px; margin-bottom: 10px;">` : ''}
+          ${settings.sellerInfo?.name ? `
+            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 14px;">${settings.sellerInfo.name}</div>
+            ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; font-size: 12px;">${settings.sellerInfo.title}</div>` : ''}
+          ` : ''}
+        </div>
+        <div style="text-align: right; font-size: 10px; color: ${colors.secondary};">
+          Page ${pageNumber} / ${totalPages}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
 // Fonction pour générer le HTML du PDF/Word
 const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteType: string): string => {
   const colors = settings.templateColors || {
@@ -307,89 +340,90 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   let html = `
     <style>
       @page { 
-        margin: 0; 
+        margin: 10mm; 
         @bottom-center { 
           content: counter(page) " / " counter(pages); 
-          font-size: 10px; 
+          font-size: 9px; 
           color: ${colors.secondary}; 
         }
       }
-      .page-number { 
-        position: fixed; 
-        bottom: 5mm; 
-        right: 10mm; 
-        font-size: 10px; 
-        color: ${colors.secondary}; 
-        z-index: 1000; 
+      .page-break { page-break-before: always; }
+      .page-break-avoid { page-break-inside: avoid; }
+      .page-header { 
+        position: running(header); 
+      }
+      @page :first { 
+        @top-center { content: element(header); } 
       }
     </style>
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; overflow: hidden; box-sizing: border-box; padding: 0 5mm;">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; box-sizing: border-box; padding: 0 2mm;">
   `;
 
   // Lettre de présentation (si activée)
   if (letterTemplate?.enabled) {
+    pageCount++;
     const letterDate = new Date().toLocaleDateString('fr-FR');
     const clientAddress = quote.addresses.contact;
     
     html += `
-      <div class="page-number">Page ${pageCount} / ${totalPages}</div>
-      <div style="margin-bottom: 40px; padding: 20px; background: ${colors.headerBackground}; border-radius: 8px; page-break-after: always;">
-        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px;">` : ''}
-        
-        <div style="margin-bottom: 20px;">
-          <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${letterTemplate.companyName || settings.sellerInfo?.name || ''}</div>
-          <div style="margin-top: 10px; color: ${colors.subtitleColor};">${letterTemplate.companyAddress || ''}</div>
-          <div style="margin-top: 10px; color: ${colors.textColor};">
-            <div>${letterTemplate.contactName || settings.sellerInfo?.name || ''} - ${letterTemplate.contactTitle || settings.sellerInfo?.title || ''}</div>
-            <div>Tél: ${letterTemplate.contactPhone || settings.sellerInfo?.phone || ''}</div>
-            <div>Email: ${letterTemplate.contactEmail || settings.sellerInfo?.email || ''}</div>
-          </div>
-        </div>
-        
-        <div style="text-align: right; margin: 20px 0; font-weight: 500; color: ${colors.textColor};">
-          Le ${letterDate}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-        </div>
-        
-        <div style="margin: 20px 0; color: ${colors.textColor};">
-          <div style="font-weight: bold;">À l'attention de :</div>
-          <div style="margin-top: 10px;">
-            ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
-            <div>${clientAddress.name}</div>
-            <div>${clientAddress.street}</div>
-            <div>${clientAddress.postalCode} ${clientAddress.city}</div>
-          </div>
-        </div>
-        
-        <div style="margin: 30px 0; font-weight: 600; color: ${colors.titleColor};">
-          <strong>Objet:</strong> ${letterTemplate.subject}
-        </div>
-        
-          <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
-            <div style="margin-bottom: 20px;">
-              ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
-            </div>
-            
-            <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
-            <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
-            <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
-            
-            <div style="margin-top: 30px;">
-              <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
+      <div class="page-break">
+        ${generatePageHeader(settings, colors, pageCount, totalPages)}
+        <div style="margin-bottom: 40px; padding: 15px;">
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${letterTemplate.companyName || settings.sellerInfo?.name || ''}</div>
+            <div style="margin-top: 10px; color: ${colors.subtitleColor};">${letterTemplate.companyAddress || ''}</div>
+            <div style="margin-top: 10px; color: ${colors.textColor};">
+              <div>${letterTemplate.contactName || settings.sellerInfo?.name || ''} - ${letterTemplate.contactTitle || settings.sellerInfo?.title || ''}</div>
+              <div>Tél: ${letterTemplate.contactPhone || settings.sellerInfo?.phone || ''}</div>
+              <div>Email: ${letterTemplate.contactEmail || settings.sellerInfo?.email || ''}</div>
             </div>
           </div>
-        
-        <!-- Signature vendeur sur lettre -->
-        <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
-          <div style="text-align: right;">
-            ${settings.sellerInfo?.signature ? `
-              <div style="margin-bottom: 10px;">
-                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px;">
+          
+          <div style="text-align: right; margin: 20px 0; font-weight: 500; color: ${colors.textColor};">
+            Le ${letterDate}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+          </div>
+          
+          <div style="margin: 20px 0; color: ${colors.textColor};">
+            <div style="font-weight: bold;">À l'attention de :</div>
+            <div style="margin-top: 10px;">
+              ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
+              <div>${clientAddress.name}</div>
+              <div>${clientAddress.street}</div>
+              <div>${clientAddress.postalCode} ${clientAddress.city}</div>
+            </div>
+          </div>
+          
+          <div style="margin: 30px 0; font-weight: 600; color: ${colors.titleColor};">
+            <strong>Objet:</strong> ${letterTemplate.subject}
+          </div>
+          
+            <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
+              <div style="margin-bottom: 20px;">
+                ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
               </div>
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
-            `}
-            <div style="font-size: 12px; color: ${colors.textColor};">
-              ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+              
+              <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
+              
+              <div style="margin-top: 30px;">
+                <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
+              </div>
+            </div>
+          
+          <!-- Signature vendeur sur lettre -->
+          <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
+            <div style="text-align: right;">
+              ${settings.sellerInfo?.signature ? `
+                <div style="margin-bottom: 10px;">
+                  <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 150px; max-height: 60px;">
+                </div>
+              ` : `
+                <div style="width: 200px; height: 60px; margin-bottom: 10px;"></div>
+              `}
+              <div style="font-size: 12px; color: ${colors.textColor};">
+                ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+              </div>
             </div>
           </div>
         </div>
@@ -399,24 +433,20 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // Page Description de la prestation (pour les agents) - avec même template
   if (hasAgentItems && quote.agentServiceDescription) {
+    pageCount++;
     const desc = quote.agentServiceDescription;
     html += `
-      <div class="page-number">Page ${pageCount} / ${totalPages}</div>
-      <div style="page-break-inside: avoid; page-break-after: always;">
-        <!-- En-tête de la description -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-          <div style="flex: 1;">
-            ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">` : ''}
-            ${settings.sellerInfo?.name ? `
-              <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${settings.sellerInfo.name}</div>
-              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
-              ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
-              ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
-            ` : ''}
-          </div>
-          
-          <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
+      <div class="page-break">
+        ${generatePageHeader(settings, colors, pageCount, totalPages)}
+        <div style="page-break-inside: avoid;">
+          <!-- En-tête de la description -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+            <div style="flex: 1;">
+              <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">Description de la prestation</div>
+            </div>
+            
+            <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
             <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
             <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
               <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
@@ -449,42 +479,39 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           </div>
           
           ${desc.remarque ? `<div><strong>Remarque:</strong><br>${desc.remarque}</div>` : ''}
+          </div>
         </div>
       </div>
     `;
   }
 
   // DEBUT DU DEVIS PRINCIPAL - Page du devis avec toutes les informations
+  pageCount++;
   html += `
-    <div class="page-number">Page ${pageCount} / ${totalPages}</div>
-    <div style="page-break-inside: avoid;">
-      <!-- En-tête du devis -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-        <div style="flex: 1;">
-          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;">` : ''}
-          ${settings.sellerInfo?.name ? `
-            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${settings.sellerInfo.name}</div>
-            ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor};">${settings.sellerInfo.title}</div>` : ''}
-            ${settings.sellerInfo.email ? `<div>${settings.sellerInfo.email}</div>` : ''}
-            ${settings.sellerInfo.phone ? `<div>${settings.sellerInfo.phone}</div>` : ''}
-          ` : ''}
-        </div>
-        
-        <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
-          <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
-          <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
-            ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
-            <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
-            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
-            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
-            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
-            ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
-            ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
+    <div class="page-break">
+      ${generatePageHeader(settings, colors, pageCount, totalPages)}
+      <div style="page-break-inside: avoid;">
+        <!-- En-tête du devis -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+          <div style="flex: 1;">
+            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${quoteType}</div>
+          </div>
+          
+          <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
+            <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
+            <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
+              ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
+              <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
+              ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
+              ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
+            </div>
           </div>
         </div>
-      </div>
   `;
 
   // Titre du devis
@@ -730,9 +757,15 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // Totaux - CENTRÉS AU MILIEU DE LA PAGE avec break-avoid pour rester ensemble
   html += `
-      <!-- Totaux centrés -->
-      <div class="page-break-avoid" style="display: flex; justify-content: center; margin: 30px 0; page-break-inside: avoid;">
-        <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">
+      </div>
+
+      <!-- SECTION TOTAUX ET SIGNATURE - TOUJOURS ENSEMBLE SUR LA MÊME PAGE -->
+      <div class="page-break-avoid" style="page-break-inside: avoid;">
+        ${generatePageHeader(settings, colors, pageCount, totalPages)}
+        
+        <!-- Totaux centrés -->
+        <div style="display: flex; justify-content: center; margin: 30px 0;">
+          <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">
   `;
 
   // Total TECH unique
@@ -788,7 +821,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       </div>
 
       <!-- Total général centré -->
-      <div class="page-break-avoid" style="display: flex; justify-content: center; margin: 30px 0; page-break-inside: avoid;">
+      <div style="display: flex; justify-content: center; margin: 30px 0;">
         <div style="text-align: center; padding: 20px; border: 3px solid ${colors.primary}; border-radius: 8px; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); max-width: 140mm; width: 100%;">
           <h4 style="color: ${colors.primary}; font-size: 24px; font-weight: bold; margin-bottom: 20px;">TOTAL GÉNÉRAL</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
@@ -813,85 +846,82 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           </div>
         </div>
       </div>
-  `;
-
-  // Commentaire
-  if (quote.comment) {
-    html += `
-      <div style="margin: 30px 0;">
-        <h4 style="color: ${colors.primary}; font-size: 16px; margin-bottom: 15px;">Commentaires</h4>
-        <div style="border: 1px solid ${colors.secondary}; background: #f8fafc; padding: 15px; border-radius: 8px;">
-          <p style="white-space: pre-wrap; margin: 0;">${quote.comment}</p>
-        </div>
-      </div>
-    `;
-  }
-
-  // Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE - PARFAITEMENT ALIGNÉS
-  html += `
-    <div class="page-break-avoid" style="margin-top: 40px; page-break-inside: avoid;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 160mm; margin: 0 auto;">
-        <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">VENDEUR</div>
-            <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
-              <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
-              <div>${settings.sellerInfo?.title || ''}</div>
-              <div>${settings.sellerInfo?.phone || ''}</div>
-            </div>
-          </div>
-          
-          <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            ${settings.sellerInfo?.signature ? `
-              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px; object-fit: contain;">
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.primary}; width: 150px; height: 40px;"></div>
-            `}
-          </div>
-          
-          <div style="text-align: center;">
-            <div style="font-size: 11px; color: ${colors.textColor};">
-              ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-            </div>
+      
+      <!-- Commentaire -->
+      ${quote.comment ? `
+        <div style="margin: 30px 0;">
+          <h4 style="color: ${colors.primary}; font-size: 16px; margin-bottom: 15px;">Commentaires</h4>
+          <div style="border: 1px solid ${colors.secondary}; background: #f8fafc; padding: 15px; border-radius: 8px;">
+            <p style="white-space: pre-wrap; margin: 0;">${quote.comment}</p>
           </div>
         </div>
-        
-        <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">CLIENT</div>
-            <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
-              <div style="font-weight: bold;">${quote.addresses.contact.name}</div>
-              <div>${quote.addresses.contact.company || ''}</div>
+      ` : ''}
+
+      <!-- Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE - PARFAITEMENT ALIGNÉS -->
+      <div style="margin-top: 40px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 160mm; margin: 0 auto;">
+          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">VENDEUR</div>
+              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
+                <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
+                <div>${settings.sellerInfo?.title || ''}</div>
+                <div>${settings.sellerInfo?.phone || ''}</div>
+              </div>
+            </div>
+            
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              ${settings.sellerInfo?.signature ? `
+                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+              ` : `
+                <div style="width: 150px; height: 40px;"></div>
+              `}
+            </div>
+            
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: ${colors.textColor};">
+                ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+              </div>
             </div>
           </div>
           
-          <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            ${quote.clientSignature ? `
-              <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 120px; max-height: 50px; object-fit: contain;">
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.primary}; width: 150px; height: 40px;"></div>
-            `}
-          </div>
-          
-          <div style="text-align: center;">
-            ${quote.clientSignature ? `
-              <div style="font-size: 11px; color: ${colors.textColor};">
-                ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
+          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">CLIENT</div>
+              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
+                <div style="font-weight: bold;">${quote.addresses.contact.name}</div>
+                <div>${quote.addresses.contact.company || ''}</div>
               </div>
-            ` : `
-              <div style="font-size: 11px; color: ${colors.textColor};">
-                Date et lieu: _______________
-              </div>
-            `}
+            </div>
+            
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              ${quote.clientSignature ? `
+                <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+              ` : `
+                <div style="width: 150px; height: 40px;"></div>
+              `}
+            </div>
+            
+            <div style="text-align: center;">
+              ${quote.clientSignature ? `
+                <div style="font-size: 11px; color: ${colors.textColor};">
+                  ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
+                </div>
+              ` : `
+                <div style="font-size: 11px; color: ${colors.textColor};">
+                  Date et lieu: _______________
+                </div>
+              `}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Pied de page -->
-    <div style="text-align: center; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 2px solid ${colors.primary}; color: ${colors.secondary};">
-      Document généré le ${new Date().toLocaleDateString('fr-CH')} par ${settings.sellerInfo?.name || ''}
-    </div>
+      <!-- Pied de page -->
+      <div style="text-align: center; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 2px solid ${colors.primary}; color: ${colors.secondary};">
+        Document généré le ${new Date().toLocaleDateString('fr-CH')} par ${settings.sellerInfo?.name || ''}
+      </div>
+    </div> <!-- Fin de la section totaux et signature -->
 
     </div> <!-- Fin du devis principal -->
   `;
