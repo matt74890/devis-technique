@@ -139,6 +139,8 @@ export interface Settings {
     holidayMarkupPct: number;
     holidays: { [canton: string]: string[] };
     agentTypes: AgentTypeRate[];
+    serviceCategories: string[];
+    agentLetterTemplate: LetterTemplate;
   };
 }
 
@@ -252,6 +254,21 @@ export interface Quote {
     billing: Address;
     installation: Address;
     useSeparateAddresses: boolean;
+  };
+  clientSignature?: {
+    dataUrl: string;
+    date: string;
+    location: string;
+  };
+  agentServiceDescription?: {
+    naturePrestation: string;
+    lieuPrestation: string;
+    periode: string;
+    horaires: string;
+    tenue: string;
+    pause: string;
+    deplacement: string;
+    remarque: string;
   };
 }
 

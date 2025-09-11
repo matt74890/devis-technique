@@ -7,7 +7,7 @@ import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
-import PDFPreview from '@/components/pdf/PDFPreview';
+import PDFPreviewWithSignature from '@/components/pdf/PDFPreviewWithSignature';
 
 const RecapScreen = () => {
   const { currentQuote, settings } = useStore();

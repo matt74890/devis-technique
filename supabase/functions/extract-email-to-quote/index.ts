@@ -19,13 +19,13 @@ serve(async (req) => {
       throw new Error('GROQ_API_KEY not configured');
     }
 
-    const { email_raw } = await req.json();
+    const { emailContent } = await req.json();
     
-    if (!email_raw) {
-      throw new Error('Email content is required');
-    }
+        if (!emailContent) {
+          throw new Error('Email content is required');
+        }
 
-    console.log('Processing email extraction for:', email_raw.substring(0, 100) + '...');
+        console.log('Processing email extraction for:', emailContent.substring(0, 100) + '...');
 
     const prompt = `Tu es un extracteur de devis techniques. 
 Retourne STRICTEMENT un JSON valide (aucun texte avant/après). 
@@ -98,7 +98,7 @@ Règles :
 
 Texte à analyser :
 ---
-${email_raw}
+${emailContent}
 ---
 
 Réponse attendue : JSON UNIQUEMENT.`;
@@ -157,9 +157,24 @@ Réponse attendue : JSON UNIQUEMENT.`;
       }
     }
 
-    console.log('Successfully parsed quote data:', JSON.stringify(parsedData, null, 2));
+    console.log('Successfully parsed quote data');
+    
+    // Adapter la structure de réponse pour match l'ancienne API
+    const adaptedResponse = {
+      client: parsedData.quote?.clientDetails || {},
+      addresses: {
+        contact: parsedData.quote?.clientDetails || {}
+      },
+      items: parsedData.quote?.items || [],
+      subscriptions: parsedData.quote?.subscriptions || {},
+      feesInstallHT: parsedData.quote?.feesInstallHT || 0,
+      feesDossierHT: parsedData.quote?.feesDossierHT || 0,
+      discountMode: parsedData.quote?.discountMode || 'none'
+    };
 
-    return new Response(JSON.stringify(parsedData), {
+    console.log('Adapted response:', JSON.stringify(adaptedResponse, null, 2));
+
+    return new Response(JSON.stringify(adaptedResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

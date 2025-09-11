@@ -264,9 +264,9 @@ const defaultSettings: Settings = {
     sundayMarkupPct: 10,
     holidayMarkupPct: 10,
     holidays: {
-      'GE': ['2024-01-01', '2024-12-25'], // Example holidays
-      'VD': ['2024-01-01', '2024-12-25'],
-      'VS': ['2024-01-01', '2024-12-25']
+      'GE': ['1er Janvier', '25 Décembre'], 
+      'VD': ['1er Janvier', '25 Décembre'],
+      'VS': ['1er Janvier', '25 Décembre']
     },
     agentTypes: [
       { type: 'Sécurité', suggestedRate: 35 },
@@ -274,7 +274,29 @@ const defaultSettings: Settings = {
       { type: 'Maître-chien', suggestedRate: 50 },
       { type: 'Patrouilleur', suggestedRate: 40 },
       { type: 'Garde du corps', suggestedRate: 60 }
-    ]
+    ],
+    serviceCategories: ['Sécurité', 'Sécurité armée', 'Maître-chien', 'Patrouilleur', 'Garde du corps', 'Autre'],
+    agentLetterTemplate: {
+      enabled: false,
+      companyName: '',
+      contactName: '',
+      contactTitle: '',
+      contactPhone: '',
+      contactEmail: '',
+      companyAddress: '',
+      subject: 'Devis pour prestations de sécurité',
+      civility: 'Monsieur',
+      opening: 'Nous avons le plaisir de vous adresser notre offre pour vos besoins en prestations de sécurité.',
+      body: 'Notre équipe d\'agents de sécurité qualifiés est à votre disposition pour assurer la protection de vos biens et personnes selon vos exigences.',
+      closing: 'Nous restons à votre disposition pour tout renseignement complémentaire et vous prions d\'agréer nos salutations distinguées.',
+      textAlignment: 'left',
+      boldOptions: {
+        subject: false,
+        opening: false,
+        body: false,
+        closing: false
+      }
+    }
   }
 };
 
