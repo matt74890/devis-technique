@@ -307,67 +307,77 @@ const PDFPreview = () => {
 
   if (!currentQuote) return null;
 
-  const downloadPDF = () => {
-    // Créer le contenu HTML du PDF
-    const pdfContent = document.querySelector('.pdf-preview-content')?.innerHTML || '';
-    const clientName = currentQuote.addresses.contact.name.replace(/[^a-zA-Z0-9]/g, '_');
-    const date = new Date(currentQuote.date).toISOString().split('T')[0];
-    const filename = `devis_${clientName}_${date}.pdf`;
-    
-    // Créer une nouvelle fenêtre pour le téléchargement
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${filename}</title>
-            <style>
-              * { box-sizing: border-box; }
-              body { 
-                font-family: Arial, sans-serif; 
-                margin: 0; 
-                padding: 20px; 
-                font-size: 12px;
-                line-height: 1.4;
-              }
-              @media print { 
-                body { margin: 0; padding: 10px; }
-                .preview-content { max-width: none; }
-                table { font-size: 10px; }
-                .page-break { page-break-before: always; }
-              }
-              .preview-content { max-width: 800px; margin: 0 auto; }
-              table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-              th, td { padding: 4px 6px; border: 1px solid #ccc; }
-              .grid { display: grid; gap: 15px; }
-              .grid-cols-1 { grid-template-columns: 1fr; }
-              .grid-cols-2 { grid-template-columns: 1fr 1fr; }
-              .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-              @media (max-width: 768px) {
-                .grid-cols-2, .grid-cols-3 { grid-template-columns: 1fr; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="preview-content">
-              ${pdfContent}
-            </div>
-            <script>
-              window.onload = function() {
-                document.title = '${filename}';
-                setTimeout(() => {
-                  window.print();
-                  // Fermer la fenêtre après impression
-                  setTimeout(() => window.close(), 1000);
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+  const downloadPDF = async () => {
+    try {
+      const { default: html2pdf } = await import('html2pdf.js');
+      const element = document.getElementById('pdf-content');
+      if (!element) {
+        console.error('Element PDF non trouvé');
+        return;
+      }
+
+      const options = {
+        margin: [10, 10, 10, 10],
+        filename: `devis-${currentQuote.ref}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          width: 794,
+          height: 1123,
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
+      };
+
+      await html2pdf().set(options).from(element).save();
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
     }
+  };
+
+  const downloadWord = () => {
+    const element = document.getElementById('pdf-content');
+    if (!element) return;
+
+    // Créer un document HTML complet
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Devis ${currentQuote.ref}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          th { background-color: #f5f5f5; }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .font-bold { font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        ${element.innerHTML}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `devis-${currentQuote.ref}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -392,9 +402,13 @@ const PDFPreview = () => {
               <FileDown className="h-4 w-4 mr-2" />
               Télécharger PDF
             </Button>
+            <Button onClick={downloadWord} variant="outline">
+              <FileDown className="h-4 w-4 mr-2" />
+              Télécharger Word
+            </Button>
           </div>
           
-          <div className="pdf-preview-content border rounded-lg p-4 bg-white max-h-[70vh] overflow-y-auto">
+          <div id="pdf-content" className="pdf-preview-content border rounded-lg p-4 bg-white max-h-[70vh] overflow-y-auto">
             <PDFPreviewContent quote={currentQuote} settings={settings} />
           </div>
         </div>

@@ -121,15 +121,15 @@ const DevisScreen = () => {
         dateEnd: new Date().toISOString().split('T')[0],
         timeEnd: '16:00',
         agentType: 'Sécurité',
-        rateCHFh: undefined,
-        pauseMinutes: 0,
+        rateCHFh: settings.agentSettings?.agentTypes?.find(t => t.type === 'Sécurité')?.suggestedRate || 50,
+        pauseMinutes: 60,
         pausePaid: false,
         travelCHF: 0,
         canton: 'GE',
         unitPriceMode: settings.priceInputModeDefault
       };
       
-      const calculatedVacation = calculateQuoteItem(newVacation as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line');
+      const calculatedVacation = calculateQuoteItem(newVacation as QuoteItem, settings.tvaPct, currentQuote.discountMode === 'per_line', settings);
       addQuoteItem(calculatedVacation);
       
       toast({

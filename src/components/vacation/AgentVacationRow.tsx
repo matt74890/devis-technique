@@ -52,7 +52,20 @@ const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate }: A
     }
     
     setErrors(newErrors);
-    onUpdate(item.id, { [field]: value });
+    
+    // Mettre à jour l'item avec la nouvelle valeur
+    const updatedItem = { ...item, [field]: value };
+    
+    // Si c'est un changement qui affecte les calculs, recalculer
+    if (['dateStart', 'timeStart', 'dateEnd', 'timeEnd', 'rateCHFh', 'pauseMinutes', 'pausePaid', 'travelCHF', 'agentType'].includes(field)) {
+      // Import du calcul d'agent
+      import('@/utils/agentCalculations').then(({ calculateAgentVacation }) => {
+        const calculatedItem = calculateAgentVacation(updatedItem, settings);
+        onUpdate(item.id, calculatedItem);
+      });
+    } else {
+      onUpdate(item.id, { [field]: value });
+    }
   };
 
   const formatTime = (hours: number): string => {
