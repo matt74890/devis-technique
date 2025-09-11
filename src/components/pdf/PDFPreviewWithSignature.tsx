@@ -525,13 +525,35 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
             Le ${letterDate}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
           </div>
           
-          <!-- Client info box - seulement sur page de présentation -->
-          <div class="client-info-box">
-            <h4>À l'attention de :</h4>
-            ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
-            <div>${clientAddress.name}</div>
-            <div>${clientAddress.street}</div>
-            <div>${clientAddress.postalCode} ${clientAddress.city}</div>
+          <!-- Vendeur info box -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+            <div class="client-info-box" style="width: 48%;">
+              <h4>Vendeur :</h4>
+              <div style="font-weight: bold;">${letterTemplate.companyName || ''}</div>
+              <div>${settings.sellerInfo?.name || ''}</div>
+              <div>${settings.sellerInfo?.title || ''}</div>
+              <div>${letterTemplate.companyAddress || ''}</div>
+              <div>${settings.sellerInfo?.email || ''}</div>
+              <div>${settings.sellerInfo?.phone || ''}</div>
+            </div>
+            
+            <!-- Client info box - seulement sur page de présentation -->
+            <div class="client-info-box" style="width: 48%;">
+              <h4>À l'attention de :</h4>
+              ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
+              <div>${clientAddress.name}</div>
+              <div>${clientAddress.street}</div>
+              <div>${clientAddress.postalCode} ${clientAddress.city}</div>
+            </div>
+          </div>
+          
+          <!-- Signature vendeur en dessous du cadre vendeur -->
+          <div style="width: 48%; margin-bottom: 20px;">
+            ${settings.sellerInfo?.signature ? `
+              <div style="margin-bottom: 10px;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px;">
+              </div>
+            ` : ''}
           </div>
           
           <div style="margin: 20px 0; font-weight: 600;">
@@ -550,17 +572,6 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
             <div style="margin-top: 25px;">
               <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${getContactLastName()}` : `Monsieur ${getContactLastName()}`}, l'expression de nos salutations distinguées.</p>
             </div>
-          </div>
-          
-          <!-- Signature vendeur sur lettre -->
-          <div style="margin-top: 40px; text-align: right;">
-            ${settings.sellerInfo?.signature ? `
-              <div style="margin-bottom: 10px;">
-                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px;">
-              </div>
-            ` : ''}
-            <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
-            <div>${settings.sellerInfo?.title || ''}</div>
           </div>
         </div>
       </div>
@@ -783,14 +794,43 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
       </div>
       
       <div class="totals-section">
+        <!-- Sous-totaux colorés alignés au centre sur une ligne -->
+        <div style="display: flex; justify-content: center; gap: 30px; margin: 30px 0;">
+          ${hasTechItems && quote.items.some(item => item.kind === 'TECH' && item.mode === 'unique') ? `
+            <div style="text-align: center; padding: 15px; background: #e1f5fe; border: 2px solid #0277bd; border-radius: 8px; min-width: 150px;">
+              <h4 style="color: #0277bd; margin-bottom: 8px; font-size: 14px;">Achat Unique</h4>
+              <div style="font-weight: bold; font-size: 16px; color: #0277bd;">${totals.unique.totalTTC.toFixed(2)} CHF</div>
+              <div style="font-size: 11px; color: #0277bd;">(TTC)</div>
+            </div>
+          ` : ''}
+          
+          ${hasTechItems && quote.items.some(item => item.kind === 'TECH' && item.mode === 'mensuel') ? `
+            <div style="text-align: center; padding: 15px; background: #f3e5f5; border: 2px solid #7b1fa2; border-radius: 8px; min-width: 150px;">
+              <h4 style="color: #7b1fa2; margin-bottom: 8px; font-size: 14px;">Mensuel</h4>
+              <div style="font-weight: bold; font-size: 16px; color: #7b1fa2;">${totals.mensuel.totalTTC.toFixed(2)} CHF</div>
+              <div style="font-size: 11px; color: #7b1fa2;">(TTC)</div>
+            </div>
+          ` : ''}
+          
+          ${hasAgentItems ? `
+            <div style="text-align: center; padding: 15px; background: #e8f5e8; border: 2px solid #2e7d32; border-radius: 8px; min-width: 150px;">
+              <h4 style="color: #2e7d32; margin-bottom: 8px; font-size: 14px;">Agent</h4>
+              <div style="font-weight: bold; font-size: 16px; color: #2e7d32;">${totals.agents.totalTTC.toFixed(2)} CHF</div>
+              <div style="font-size: 11px; color: #2e7d32;">(TTC)</div>
+            </div>
+          ` : ''}
+        </div>
+        
+        <!-- Détails des totaux si nécessaire -->
+        <div style="margin: 30px 0;">
   `;
 
-  // Affichage des totaux selon le type de devis
+  // Affichage des totaux détaillés selon le type de devis
   if (hasTechItems) {
     if (quote.items.some(item => item.kind === 'TECH' && item.mode === 'unique')) {
       html += `
-        <div style="margin-bottom: 15px;">
-          <h4 style="color: ${colors.titleColor}; margin-bottom: 8px;">Prestations uniques</h4>
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid ${colors.tableBorder}; border-radius: 4px;">
+          <h4 style="color: ${colors.titleColor}; margin-bottom: 10px; border-bottom: 1px solid ${colors.tableBorder}; padding-bottom: 5px;">Détail Prestations Uniques</h4>
           <div class="total-row">
             <span>Sous-total HT :</span>
             <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
@@ -798,7 +838,7 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
           ${totals.unique.discountHT > 0 ? `
             <div class="total-row">
               <span>Remise :</span>
-              <span>-${totals.unique.discountHT.toFixed(2)} CHF</span>
+              <span style="color: #d32f2f;">-${totals.unique.discountHT.toFixed(2)} CHF</span>
             </div>
           ` : ''}
           <div class="total-row">
@@ -809,7 +849,7 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
             <span>TVA (${settings.tvaPct}%) :</span>
             <span>${totals.unique.tva.toFixed(2)} CHF</span>
           </div>
-          <div class="total-row" style="font-weight: bold;">
+          <div class="total-row" style="font-weight: bold; background: #f5f5f5;">
             <span>Total TTC :</span>
             <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -819,8 +859,8 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
 
     if (quote.items.some(item => item.kind === 'TECH' && item.mode === 'mensuel')) {
       html += `
-        <div style="margin-bottom: 15px;">
-          <h4 style="color: ${colors.titleColor}; margin-bottom: 8px;">Prestations mensuelles</h4>
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid ${colors.tableBorder}; border-radius: 4px;">
+          <h4 style="color: ${colors.titleColor}; margin-bottom: 10px; border-bottom: 1px solid ${colors.tableBorder}; padding-bottom: 5px;">Détail Prestations Mensuelles</h4>
           <div class="total-row">
             <span>Sous-total HT :</span>
             <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
@@ -828,7 +868,7 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
           ${totals.mensuel.discountHT > 0 ? `
             <div class="total-row">
               <span>Remise :</span>
-              <span>-${totals.mensuel.discountHT.toFixed(2)} CHF</span>
+              <span style="color: #d32f2f;">-${totals.mensuel.discountHT.toFixed(2)} CHF</span>
             </div>
           ` : ''}
           <div class="total-row">
@@ -839,7 +879,7 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
             <span>TVA (${settings.tvaPct}%) :</span>
             <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
           </div>
-          <div class="total-row" style="font-weight: bold;">
+          <div class="total-row" style="font-weight: bold; background: #f5f5f5;">
             <span>Total TTC :</span>
             <span>${totals.mensuel.totalTTC.toFixed(2)} CHF</span>
           </div>
@@ -850,8 +890,8 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
 
   if (hasAgentItems) {
     html += `
-      <div style="margin-bottom: 15px;">
-        <h4 style="color: ${colors.titleColor}; margin-bottom: 8px;">Prestations Agents</h4>
+      <div style="margin-bottom: 20px; padding: 15px; border: 1px solid ${colors.tableBorder}; border-radius: 4px;">
+        <h4 style="color: ${colors.titleColor}; margin-bottom: 10px; border-bottom: 1px solid ${colors.tableBorder}; padding-bottom: 5px;">Détail Prestations Agents</h4>
         <div class="total-row">
           <span>Total HT :</span>
           <span>${totals.agents.subtotalHT.toFixed(2)} CHF</span>
@@ -860,7 +900,7 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
           <span>TVA (${settings.tvaPct}%) :</span>
           <span>${totals.agents.tva.toFixed(2)} CHF</span>
         </div>
-        <div class="total-row" style="font-weight: bold;">
+        <div class="total-row" style="font-weight: bold; background: #f5f5f5;">
           <span>Total TTC :</span>
           <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
         </div>
@@ -868,11 +908,14 @@ const generateOptimizedPDFHTML = (quote: Quote, settings: Settings, totals: any,
     `;
   }
 
-  // Grand total
   html += `
-        <div class="total-row grand-total" style="font-size: 16px; background: ${colors.headerBackground}; padding: 10px;">
-          <span>TOTAL GÉNÉRAL TTC :</span>
-          <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
+        </div>
+        
+        <!-- Grand total -->
+        <div style="text-align: center; margin: 40px 0; padding: 20px; background: linear-gradient(135deg, #1976d2, #1565c0); border-radius: 10px; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+          <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">TOTAL GÉNÉRAL</div>
+          <div style="font-size: 28px; font-weight: bold;">${totals.global.totalTTC.toFixed(2)} CHF</div>
+          <div style="font-size: 14px; opacity: 0.9;">(TTC)</div>
         </div>
       </div>
       
