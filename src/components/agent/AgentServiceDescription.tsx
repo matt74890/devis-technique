@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Shield, MapPin, Calendar, Clock, Shirt, Coffee, Car, MessageSquare } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useSettings } from '@/components/SettingsProvider';
+import { toast } from 'sonner';
 
 const AgentServiceDescription = () => {
   const { currentQuote, updateQuote } = useStore();
@@ -91,6 +92,7 @@ const AgentServiceDescription = () => {
     updateQuote({
       agentServiceDescription: description
     });
+    toast.success('Description de la prestation sauvegardée');
   };
 
   const serviceCategories = settings.agentSettings?.serviceCategories || [

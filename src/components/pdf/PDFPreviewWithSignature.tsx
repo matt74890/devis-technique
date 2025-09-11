@@ -82,7 +82,7 @@ const PDFPreviewWithSignature = () => {
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [8, 8, 8, 8],
+        margin: [12, 12, 12, 12],
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
@@ -112,7 +112,16 @@ const PDFPreviewWithSignature = () => {
         }
       };
       
-      await html2pdf().set(opt).from(tempDiv).save();
+      // Force download instead of opening in new tab
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = opt.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       // Cleanup
       document.body.removeChild(tempDiv);
@@ -289,7 +298,28 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     ? settings.agentSettings.agentLetterTemplate
     : settings.letterTemplate;
 
+  let pageCount = 1;
+  const totalPages = (letterTemplate?.enabled ? 1 : 0) + (hasAgentItems && quote.agentServiceDescription ? 1 : 0) + 1;
+
   let html = `
+    <style>
+      @page { 
+        margin: 0; 
+        @bottom-center { 
+          content: counter(page) " / " counter(pages); 
+          font-size: 10px; 
+          color: ${colors.secondary}; 
+        }
+      }
+      .page-number { 
+        position: fixed; 
+        bottom: 10mm; 
+        right: 15mm; 
+        font-size: 10px; 
+        color: ${colors.secondary}; 
+        z-index: 1000; 
+      }
+    </style>
     <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; overflow: visible;">
   `;
 
@@ -299,6 +329,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     const clientAddress = quote.addresses.contact;
     
     html += `
+      <div class="page-number">Page ${pageCount} / ${totalPages}</div>
       <div style="margin-bottom: 40px; padding: 20px; background: ${colors.headerBackground}; border-radius: 8px; page-break-after: always;">
         ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 20px;">` : ''}
         
@@ -332,7 +363,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         
         <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
           <div style="margin-bottom: 20px;">
-            ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`},
+            ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').pop()}`},
           </div>
           
           <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
@@ -340,11 +371,11 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
           
           <div style="margin-top: 30px;">
-            <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`}, l'expression de nos salutations distinguées.</p>
+            <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').pop()}` : `Monsieur ${quote.addresses.contact.name.split(' ').pop()}`}, l'expression de nos salutations distinguées.</p>
           </div>
         </div>
         
-        <!-- Signature vendeur uniquement sur lettre -->
+        <!-- Signature vendeur sur lettre -->
         <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
           <div style="text-align: right;">
             <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
@@ -364,6 +395,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   if (hasAgentItems && quote.agentServiceDescription) {
     const desc = quote.agentServiceDescription;
     html += `
+      <div class="page-number">Page ${pageCount} / ${totalPages}</div>
       <div style="page-break-inside: avoid; page-break-after: always;">
         <!-- En-tête de la description -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
@@ -418,6 +450,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
   // DEBUT DU DEVIS PRINCIPAL - Page du devis avec toutes les informations
   html += `
+    <div class="page-number">Page ${pageCount} / ${totalPages}</div>
     <div style="page-break-inside: avoid;">
       <!-- En-tête du devis -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
@@ -788,31 +821,15 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Signatures
+  // Signatures - AVEC LA SIGNATURE DU VENDEUR À DROITE
   html += `
     <div style="margin-top: 50px;">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
-          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
-            ${settings.sellerInfo?.name || ''}<br>
-            ${settings.sellerInfo?.title || ''}<br>
-            ${settings.sellerInfo?.phone || ''}
-          </div>
-          <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-            Date et signature
-          </div>
-        </div>
-        
         <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
           <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CLIENT</div>
           <div style="color: ${colors.textColor}; margin-bottom: 15px;">
             ${quote.addresses.contact.name}<br>
             ${quote.addresses.contact.company || ''}
-          </div>
-          
-          <div style="border-top: 1px solid ${colors.primary}; margin-top: 20px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-            Date et lieu:
           </div>
           
           ${quote.clientSignature ? `
@@ -823,10 +840,29 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
               ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
             </div>
           ` : `
+            <div style="border-top: 1px solid ${colors.primary}; margin-top: 20px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
+              Date et lieu: _______________
+            </div>
             <div style="margin-top: 10px; font-size: 12px; color: ${colors.textColor};">
               Signature du client
             </div>
           `}
+        </div>
+        
+        <div style="border: 1px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">VENDEUR</div>
+          <div style="color: ${colors.textColor}; margin-bottom: 15px;">
+            ${settings.sellerInfo?.name || ''}<br>
+            ${settings.sellerInfo?.title || ''}<br>
+            ${settings.sellerInfo?.phone || ''}
+          </div>
+          <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin: 15px 0;"></div>
+          <div style="font-size: 12px; color: ${colors.textColor};">
+            ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+          </div>
+          <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
+            Signature du vendeur
+          </div>
         </div>
       </div>
     </div>
