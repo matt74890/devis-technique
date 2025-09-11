@@ -14,7 +14,7 @@ import { calculateQuoteItem, calculateQuoteTotals } from '@/utils/calculations';
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
-import PDFPreviewWithSignature from '@/components/pdf/PDFPreviewWithSignature';
+import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
@@ -178,6 +178,12 @@ const DevisScreen = () => {
     });
   };
 
+  const downloadPDF = () => {
+    // Déclencher le téléchargement depuis le composant PDFPreview
+    const downloadEvent = new CustomEvent('downloadPDF');
+    document.dispatchEvent(downloadEvent);
+  };
+
   const handleItemUpdate = (itemId: string, field: string, value: any) => {
     const item = currentQuote.items.find(i => i.id === itemId);
     if (!item) return;
@@ -207,12 +213,7 @@ const DevisScreen = () => {
 
       if (error) throw error;
 
-      if (!data?.quote) {
-        throw new Error('Format de données invalide');
-      }
-
-      const { quote } = data;
-      const { client, addresses, items, subscriptions, feesInstallHT, feesDossierHT, discountMode } = quote;
+      const { client, addresses, items, subscriptions, feesInstallHT, feesDossierHT, discountMode } = data;
 
       // Mise à jour du devis avec les informations extraites
       const updates: any = {};
@@ -503,7 +504,11 @@ const DevisScreen = () => {
               <span>Actions rapides</span>
             </div>
             <div className="flex items-center space-x-2">
-              <PDFPreviewWithSignature />
+              <PDFPreview />
+              <Button onClick={downloadPDF} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Télécharger PDF
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>

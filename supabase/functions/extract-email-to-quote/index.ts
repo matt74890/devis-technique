@@ -19,14 +19,13 @@ serve(async (req) => {
       throw new Error('GROQ_API_KEY not configured');
     }
 
-    const { emailContent, email_raw } = await req.json();
-    const content = emailContent || email_raw;
+    const { email_raw } = await req.json();
     
-    if (!content) {
+    if (!email_raw) {
       throw new Error('Email content is required');
     }
 
-    console.log('Processing email extraction for:', content.substring(0, 100) + '...');
+    console.log('Processing email extraction for:', email_raw.substring(0, 100) + '...');
 
     const prompt = `Tu es un extracteur de devis techniques. 
 Retourne STRICTEMENT un JSON valide (aucun texte avant/après). 
@@ -99,7 +98,7 @@ Règles :
 
 Texte à analyser :
 ---
-${content}
+${email_raw}
 ---
 
 Réponse attendue : JSON UNIQUEMENT.`;
