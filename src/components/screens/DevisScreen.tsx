@@ -656,14 +656,18 @@ const DevisScreen = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-name">Contact</Label>
+                <Label htmlFor="contact-firstName">Prénom</Label>
                 <Input
-                  id="contact-name"
-                  value={currentQuote.addresses.contact.name}
+                  id="contact-firstName"
+                  value={currentQuote.addresses.contact.firstName || ''}
                   onChange={(e) => {
-                    const newAddress = { ...currentQuote.addresses.contact, name: e.target.value };
+                    const newAddress = { 
+                      ...currentQuote.addresses.contact, 
+                      firstName: e.target.value,
+                      name: `${e.target.value} ${currentQuote.addresses.contact.lastName || ''}`.trim()
+                    };
                     updateQuote({ 
-                      client: e.target.value,
+                      client: newAddress.name,
                       addresses: { 
                         ...currentQuote.addresses, 
                         contact: newAddress,
@@ -672,7 +676,31 @@ const DevisScreen = () => {
                       } 
                     });
                   }}
-                  placeholder="Nom et prénom"
+                  placeholder="Prénom"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-lastName">Nom de famille</Label>
+                <Input
+                  id="contact-lastName"
+                  value={currentQuote.addresses.contact.lastName || ''}
+                  onChange={(e) => {
+                    const newAddress = { 
+                      ...currentQuote.addresses.contact, 
+                      lastName: e.target.value,
+                      name: `${currentQuote.addresses.contact.firstName || ''} ${e.target.value}`.trim()
+                    };
+                    updateQuote({ 
+                      client: newAddress.name,
+                      addresses: { 
+                        ...currentQuote.addresses, 
+                        contact: newAddress,
+                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
+                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
+                      } 
+                    });
+                  }}
+                  placeholder="Nom de famille"
                 />
               </div>
               <div className="space-y-2">

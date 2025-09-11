@@ -152,6 +152,8 @@ export interface Currency {
 export interface Address {
   company: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   street: string;
   city: string;
   postalCode: string;
