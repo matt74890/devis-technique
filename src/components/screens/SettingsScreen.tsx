@@ -90,7 +90,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -99,10 +99,14 @@ const SettingsScreen = () => {
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Catalogue</span>
           </TabsTrigger>
-            <TabsTrigger value="pdf" className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">PDF & Lettre</span>
-            </TabsTrigger>
+          <TabsTrigger value="agent" className="flex items-center space-x-2">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Devis Agent</span>
+          </TabsTrigger>
+          <TabsTrigger value="pdf" className="flex items-center space-x-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">PDF & Lettre</span>
+          </TabsTrigger>
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
@@ -516,6 +520,265 @@ const SettingsScreen = () => {
 
         <TabsContent value="catalog">
           <ProductCatalog />
+        </TabsContent>
+
+        <TabsContent value="agent">
+          <div className="space-y-6">
+            {/* Configuration des heures de majoration */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span>Heures de majoration</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="night-start">Début heures de nuit</Label>
+                    <Input
+                      id="night-start"
+                      type="time"
+                      value={settings.agentSettings?.nightStartTime || '22:00'}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          nightStartTime: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="night-end">Fin heures de nuit</Label>
+                    <Input
+                      id="night-end"
+                      type="time"
+                      value={settings.agentSettings?.nightEndTime || '06:00'}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          nightEndTime: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sunday-start">Début heures dimanche</Label>
+                    <Input
+                      id="sunday-start"
+                      type="time"
+                      value={settings.agentSettings?.sundayStartTime || '00:00'}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          sundayStartTime: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sunday-end">Fin heures dimanche</Label>
+                    <Input
+                      id="sunday-end"
+                      type="time"
+                      value={settings.agentSettings?.sundayEndTime || '23:59'}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          sundayEndTime: e.target.value
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="night-markup">Majoration nuit (%)</Label>
+                    <Input
+                      id="night-markup"
+                      type="number"
+                      step="0.1"
+                      value={settings.agentSettings?.nightMarkupPct || 25}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          nightMarkupPct: parseFloat(e.target.value) || 25
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sunday-markup">Majoration dimanche (%)</Label>
+                    <Input
+                      id="sunday-markup"
+                      type="number"
+                      step="0.1"
+                      value={settings.agentSettings?.sundayMarkupPct || 100}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          sundayMarkupPct: parseFloat(e.target.value) || 100
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="holiday-markup">Majoration jours fériés (%)</Label>
+                    <Input
+                      id="holiday-markup"
+                      type="number"
+                      step="0.1"
+                      value={settings.agentSettings?.holidayMarkupPct || 100}
+                      onChange={(e) => updateSettings({
+                        agentSettings: {
+                          ...settings.agentSettings,
+                          holidayMarkupPct: parseFloat(e.target.value) || 100
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Configuration des jours fériés par canton */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <span>Jours fériés par canton</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {['VD', 'GE', 'NE', 'VS', 'FR', 'JU', 'BE', 'AG', 'ZH', 'TI', 'GR'].map((canton) => (
+                  <div key={canton} className="space-y-2">
+                    <Label htmlFor={`holidays-${canton}`}>
+                      Canton {canton} - Jours fériés (dates au format DD/MM)
+                    </Label>
+                    <Textarea
+                      id={`holidays-${canton}`}
+                      value={settings.agentSettings?.holidays?.[canton]?.join(', ') || ''}
+                      onChange={(e) => {
+                        const holidays = e.target.value.split(',').map(h => h.trim()).filter(h => h);
+                        updateSettings({
+                          agentSettings: {
+                            ...settings.agentSettings,
+                            holidays: {
+                              ...settings.agentSettings?.holidays,
+                              [canton]: holidays
+                            }
+                          }
+                        });
+                      }}
+                      placeholder="01/01, 25/12, 01/08, etc."
+                      rows={2}
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Types d'agents et tarifs suggérés */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span>Types d'agents et tarifs</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Type d'agent</th>
+                        <th className="text-left p-2">Tarif suggéré (CHF/h)</th>
+                        <th className="text-left p-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(settings.agentSettings?.agentTypes || []).map((agentType, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="p-2">
+                            <Input
+                              value={agentType.type}
+                              onChange={(e) => {
+                                const newTypes = [...(settings.agentSettings?.agentTypes || [])];
+                                newTypes[index].type = e.target.value;
+                                updateSettings({
+                                  agentSettings: {
+                                    ...settings.agentSettings,
+                                    agentTypes: newTypes
+                                  }
+                                });
+                              }}
+                              className="min-w-48"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={agentType.suggestedRate}
+                              onChange={(e) => {
+                                const newTypes = [...(settings.agentSettings?.agentTypes || [])];
+                                newTypes[index].suggestedRate = parseFloat(e.target.value) || 0;
+                                updateSettings({
+                                  agentSettings: {
+                                    ...settings.agentSettings,
+                                    agentTypes: newTypes
+                                  }
+                                });
+                              }}
+                              className="w-24"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newTypes = [...(settings.agentSettings?.agentTypes || [])];
+                                newTypes.splice(index, 1);
+                                updateSettings({
+                                  agentSettings: {
+                                    ...settings.agentSettings,
+                                    agentTypes: newTypes
+                                  }
+                                });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <Button
+                  onClick={() => {
+                    const newTypes = [...(settings.agentSettings?.agentTypes || [])];
+                    newTypes.push({ type: 'Nouvel agent', suggestedRate: 30 });
+                    updateSettings({
+                      agentSettings: {
+                        ...settings.agentSettings,
+                        agentTypes: newTypes
+                      }
+                    });
+                  }}
+                  className="bg-success hover:bg-success/90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un type d'agent
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="pdf">

@@ -91,6 +91,67 @@ const RecapScreen = () => {
   const quoteWithCalculatedItems = { ...currentQuote, items: calculatedItems };
   const totals = calculateQuoteTotals(quoteWithCalculatedItems, settings.tvaPct);
   
+  const downloadPDF = async () => {
+    console.log('Début téléchargement PDF direct');
+    
+    // Validation des données requises
+    if (!currentQuote.ref) {
+      console.log('Erreur: Référence manquante');
+      toast.error('Veuillez renseigner une référence pour le devis');
+      return;
+    }
+    
+    if (!currentQuote.client) {
+      console.log('Erreur: Client manquant');  
+      toast.error('Veuillez sélectionner ou renseigner un client');
+      return;
+    }
+    
+    if (currentQuote.items.length === 0) {
+      console.log('Erreur: Aucune ligne dans le devis');
+      toast.error('Veuillez ajouter au moins une ligne au devis');
+      return;
+    }
+    
+    try {
+      // Générer d'abord le HTML complet du PDF
+      generatePDF(); // Cela génère le HTML
+      
+      // Attendre un petit délai pour que le HTML soit généré
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const element = document.querySelector('#pdf-content') || document.body;
+      
+      // Dynamically import html2pdf
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const options = {
+        margin: [10, 10, 10, 10],
+        filename: `devis-${currentQuote.ref}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { 
+          scale: 1.5,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
+      };
+
+      await html2pdf().set(options).from(element).save();
+      
+      console.log('PDF téléchargé avec succès');
+      toast.success('PDF téléchargé avec succès');
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du PDF:', error);
+      toast.error('Erreur lors du téléchargement du PDF. Veuillez réessayer.');
+    }
+  };
+
   const generatePDF = () => {
     console.log('Début génération PDF');
     
@@ -1116,6 +1177,10 @@ const RecapScreen = () => {
               <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
                 <FileDown className="h-4 w-4 mr-2" />
                 Générer PDF
+              </Button>
+              <Button onClick={downloadPDF} variant="secondary">
+                <FileDown className="h-4 w-4 mr-2" />
+                Télécharger PDF
               </Button>
               <Button onClick={downloadWord} variant="outline">
                 <FileDown className="h-4 w-4 mr-2" />

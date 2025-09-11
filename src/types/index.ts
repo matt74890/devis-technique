@@ -79,6 +79,7 @@ export interface TemplateColors {
 
 export interface LetterTemplate {
   enabled: boolean;
+  templateId?: string;
   companyName: string;
   contactName: string;
   contactTitle: string;
