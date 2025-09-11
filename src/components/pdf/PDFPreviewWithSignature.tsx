@@ -89,15 +89,15 @@ const PDFPreviewWithSignature = () => {
         filename: `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-          scale: 1.0,
+          scale: 1.5,
           useCORS: true,
           letterRendering: true,
           allowTaint: false,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          windowWidth: 1000,
-          windowHeight: 1400,
+          windowWidth: 1200,
+          windowHeight: 1600,
           logging: false
         },
         jsPDF: { 
@@ -108,35 +108,27 @@ const PDFPreviewWithSignature = () => {
           precision: 16
         },
         pagebreak: { 
-          mode: ['avoid-all', 'css', 'legacy'],
+          mode: ['avoid-all', 'css', 'legacy'],  
           before: '.page-break-before',
           after: '.page-break-after',
           avoid: '.page-break-avoid'
         }
       };
       
-      // Force download instead of opening in new tab
-      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = opt.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Generate and download PDF
+      await html2pdf().set(opt).from(tempDiv).save();
       
       // Cleanup
       document.body.removeChild(tempDiv);
       
-      toast.success('PDF téléchargé');
+      toast.success('PDF téléchargé avec succès');
     } catch (error) {
       console.error('Erreur génération PDF:', error);
       toast.error('Erreur lors de la génération du PDF');
     }
   };
 
-  const downloadWord = () => {
+  const downloadWord = async () => {
     try {
       // Validation
       if (!currentQuote.ref) {
@@ -154,18 +146,50 @@ const PDFPreviewWithSignature = () => {
 
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
-      // Create proper HTML document for Word
+      // Create proper Word document structure
       const wordContent = `
 <!DOCTYPE html>
-<html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
   <meta charset="UTF-8">
+  <meta name="ProgId" content="Word.Document">
+  <meta name="Generator" content="Microsoft Word 15">
+  <meta name="Originator" content="Microsoft Word 15">
+  <!--[if !mso]>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-    th { background-color: #f5f5f5; }
-    .page-break { page-break-before: always; }
+    v\\:* {behavior:url(#default#VML);}
+    o\\:* {behavior:url(#default#VML);}
+    w\\:* {behavior:url(#default#VML);}
+    .shape {behavior:url(#default#VML);}
+  </style>
+  <![endif]-->
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      line-height: 1.4;
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin: 10px 0; 
+    }
+    th, td { 
+      border: 1px solid #000; 
+      padding: 8px; 
+      text-align: left; 
+      vertical-align: top;
+    }
+    th { 
+      background-color: #f5f5f5; 
+      font-weight: bold;
+    }
+    .page-break { 
+      page-break-before: always; 
+    }
+    .page-break-avoid {
+      page-break-inside: avoid;
+    }
   </style>
 </head>
 <body>
@@ -174,22 +198,22 @@ ${htmlContent}
 </html>
       `;
       
-      // Use HTML MIME type for better Word compatibility  
-      const blob = new Blob([wordContent], {
-        type: 'application/vnd.ms-word'
+      // Create a proper Word document blob
+      const blob = new Blob(['\ufeff', wordContent], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      // Use .doc extension for Word compatibility
-      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.doc`;
+      // Use .docx extension for modern Word format
+      link.download = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.docx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success('Word téléchargé');
+      toast.success('Document Word téléchargé avec succès');
     } catch (error) {
       console.error('Erreur génération Word:', error);
       toast.error('Erreur lors de la génération du Word');
@@ -857,58 +881,58 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         </div>
       ` : ''}
 
-      <!-- Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE - PARFAITEMENT ALIGNÉS -->
-      <div style="margin-top: 40px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 160mm; margin: 0 auto;">
-          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+      <!-- Signatures - VENDEUR À GAUCHE ET CLIENT À DROITE - PARFAITEMENT ALIGNÉS EN BAS -->
+      <div style="margin-top: 50px; position: relative; min-height: 200px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 160mm; margin: 0 auto; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%;">
+          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">VENDEUR</div>
-              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
-                <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
-                <div>${settings.sellerInfo?.title || ''}</div>
-                <div>${settings.sellerInfo?.phone || ''}</div>
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; text-align: center;">VENDEUR</div>
+              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.4; text-align: center;">
+                <div style="font-weight: bold; font-size: 13px;">${settings.sellerInfo?.name || ''}</div>
+                <div style="font-size: 12px;">${settings.sellerInfo?.title || ''}</div>
+                <div style="font-size: 11px;">${settings.sellerInfo?.phone || ''}</div>
               </div>
             </div>
             
-            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 15px 0;">
               ${settings.sellerInfo?.signature ? `
-                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+                <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-width: 140px; max-height: 60px; object-fit: contain; border-bottom: 1px solid ${colors.secondary}; padding-bottom: 5px;">
               ` : `
-                <div style="width: 150px; height: 40px;"></div>
+                <div style="width: 160px; height: 50px; border-bottom: 1px solid ${colors.secondary}; margin-bottom: 5px;"></div>
               `}
             </div>
             
-            <div style="text-align: center;">
-              <div style="font-size: 11px; color: ${colors.textColor};">
+            <div style="text-align: center; margin-top: auto;">
+              <div style="font-size: 11px; color: ${colors.textColor}; font-weight: 500;">
                 ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
               </div>
             </div>
           </div>
           
-          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 15px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="border: 2px solid ${colors.primary}; background: ${colors.background}; padding: 20px; border-radius: 8px; height: 180px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">CLIENT</div>
-              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.3;">
-                <div style="font-weight: bold;">${quote.addresses.contact.name}</div>
-                <div>${quote.addresses.contact.company || ''}</div>
+              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; text-align: center;">CLIENT</div>
+              <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.4; text-align: center;">
+                <div style="font-weight: bold; font-size: 13px;">${quote.addresses.contact.name}</div>
+                <div style="font-size: 12px;">${quote.addresses.contact.company || ''}</div>
               </div>
             </div>
             
-            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 15px 0;">
               ${quote.clientSignature ? `
-                <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 120px; max-height: 50px; object-fit: contain;">
+                <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 140px; max-height: 60px; object-fit: contain; border-bottom: 1px solid ${colors.secondary}; padding-bottom: 5px;">
               ` : `
-                <div style="width: 150px; height: 40px;"></div>
+                <div style="width: 160px; height: 50px; border-bottom: 1px solid ${colors.secondary}; margin-bottom: 5px;"></div>
               `}
             </div>
             
-            <div style="text-align: center;">
+            <div style="text-align: center; margin-top: auto;">
               ${quote.clientSignature ? `
-                <div style="font-size: 11px; color: ${colors.textColor};">
+                <div style="font-size: 11px; color: ${colors.textColor}; font-weight: 500;">
                   ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
                 </div>
               ` : `
-                <div style="font-size: 11px; color: ${colors.textColor};">
+                <div style="font-size: 11px; color: ${colors.textColor}; font-weight: 500;">
                   Date et lieu: _______________
                 </div>
               `}
