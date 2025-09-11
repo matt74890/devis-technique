@@ -378,6 +378,8 @@ const DevisScreen = () => {
       const newContactAddress = {
         company: client.company || '',
         name: client.name,
+        firstName: client.firstName || client.first_name || '',
+        lastName: client.lastName || client.last_name || '',
         email: client.email || '',
         phone: client.phone || '',
         street: client.address || '',
@@ -428,6 +430,8 @@ const DevisScreen = () => {
         .from('clients')
         .insert([{
           name: contact.name,
+          first_name: contact.firstName || null,
+          last_name: contact.lastName || null,
           company: contact.company || null,
           email: contact.email || null,
           phone: contact.phone || null,

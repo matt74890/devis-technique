@@ -335,9 +335,23 @@ const PDFPreview = () => {
         }
       };
 
-      await html2pdf().set(options).from(element).save();
+      // Generate PDF as blob and force download
+      const pdfBlob = await html2pdf().set(options).from(element).outputPdf('blob');
       
-      console.log('PDF généré avec succès');
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `devis-${currentQuote.ref}.pdf`;
+      link.style.display = 'none';
+      
+      // Force download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log('PDF téléchargé avec succès');
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
       alert('Erreur lors du téléchargement du PDF. Veuillez réessayer.');

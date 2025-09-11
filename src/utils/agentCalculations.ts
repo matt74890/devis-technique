@@ -16,7 +16,7 @@ export const calculateAgentVacation = (
     return item;
   }
 
-  // Parse dates and times properly, handling 00:00 as midnight
+  // Parse dates and times with special handling for 00:00
   const formatTime = (time: string): string => {
     if (!time.includes(':')) return time + ':00';
     const parts = time.split(':');
@@ -27,8 +27,23 @@ export const calculateAgentVacation = (
   const formattedStartTime = formatTime(item.timeStart);
   const formattedEndTime = formatTime(item.timeEnd);
   
-  const startDateTime = new Date(`${item.dateStart}T${formattedStartTime}:00`);
-  const endDateTime = new Date(`${item.dateEnd}T${formattedEndTime}:00`);
+  let startDateTime = new Date(`${item.dateStart}T${formattedStartTime}:00`);
+  let endDateTime = new Date(`${item.dateEnd}T${formattedEndTime}:00`);
+  
+  // Special handling for 00:00 end time - interpret as end of day (24:00)
+  if (formattedEndTime === '00:00') {
+    if (item.dateEnd === item.dateStart) {
+      // Same date with 00:00 end time = end of day (add 24 hours)
+      endDateTime = new Date(startDateTime);
+      endDateTime.setDate(endDateTime.getDate() + 1);
+      endDateTime.setHours(0, 0, 0, 0);
+    }
+  }
+  
+  // If end time is before start time (crossing midnight), assume next day
+  if (endDateTime <= startDateTime && formattedEndTime !== '00:00') {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
   
   // Validate parsed dates
   if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
@@ -41,7 +56,9 @@ export const calculateAgentVacation = (
     return { ...item, hoursTotal: 0, hoursNormal: 0, hoursNight: 0, hoursSunday: 0, hoursHoliday: 0 };
   }
   
+  // Final check - should never have zero duration unless explicitly set
   if (endDateTime <= startDateTime) {
+    console.warn('Zero duration vacation:', { startDateTime, endDateTime, item });
     return { ...item, hoursTotal: 0, hoursNormal: 0, hoursNight: 0, hoursSunday: 0, hoursHoliday: 0 };
   }
 

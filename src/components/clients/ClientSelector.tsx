@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 interface Client {
   id: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   company?: string;
   email?: string;
   phone?: string;
@@ -68,9 +70,24 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
 
   const sortedLetters = Object.keys(groupedClients).sort();
 
-  const handleSelect = (client: Client) => {
+  const handleSelect = (clientData: Client) => {
+    // Si le client a des champs first_name et last_name, les utiliser
+    const client = {
+      ...clientData,
+      name: clientData.first_name && clientData.last_name 
+        ? `${clientData.first_name} ${clientData.last_name}`.trim()
+        : clientData.name
+    };
+    
+    // Mapper les champs pour l'interface avec propriétés étendues
+    const mappedClient = {
+      ...client,
+      firstName: clientData.first_name,
+      lastName: clientData.last_name
+    } as any; // Type étendu pour inclure firstName et lastName
+    
     setSelectedClient(client);
-    onSelect(client);
+    onSelect?.(mappedClient);
     setOpen(false);
   };
 
