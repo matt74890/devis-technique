@@ -101,11 +101,23 @@ const PDFPreviewWithSignature = () => {
     }
   };
 
-  const PreviewContent = () => (
-    <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div dangerouslySetInnerHTML={{ __html: generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType) }} />
-    </div>
-  );
+  const PreviewContent = () => {
+    try {
+      const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
+      return (
+        <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6 print:p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        </div>
+      );
+    } catch (error) {
+      console.error('Erreur génération aperçu PDF:', error);
+      return (
+        <div className="max-w-4xl mx-auto bg-white text-black p-8 space-y-6" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <p>Erreur lors de la génération de l'aperçu</p>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -181,22 +193,24 @@ const PDFPreviewWithSignature = () => {
 
 // Fonction pour générer le HTML du PDF
 const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteType: string): string => {
-  const colors = settings.templateColors || {
-    primary: '#000000',
-    secondary: '#666666',
-    accent: '#333333',
-    titleColor: '#000000',
-    subtitleColor: '#666666',
-    textColor: '#000000'
-  };
+  try {
+    const colors = settings.templateColors || {
+      primary: '#000000',
+      secondary: '#666666',
+      accent: '#333333',
+      titleColor: '#000000',
+      subtitleColor: '#666666',
+      textColor: '#000000'
+    };
 
-  const hasTechItems = quote.items.some(item => item.kind === 'TECH');
-  const hasAgentItems = quote.items.some(item => item.kind === 'AGENT');
+    const hasTechItems = quote.items?.some(item => item.kind === 'TECH') || false;
+    const hasAgentItems = quote.items?.some(item => item.kind === 'AGENT') || false;
 
-  // Obtenir le nom d'affichage du client
-  const clientDisplayName = quote.addresses?.contact?.first_name && quote.addresses?.contact?.last_name 
-    ? `${quote.addresses.contact.first_name} ${quote.addresses.contact.last_name}`
-    : quote.addresses?.contact?.name || quote.client || '';
+    // Obtenir le nom d'affichage du client avec protection contre les valeurs nulles
+    const contactInfo = quote.addresses?.contact || {};
+    const clientDisplayName = (contactInfo as any).first_name && (contactInfo as any).last_name 
+      ? `${(contactInfo as any).first_name} ${(contactInfo as any).last_name}`
+      : (contactInfo as any).name || quote.client || 'Client non défini';
 
   let html = `
     <style>
@@ -379,6 +393,10 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   html += `</div>`;
   
   return html;
+  } catch (error) {
+    console.error('Erreur génération HTML PDF:', error);
+    return '<div>Erreur lors de la génération du PDF</div>';
+  }
 };
 
 export default PDFPreviewWithSignature;
