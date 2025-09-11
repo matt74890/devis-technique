@@ -60,6 +60,8 @@ const PDFPreviewWithSignature = () => {
         return;
       }
 
+      toast.loading('Génération du PDF...');
+
       // Créer le contenu HTML complet
       const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
       
@@ -94,10 +96,63 @@ const PDFPreviewWithSignature = () => {
       // Cleanup
       document.body.removeChild(tempDiv);
       
-      toast.success('PDF téléchargé');
+      toast.success('PDF téléchargé avec succès');
     } catch (error) {
       console.error('Erreur génération PDF:', error);
-      toast.error('Échec PDF');
+      toast.error('Erreur lors de la génération du PDF');
+    }
+  };
+
+  const downloadWord = async () => {
+    try {
+      // Validation
+      if (!currentQuote.ref) {
+        toast.error('Veuillez renseigner une référence pour le devis');
+        return;
+      }
+      if (!currentQuote.client) {
+        toast.error('Veuillez sélectionner ou renseigner un client');
+        return;
+      }
+      if (currentQuote.items.length === 0) {
+        toast.error('Veuillez ajouter au moins une ligne au devis');
+        return;
+      }
+
+      toast.loading('Conversion en Word...');
+
+      // Créer le contenu HTML complet
+      const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
+      
+      // Appel de l'edge function pour convertir en Word
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('convert-pdf-to-docx', {
+        body: {
+          htmlContent,
+          filename: `devis_${currentQuote.ref}_${currentQuote.client?.replace(/\s+/g, '_') || 'client'}`
+        }
+      });
+
+      if (error) throw error;
+
+      // Télécharger le fichier Word
+      const blob = new Blob([new Uint8Array(data.fileBuffer)], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devis_${currentQuote.ref}_${currentQuote.client?.replace(/\s+/g, '_') || 'client'}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Document Word téléchargé avec succès');
+    } catch (error) {
+      console.error('Erreur conversion Word:', error);
+      toast.error('Erreur lors de la conversion en Word');
     }
   };
 
@@ -177,6 +232,12 @@ const PDFPreviewWithSignature = () => {
         PDF
       </Button>
 
+      {/* Bouton Word */}
+      <Button onClick={downloadWord} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <FileDown className="h-4 w-4 mr-2" />
+        Word
+      </Button>
+
       {/* Affichage signature client si présente */}
       {currentQuote.clientSignature && (
         <div className="w-full mt-4 p-4 border rounded-lg bg-green-50">
@@ -215,7 +276,13 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   let html = `
     <style>
       @page { size: A4; margin: 10mm; }
-      body { font-family: Arial, sans-serif; color: ${colors.textColor}; line-height: 1.4; }
+      body { 
+        font-family: Arial, sans-serif; 
+        color: ${colors.textColor}; 
+        line-height: 1.4; 
+        margin: 0;
+        padding: 0;
+      }
       .page-break { page-break-before: always; }
       .avoid-break { page-break-inside: avoid; }
       table { width: 100%; border-collapse: collapse; margin: 15px 0; }
