@@ -464,7 +464,7 @@ const RecapScreen = () => {
           
           <div class="letter-content">
             <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.lastName || clientAddress.name || currentQuote.client || 'Client'},
+              ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.lastName || currentQuote.client || 'Client'},
             </div>
             
             <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
@@ -474,7 +474,7 @@ const RecapScreen = () => {
             </div>
             
             <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${currentQuote.clientCivility} ${clientAddress.name || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
+              <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${currentQuote.clientCivility} ${clientAddress.lastName || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
               
               <div style="margin-top: 40px;">
                 <p><strong>Cordialement,</strong></p>
@@ -1025,38 +1025,37 @@ const RecapScreen = () => {
           </table>
           ` : ''}
 
-          ${calculatedItems.some(item => item.kind === 'AGENT') ? `
-          <h3>Prestations d'agents de sécurité</h3>
+          ${groupedAgentItemsArray.length > 0 ? `
+          <h3 style="color: ${colors.primary};">Prestations d'agents de sécurité</h3>
           <table style="font-size: 8pt;">
             <tr>
-              <th>Date début</th>
-              <th>H début</th>
-              <th>Date fin</th>
-              <th>H fin</th>
-              <th>Type</th>
+              <th>Période</th>
+              <th>Horaires</th>
+              <th>Type Agent</th>
+              <th>Canton</th>
               <th>H norm.</th>
               <th>H nuit</th>
               <th>H dim.</th>
               <th>H JF</th>
-              <th>Tarif CHF/h</th>
+              <th>Total H</th>
               <th>HT</th>
               <th>TTC</th>
             </tr>
-            ${calculatedItems.filter(item => item.kind === 'AGENT').map(item => `
+            ${groupedAgentItemsArray.map(group => `
             <tr>
-              <td>${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
-              <td>${item.timeStart || '-'}</td>
-              <td>${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
-              <td>${item.timeEnd || '-'}</td>
-              <td>${item.agentType || '-'}</td>
-              <td class="text-center">${(item.hoursNormal || 0).toFixed(1)}</td>
-              <td class="text-center">${(item.hoursNight || 0).toFixed(1)}</td>
-              <td class="text-center">${(item.hoursSunday || 0).toFixed(1)}</td>
-              <td class="text-center">${(item.hoursHoliday || 0).toFixed(1)}</td>
-              <td class="text-right">${(item.rateCHFh || 0).toFixed(2)}</td>
-              <td class="text-right">${(item.lineHT || 0).toFixed(2)}</td>
-              <td class="text-right">${(item.lineTTC || 0).toFixed(2)}</td>
+              <td>${group.dateRange}</td>
+              <td>${group.timeRange}</td>
+              <td>${group.agentType}</td>
+              <td>${group.canton}</td>
+              <td class="text-center">${group.normalHours.toFixed(1)}</td>
+              <td class="text-center">${group.nightHours.toFixed(1)}</td>
+              <td class="text-center">${group.sundayHours.toFixed(1)}</td>
+              <td class="text-center">${group.holidayHours.toFixed(1)}</td>
+              <td class="text-center"><strong>${group.totalHours.toFixed(1)}</strong></td>
+              <td class="text-right">${group.totalHT.toFixed(2)}</td>
+              <td class="text-right"><strong>${group.totalTTC.toFixed(2)}</strong></td>
             </tr>
+            ${group.count > 1 ? `<tr><td colspan="11" style="font-size: 7pt; color: ${colors.subtitleColor}; font-style: italic;">* ${group.count} périodes identiques regroupées</td></tr>` : ''}
             `).join('')}
           </table>
           ` : ''}
