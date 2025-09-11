@@ -16,23 +16,29 @@ export const calculateAgentVacation = (
     return item;
   }
 
-  // Parse dates more safely to handle 00:00 times
-  const startDateTime = new Date(`${item.dateStart}T${item.timeStart}:00`);
-  const endDateTime = new Date(`${item.dateEnd}T${item.timeEnd}:00`);
+  // Parse dates and times properly, handling 00:00 as midnight
+  const formatTime = (time: string): string => {
+    if (!time.includes(':')) return time + ':00';
+    const parts = time.split(':');
+    if (parts.length === 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+    return time;
+  };
+
+  const formattedStartTime = formatTime(item.timeStart);
+  const formattedEndTime = formatTime(item.timeEnd);
   
-  // If parsing failed, try without seconds
-  if (isNaN(startDateTime.getTime())) {
-    const startDateTime2 = new Date(`${item.dateStart}T${item.timeStart}`);
-    if (!isNaN(startDateTime2.getTime())) {
-      startDateTime.setTime(startDateTime2.getTime());
-    }
-  }
+  const startDateTime = new Date(`${item.dateStart}T${formattedStartTime}:00`);
+  const endDateTime = new Date(`${item.dateEnd}T${formattedEndTime}:00`);
   
-  if (isNaN(endDateTime.getTime())) {
-    const endDateTime2 = new Date(`${item.dateEnd}T${item.timeEnd}`);
-    if (!isNaN(endDateTime2.getTime())) {
-      endDateTime.setTime(endDateTime2.getTime());
-    }
+  // Validate parsed dates
+  if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+    console.error('Invalid date parsing:', { 
+      dateStart: item.dateStart, 
+      timeStart: item.timeStart,
+      dateEnd: item.dateEnd, 
+      timeEnd: item.timeEnd 
+    });
+    return { ...item, hoursTotal: 0, hoursNormal: 0, hoursNight: 0, hoursSunday: 0, hoursHoliday: 0 };
   }
   
   if (endDateTime <= startDateTime) {
