@@ -71,9 +71,9 @@ const PDFPreviewWithSignature = () => {
       // Create a temporary div for PDF generation
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = htmlContent;
-      tempDiv.style.width = '180mm';
+      tempDiv.style.width = '190mm';
       tempDiv.style.minHeight = '277mm';
-      tempDiv.style.padding = '10mm';
+      tempDiv.style.padding = '12mm';
       tempDiv.style.backgroundColor = 'white';
       tempDiv.style.fontFamily = 'Arial, sans-serif';
       tempDiv.style.fontSize = '12px';
@@ -81,13 +81,13 @@ const PDFPreviewWithSignature = () => {
       tempDiv.style.color = 'black';
       tempDiv.style.boxSizing = 'border-box';
       tempDiv.style.margin = '0 auto';
-      tempDiv.style.maxWidth = '180mm';
+      tempDiv.style.maxWidth = '190mm';
       
       // Add to DOM temporarily
       document.body.appendChild(tempDiv);
       
       const opt = {
-        margin: [15, 15, 15, 15],
+        margin: [12, 12, 12, 12],
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
           scale: 1.5,
@@ -139,137 +139,6 @@ const PDFPreviewWithSignature = () => {
     } catch (error) {
       console.error('Erreur génération PDF:', error);
       toast.error('Échec PDF');
-    }
-  };
-
-  const downloadWord = async () => {
-    setIsGeneratingWord(true);
-    try {
-      // Validation
-      if (!currentQuote.ref) {
-        toast.error('Veuillez renseigner une référence pour le devis');
-        return;
-      }
-      if (!currentQuote.client) {
-        toast.error('Veuillez sélectionner ou renseigner un client');
-        return;
-      }
-      if (currentQuote.items.length === 0) {
-        toast.error('Veuillez ajouter au moins une ligne au devis');
-        return;
-      }
-
-      // 1. Générer d'abord le PDF (même logique que downloadPDF)
-      const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
-      
-      const html2pdf = (await import('html2pdf.js')).default;
-      
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      tempDiv.style.width = '180mm';
-      tempDiv.style.minHeight = '277mm';
-      tempDiv.style.padding = '10mm';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.fontSize = '12px';
-      tempDiv.style.lineHeight = '1.4';
-      tempDiv.style.color = 'black';
-      tempDiv.style.boxSizing = 'border-box';
-      tempDiv.style.margin = '0 auto';
-      tempDiv.style.maxWidth = '180mm';
-      
-      document.body.appendChild(tempDiv);
-      
-      const opt = {
-        margin: [15, 15, 15, 15],
-        image: { type: 'jpeg', quality: 1.0 },
-        html2canvas: { 
-          scale: 1.5,
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 1200,
-          windowHeight: 1600,
-          logging: false
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: true,
-          precision: 16
-        },
-        pagebreak: { 
-          mode: ['avoid-all', 'css', 'legacy'],  
-          before: '.page-break-before',
-          after: '.page-break-after',
-          avoid: '.page-break-avoid'
-        }
-      };
-      
-      // Générer le PDF en tant que blob
-      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
-      document.body.removeChild(tempDiv);
-      
-      console.log('PDF généré pour conversion - Taille:', pdfBlob.size, 'bytes');
-      
-      // 2. Convertir le PDF en base64
-      const pdfArrayBuffer = await pdfBlob.arrayBuffer();
-      const pdfUint8Array = new Uint8Array(pdfArrayBuffer);
-      const pdfBase64 = btoa(String.fromCharCode(...pdfUint8Array));
-      
-      const filename = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`;
-      
-      // 3. Appeler l'edge function de conversion
-      const { data: conversionResult, error } = await supabase.functions.invoke('convert-pdf-to-docx', {
-        body: {
-          filename,
-          file_base64: pdfBase64
-        }
-      });
-      
-      if (error) {
-        throw new Error(`Erreur de conversion: ${error.message}`);
-      }
-      
-      if (!conversionResult?.file_base64) {
-        throw new Error('Pas de fichier DOCX retourné par le service de conversion');
-      }
-      
-      // 4. Décoder le DOCX et déclencher le téléchargement
-      const docxBase64 = conversionResult.file_base64;
-      const docxBinary = atob(docxBase64);
-      const docxBytes = new Uint8Array(docxBinary.length);
-      for (let i = 0; i < docxBinary.length; i++) {
-        docxBytes[i] = docxBinary.charCodeAt(i);
-      }
-      
-      const docxBlob = new Blob([docxBytes], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      });
-      
-      const docxFilename = conversionResult.filename || filename.replace('.pdf', '.docx');
-      const url = window.URL.createObjectURL(docxBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = docxFilename;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      console.log('DOCX téléchargé - Taille:', docxBlob.size, 'bytes, Méthode:', conversionResult.conversion_method);
-      toast.success('Word téléchargé');
-      
-    } catch (error) {
-      console.error('Erreur génération Word:', error);
-      toast.error('Conversion PDF→Word impossible');
-    } finally {
-      setIsGeneratingWord(false);
     }
   };
 
@@ -337,14 +206,14 @@ const PDFPreviewWithSignature = () => {
         PDF
       </Button>
 
-      {/* Bouton Word */}
+      {/* Bouton Word - DÉSACTIVÉ (conversion impossible, bug connu) */}
       <Button 
-        onClick={downloadWord} 
-        disabled={isGeneratingWord}
-        className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+        disabled={true}
+        className="bg-gray-400 text-white cursor-not-allowed opacity-50"
+        title="Conversion Word temporairement désactivée (bug connu)"
       >
         <FileDown className="h-4 w-4 mr-2" />
-        {isGeneratingWord ? 'Conversion...' : 'Word'}
+        Word (désactivé)
       </Button>
 
       {/* Affichage signature client si présente */}
@@ -362,20 +231,18 @@ const PDFPreviewWithSignature = () => {
 };
 
 // Fonction pour générer une en-tête standardisée
-const generatePageHeader = (settings: Settings, colors: any, pageNumber: number, totalPages: number): string => {
+const generatePageHeader = (settings: Settings, colors: any, quoteRef: string): string => {
   return `
-    <div class="page-header" style="margin-bottom: 30px; padding: 15px 0; border-bottom: 1px solid ${colors.secondary};">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div style="flex: 1;">
-          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 50px; margin-bottom: 10px;">` : ''}
-          ${settings.sellerInfo?.name ? `
-            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 14px;">${settings.sellerInfo.name}</div>
-            ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; font-size: 12px;">${settings.sellerInfo.title}</div>` : ''}
-          ` : ''}
-        </div>
-        <div style="text-align: right; font-size: 10px; color: ${colors.secondary};">
-          Page ${pageNumber} / ${totalPages}
-        </div>
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid ${colors.secondary};">
+      <div style="flex: 1;">
+        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 50px; margin-bottom: 10px;">` : ''}
+        ${settings.sellerInfo?.name ? `
+          <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 14px;">${settings.sellerInfo.name}</div>
+          ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; font-size: 12px;">${settings.sellerInfo.title}</div>` : ''}
+        ` : ''}
+      </div>
+      <div style="text-align: right; font-size: 12px; color: ${colors.primary}; font-weight: bold;">
+        Réf. devis : ${quoteRef}
       </div>
     </div>
   `;
@@ -406,6 +273,12 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   const isAgentOnly = hasAgentItems && !hasTechItems;
   const isMixed = hasTechItems && hasAgentItems;
 
+  // Obtenir le nom d'affichage du client pour réutilisation dans tout le PDF
+  const clientDisplayName = quote.addresses.contact.first_name && quote.addresses.contact.last_name 
+    ? `${quote.addresses.contact.first_name} ${quote.addresses.contact.last_name}`
+    : quote.addresses.contact.name || '';
+  const clientLastName = quote.addresses.contact.last_name || quote.addresses.contact.name?.split(' ').pop() || '';
+
   console.log('Génération PDF - Items:', quote.items?.length || 0, 'Tech:', hasTechItems, 'Agent:', hasAgentItems);
   console.log('Génération PDF - Totaux:', totals);
   console.log('Génération PDF - QuoteType:', quoteType);
@@ -421,7 +294,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
   let html = `
     <style>
       @page { 
-        margin: 10mm 15mm 25mm 15mm; 
+        size: A4;
+        margin: 12mm;
         @bottom-right { 
           content: "Page " counter(page) " / " counter(pages); 
           font-size: 10px; 
@@ -429,10 +303,17 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           font-family: Arial, sans-serif;
         }
       }
+      body, html { margin: 0; padding: 0; }
       .page-break { page-break-before: always; }
       .page-break-avoid { page-break-inside: avoid; }
+      .section { page-break-inside: avoid; }
+      table { table-layout: fixed; width: 100%; word-break: break-word; overflow-wrap: anywhere; }
+      thead { display: table-header-group; }
+      tfoot { display: table-footer-group; }
+      tr, td, th { page-break-inside: avoid; }
+      * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     </style>
-    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 180mm; margin: 0 auto; box-sizing: border-box; padding: 0 2mm;">
+    <div style="font-family: Arial, sans-serif; color: ${colors.textColor}; background: ${colors.background}; width: 100%; max-width: 190mm; margin: 0 auto; box-sizing: border-box; padding: 0;">
   `;
 
   // Lettre de présentation (si activée)
@@ -441,8 +322,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     const clientAddress = quote.addresses.contact;
     
     html += `
-      <div style="page-break-inside: avoid;">
-        ${generatePageHeader(settings, colors, 1, totalPages)}
+      <div class="section" style="page-break-inside: avoid;">
+        ${generatePageHeader(settings, colors, quote.ref)}
         <div style="margin-bottom: 40px; padding: 15px;">
           <div style="margin-bottom: 20px;">
             <div style="font-weight: bold; font-size: 18px; color: ${colors.titleColor};">${letterTemplate.companyName || settings.sellerInfo?.name || ''}</div>
@@ -462,7 +343,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             <div style="font-weight: bold;">À l'attention de :</div>
             <div style="margin-top: 10px;">
               ${clientAddress.company ? `<div style="font-weight: bold;">${clientAddress.company}</div>` : ''}
-              <div>${clientAddress.name}</div>
+              <div>${clientDisplayName}</div>
               <div>${clientAddress.street}</div>
               <div>${clientAddress.postalCode} ${clientAddress.city}</div>
             </div>
@@ -474,10 +355,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           
               <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
                 <div style="margin-bottom: 20px;">
-                  ${(() => {
-                    const lastName = quote.addresses.contact.name?.split(' ').pop() || '';
-                    return quote.clientCivility === 'Madame' ? `Chère Madame ${lastName}` : `Cher Monsieur ${lastName}`;
-                  })()},
+                  ${quote.clientCivility === 'Madame' ? `Chère Madame ${clientLastName}` : `Cher Monsieur ${clientLastName}`},
                 </div>
               
               <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
@@ -485,10 +363,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
               <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
               
               <div style="margin-top: 30px;">
-                <p>Veuillez agréer, ${(() => {
-                    const lastName = quote.addresses.contact.name?.split(' ').pop() || '';
-                    return quote.clientCivility === 'Madame' ? `Madame ${lastName}` : `Monsieur ${lastName}`;
-                  })()}, l'expression de nos salutations distinguées.</p>
+                <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${clientLastName}` : `Monsieur ${clientLastName}`}, l'expression de nos salutations distinguées.</p>
               </div>
             </div>
           
@@ -512,34 +387,17 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // Page Description de la prestation (pour les agents) - avec même template
+  // Page Description de la prestation (pour les agents) - SANS cadre client
   if (hasAgentItems && quote.agentServiceDescription) {
     const desc = quote.agentServiceDescription;
     html += `
-      <div class="page-break">
-        ${generatePageHeader(settings, colors, letterTemplate?.enabled ? 2 : 1, totalPages)}
+      <div class="page-break section">
+        ${generatePageHeader(settings, colors, quote.ref)}
         <div style="page-break-inside: avoid;">
-          <!-- En-tête de la description -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-            <div style="flex: 1;">
-              <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">Description de la prestation</div>
-            </div>
-            
-            <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
-              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
-            <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
-            <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
-              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
-              ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
-              <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
-              ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
-              ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
-            </div>
+          <!-- En-tête de la description SANS cadre client -->
+          <div style="margin-bottom: 30px;">
+            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">Description de la prestation</div>
           </div>
-        </div>
 
         <!-- Titre -->
         <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary}; margin: 20px 0;">
@@ -565,31 +423,14 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
     `;
   }
 
-  // DEBUT DU DEVIS PRINCIPAL - Page du devis avec toutes les informations
+  // DEBUT DU DEVIS PRINCIPAL - Page du devis SANS cadre client
   html += `
-    <div class="page-break">
-      ${generatePageHeader(settings, colors, 2, totalPages)}
+    <div class="page-break section">
+      ${generatePageHeader(settings, colors, quote.ref)}
       <div style="page-break-inside: avoid;">
-        <!-- En-tête du devis -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-          <div style="flex: 1;">
-            <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${quoteType}</div>
-          </div>
-          
-          <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
-            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
-            <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
-            <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
-              <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
-              ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
-              <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
-              <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
-              ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
-              ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
-            </div>
-          </div>
+        <!-- En-tête du devis SANS cadre client -->
+        <div style="margin-bottom: 30px;">
+          <div style="font-weight: bold; color: ${colors.titleColor}; font-size: 16px;">${quoteType}</div>
         </div>
   `;
 
@@ -624,15 +465,15 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         <h3 style="color: ${colors.primary}; font-size: 18px; margin-bottom: 15px;">
           ${isMixed ? 'Prestations techniques' : 'Prestations'}
         </h3>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder};">
-          <thead>
-            <tr style="background: ${colors.tableHeader}; color: ${colors.tableHeaderText};">
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: left;">Type</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: left;">Référence</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: center;">Mode</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: center;">Qté</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: right;">PU TTC</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 10px; text-align: right;">Total TTC</th>
+        <table style="table-layout: fixed; width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder}; word-break: break-word; overflow-wrap: anywhere;">
+          <thead style="display: table-header-group;">
+            <tr style="background: ${colors.tableHeader}; color: ${colors.tableHeaderText}; page-break-inside: avoid;">
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; width: 20%;">Type</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; width: 25%;">Référence</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; width: 12%;">Mode</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; width: 8%;">Qté</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; width: 15%;">PU TTC</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; width: 20%;">Total TTC</th>
             </tr>
           </thead>
           <tbody>
@@ -640,17 +481,17 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
 
     quote.items.filter(item => item.kind === 'TECH').forEach((item, index) => {
       html += `
-        <tr style="background: ${index % 2 === 0 ? colors.tableRowAlt : colors.tableRow};">
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px;">${item.type}</td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px;">${item.reference}</td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">
-            <span style="background: ${item.mode === 'mensuel' ? colors.accent : colors.secondary}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px;">
+        <tr style="background: ${index % 2 === 0 ? colors.tableRowAlt : colors.tableRow}; page-break-inside: avoid;">
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; overflow: hidden; text-overflow: ellipsis;">${item.type}</td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; overflow: hidden; text-overflow: ellipsis;">${item.reference}</td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">
+            <span style="background: ${item.mode === 'mensuel' ? colors.accent : colors.secondary}; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; white-space: nowrap;">
               ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
             </span>
           </td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">${item.qty || 0}</td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right;">${(item.puTTC || 0).toFixed(2)} CHF</td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-weight: bold; color: ${colors.primary};">
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">${item.qty || 0}</td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; white-space: nowrap;">${(item.puTTC || 0).toFixed(2)} CHF</td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right; font-weight: bold; color: ${colors.primary}; white-space: nowrap;">
             ${(item.totalTTC || 0).toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
           </td>
         </tr>
@@ -671,25 +512,25 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         <h3 style="color: ${colors.primary}; font-size: 18px; margin-bottom: 15px;">
           ${isMixed ? 'Prestations d\'agents de sécurité' : 'Prestations d\'agents'}
         </h3>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder};">
-          <thead>
-            <tr style="background: ${colors.tableHeader}; color: ${colors.tableHeaderText};">
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Type</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Date début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Heure début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Date fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left; font-size: 10px;">Heure fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H norm.</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H nuit</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H dim.</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center; font-size: 10px;">H JF</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Tarif CHF/h</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Nuit</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Dim/JF</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">Dépl.</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">HT</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">TVA</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right; font-size: 10px;">TTC</th>
+        <table style="table-layout: fixed; width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder}; font-size: 9px; word-break: break-word;">
+          <thead style="display: table-header-group;">
+            <tr style="background: ${colors.tableHeader}; color: ${colors.tableHeaderText}; page-break-inside: avoid;">
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: left; width: 8%;">Type</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: left; width: 7%;">Début</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: left; width: 5%;">H.Déb</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: left; width: 7%;">Fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: left; width: 5%;">H.Fin</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center; width: 5%;">H.N</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center; width: 5%;">H.Nt</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center; width: 5%;">H.D</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center; width: 5%;">H.JF</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 8%;">CHF/h</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 6%;">Nuit</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 7%;">Dim/JF</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 6%;">Dépl.</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 7%;">HT</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 6%;">TVA</th>
+              <th style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right; width: 8%;">TTC</th>
             </tr>
           </thead>
           <tbody>
@@ -833,8 +674,22 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       </div>
 
       <!-- SECTION TOTAUX ET SIGNATURE - TOUJOURS ENSEMBLE SUR LA MÊME PAGE -->
-      <div class="page-break-avoid" style="page-break-inside: avoid;">
-        ${generatePageHeader(settings, colors, (letterTemplate?.enabled ? 1 : 0) + (hasAgentItems && quote.agentServiceDescription ? 1 : 0) + 1, totalPages)}
+      <div class="page-break section" style="page-break-inside: avoid;">
+        ${generatePageHeader(settings, colors, quote.ref)}
+        
+        <!-- Cadre client en haut à droite sur page totaux -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
+          <div style="border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-width: 250px;">
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px; text-align: center;">CLIENT</div>
+            ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px; text-align: center;">${quote.addresses.contact.company}</div>` : ''}
+            <div style="font-size: 13px; margin-bottom: 2px; text-align: center;">${clientDisplayName}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px; text-align: center;">${quote.addresses.contact.street}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px; text-align: center;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px; text-align: center;">${quote.addresses.contact.country}</div>
+            ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px; text-align: center;">${quote.addresses.contact.email}</div>` : ''}
+            ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; text-align: center;">${quote.addresses.contact.phone}</div>` : ''}
+          </div>
+        </div>
         <!-- Totaux centrés -->
         <div style="display: flex; justify-content: center; margin: 30px 0;">
           <div style="display: grid; grid-template-columns: repeat(${totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '3' : totals.unique.totalTTC > 0 && totals.mensuel.totalTTC > 0 || totals.unique.totalTTC > 0 && totals.agents.totalTTC > 0 || totals.mensuel.totalTTC > 0 && totals.agents.totalTTC > 0 ? '2' : '1'}, 1fr); gap: 15px; max-width: 160mm; width: 100%;">
@@ -961,7 +816,7 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             <div>
               <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; text-align: center;">CLIENT</div>
               <div style="color: ${colors.textColor}; margin-bottom: 15px; line-height: 1.4; text-align: center;">
-                <div style="font-weight: bold; font-size: 13px;">${quote.addresses.contact.name}</div>
+                <div style="font-weight: bold; font-size: 13px;">${clientDisplayName}</div>
                 <div style="font-size: 12px;">${quote.addresses.contact.company || ''}</div>
               </div>
             </div>

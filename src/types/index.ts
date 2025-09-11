@@ -2,7 +2,9 @@
 
 export interface Client {
   id: string;
-  name: string;
+  name?: string; // Rétrocompatibilité
+  first_name?: string;
+  last_name?: string;
   company?: string;
   email?: string;
   phone?: string;
@@ -157,7 +159,9 @@ export interface Currency {
 
 export interface Address {
   company: string;
-  name: string;
+  name?: string; // Rétrocompatibilité
+  first_name?: string;
+  last_name?: string;
   street: string;
   city: string;
   postalCode: string;
