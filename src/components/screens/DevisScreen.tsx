@@ -14,7 +14,7 @@ import { calculateQuoteItem, calculateQuoteTotals } from '@/utils/calculations';
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
-import PDFPreviewWithSignature from '@/components/pdf/PDFPreviewWithSignature';
+import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
@@ -179,7 +179,7 @@ const DevisScreen = () => {
   };
 
   const downloadPDF = () => {
-    // Déclencher le téléchargement depuis le composant PDFPreviewWithSignature
+    // Déclencher le téléchargement depuis le composant PDFPreview
     const downloadEvent = new CustomEvent('downloadPDF');
     document.dispatchEvent(downloadEvent);
   };
@@ -504,7 +504,11 @@ const DevisScreen = () => {
               <span>Actions rapides</span>
             </div>
             <div className="flex items-center space-x-2">
-              <PDFPreviewWithSignature />
+              <PDFPreview />
+              <Button onClick={downloadPDF} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Télécharger PDF
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>
@@ -573,35 +577,14 @@ const DevisScreen = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="contactFirstName">Prénom du contact</Label>
+              <Label htmlFor="contact">Contact sur site</Label>
               <Input
-                id="contactFirstName"
-                value={currentQuote.contactFirstName || ''}
-                onChange={(e) => {
-                  const contactFirstName = e.target.value;
-                  updateQuote({ 
-                    contactFirstName,
-                    contact: `${contactFirstName} ${currentQuote.contactLastName || ''}`.trim()
-                  });
-                }}
-                placeholder="Prénom"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contactLastName">Nom du contact</Label>
-              <Input
-                id="contactLastName"
-                value={currentQuote.contactLastName || ''}
-                onChange={(e) => {
-                  const contactLastName = e.target.value;
-                  updateQuote({ 
-                    contactLastName,
-                    contact: `${currentQuote.contactFirstName || ''} ${contactLastName}`.trim()
-                  });
-                }}
-                placeholder="Nom"
+                id="contact"
+                value={currentQuote.contact}
+                onChange={(e) => updateQuote({ contact: e.target.value })}
+                placeholder="Nom du contact"
               />
             </div>
             <div className="space-y-2">
@@ -673,17 +656,14 @@ const DevisScreen = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-first-name">Prénom</Label>
+                <Label htmlFor="contact-name">Contact</Label>
                 <Input
-                  id="contact-first-name"
-                  value={currentQuote.contactFirstName || ''}
+                  id="contact-name"
+                  value={currentQuote.addresses.contact.name}
                   onChange={(e) => {
-                    const contactFirstName = e.target.value;
-                    const fullName = `${contactFirstName} ${currentQuote.contactLastName || ''}`.trim();
-                    const newAddress = { ...currentQuote.addresses.contact, name: fullName };
+                    const newAddress = { ...currentQuote.addresses.contact, name: e.target.value };
                     updateQuote({ 
-                      contactFirstName,
-                      client: fullName,
+                      client: e.target.value,
                       addresses: { 
                         ...currentQuote.addresses, 
                         contact: newAddress,
@@ -692,30 +672,7 @@ const DevisScreen = () => {
                       } 
                     });
                   }}
-                  placeholder="Prénom"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact-last-name">Nom</Label>
-                <Input
-                  id="contact-last-name"
-                  value={currentQuote.contactLastName || ''}
-                  onChange={(e) => {
-                    const contactLastName = e.target.value;
-                    const fullName = `${currentQuote.contactFirstName || ''} ${contactLastName}`.trim();
-                    const newAddress = { ...currentQuote.addresses.contact, name: fullName };
-                    updateQuote({ 
-                      contactLastName,
-                      client: fullName,
-                      addresses: { 
-                        ...currentQuote.addresses, 
-                        contact: newAddress,
-                        billing: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.billing : newAddress,
-                        installation: currentQuote.addresses.useSeparateAddresses ? currentQuote.addresses.installation : newAddress
-                      } 
-                    });
-                  }}
-                  placeholder="Nom de famille"
+                  placeholder="Nom et prénom"
                 />
               </div>
               <div className="space-y-2">

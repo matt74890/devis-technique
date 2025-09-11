@@ -7,7 +7,7 @@ import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
-import PDFPreviewWithSignature from '@/components/pdf/PDFPreviewWithSignature';
+import PDFPreview from '@/components/pdf/PDFPreview';
 
 const RecapScreen = () => {
   const { currentQuote, settings } = useStore();
@@ -1041,7 +1041,15 @@ const RecapScreen = () => {
               <span>Récapitulatif du devis</span>
             </div>
             <div className="flex space-x-2">
-              <PDFPreviewWithSignature />
+              <PDFPreview />
+              <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
+                <FileDown className="h-4 w-4 mr-2" />
+                Générer PDF
+              </Button>
+              <Button onClick={downloadWord} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Télécharger Word
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>
