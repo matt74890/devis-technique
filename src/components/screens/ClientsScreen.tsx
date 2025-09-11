@@ -61,12 +61,12 @@ const ClientsScreen = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.first_name?.trim() && !formData.last_name?.trim()) {
-      toast.error('Le prénom ou le nom de famille est obligatoire');
+    if (!formData.last_name?.trim()) {
+      toast.error('Le nom de famille est obligatoire');
       return;
     }
 
-    // Adapter les données pour la base de données (rétrocompatibilité)
+    // Préparer les données pour la base de données
     const clientData = {
       ...formData,
       name: `${formData.first_name || ''} ${formData.last_name || ''}`.trim()
@@ -119,7 +119,6 @@ const ClientsScreen = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
       first_name: '',
       last_name: '',
       company: '',
