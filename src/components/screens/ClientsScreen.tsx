@@ -48,7 +48,7 @@ const ClientsScreen = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('name');
+        .order('last_name', { nullsFirst: false });
       
       if (error) throw error;
       setClients(data || []);

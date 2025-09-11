@@ -116,22 +116,30 @@ const PDFPreviewWithSignature = () => {
         }
       };
       
-      // Generate PDF as blob instead of opening in new tab
+      // Generate PDF as blob - force download attachment
       const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
       
-      // Force download with proper filename and headers
-      const filename = `${quoteType.replace(/\s+/g, '_')}_${currentQuote.ref}_${currentQuote.client.replace(/\s+/g, '_')}.pdf`;
-      const url = window.URL.createObjectURL(pdfBlob);
+      // Get client name for filename
+      const clientName = currentQuote.addresses?.contact?.first_name && currentQuote.addresses?.contact?.last_name 
+        ? `${currentQuote.addresses.contact.first_name}_${currentQuote.addresses.contact.last_name}`
+        : currentQuote.addresses?.contact?.name?.replace(/\s+/g, '_') || currentQuote.client?.replace(/\s+/g, '_') || 'client';
+      
+      const filename = `devis_${currentQuote.ref}_${clientName}.pdf`;
+      
+      // Force download with proper MIME type and attachment disposition
+      const url = window.URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
       
       // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
       document.body.removeChild(tempDiv);
       
       console.log('PDF généré - Taille:', pdfBlob.size, 'bytes');
@@ -139,6 +147,133 @@ const PDFPreviewWithSignature = () => {
     } catch (error) {
       console.error('Erreur génération PDF:', error);
       toast.error('Échec PDF');
+    }
+  };
+
+  const downloadWord = async () => {
+    if (isGeneratingWord) return;
+    
+    try {
+      setIsGeneratingWord(true);
+      
+      // Validation
+      if (!currentQuote.ref) {
+        toast.error('Veuillez renseigner une référence pour le devis');
+        return;
+      }
+      if (!currentQuote.client) {
+        toast.error('Veuillez sélectionner ou renseigner un client');
+        return;
+      }
+      if (currentQuote.items.length === 0) {
+        toast.error('Veuillez ajouter au moins une ligne au devis');
+        return;
+      }
+
+      // 1. Générer d'abord le PDF
+      const htmlContent = generatePDFHTML(quoteWithCalculatedItems, settings, totals, quoteType);
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      tempDiv.style.width = '190mm';
+      tempDiv.style.minHeight = '277mm';
+      tempDiv.style.padding = '12mm';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = 'black';
+      tempDiv.style.boxSizing = 'border-box';
+      tempDiv.style.margin = '0 auto';
+      tempDiv.style.maxWidth = '190mm';
+      
+      document.body.appendChild(tempDiv);
+      
+      const opt = {
+        margin: [12, 12, 12, 12],
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { 
+          scale: 1.5,
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        }
+      };
+      
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
+      document.body.removeChild(tempDiv);
+      
+      // 2. Convertir le PDF en base64
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Enlever le préfixe data:...
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+      
+      // 3. Appeler le service de conversion
+      const clientName = currentQuote.addresses?.contact?.first_name && currentQuote.addresses?.contact?.last_name 
+        ? `${currentQuote.addresses.contact.first_name}_${currentQuote.addresses.contact.last_name}`
+        : currentQuote.addresses?.contact?.name?.replace(/\s+/g, '_') || currentQuote.client?.replace(/\s+/g, '_') || 'client';
+      
+      const pdfFilename = `devis_${currentQuote.ref}_${clientName}.pdf`;
+      
+      console.log('Appel service de conversion PDF→DOCX...');
+      const { data: conversionResult, error } = await supabase.functions.invoke('convert-pdf-to-docx', {
+        body: {
+          filename: pdfFilename,
+          file_base64: pdfBase64
+        }
+      });
+      
+      if (error) {
+        throw new Error(`Erreur service: ${error.message}`);
+      }
+      
+      if (!conversionResult?.file_base64) {
+        throw new Error('Réponse service invalide - pas de fichier DOCX');
+      }
+      
+      // 4. Télécharger le fichier DOCX
+      const docxBytes = Uint8Array.from(atob(conversionResult.file_base64), c => c.charCodeAt(0));
+      const docxBlob = new Blob([docxBytes], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      
+      const docxFilename = conversionResult.filename || pdfFilename.replace('.pdf', '.docx');
+      
+      const url = window.URL.createObjectURL(docxBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = docxFilename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      console.log('DOCX généré - Taille:', docxBlob.size, 'bytes - Méthode:', conversionResult.conversion_method);
+      toast.success('Word téléchargé');
+      
+    } catch (error) {
+      console.error('Erreur conversion PDF→Word:', error);
+      toast.error('Conversion PDF→Word impossible');
+    } finally {
+      setIsGeneratingWord(false);
     }
   };
 
@@ -206,14 +341,14 @@ const PDFPreviewWithSignature = () => {
         PDF
       </Button>
 
-      {/* Bouton Word - DÉSACTIVÉ (conversion impossible, bug connu) */}
+      {/* Bouton Word */}
       <Button 
-        disabled={true}
-        className="bg-gray-400 text-white cursor-not-allowed opacity-50"
-        title="Conversion Word temporairement désactivée (bug connu)"
+        onClick={downloadWord}
+        disabled={isGeneratingWord}
+        className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
       >
         <FileDown className="h-4 w-4 mr-2" />
-        Word (désactivé)
+        {isGeneratingWord ? 'Génération...' : 'Word'}
       </Button>
 
       {/* Affichage signature client si présente */}
