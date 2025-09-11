@@ -139,6 +139,11 @@ export interface Settings {
     holidayMarkupPct: number;
     holidays: { [canton: string]: string[] };
     agentTypes: AgentTypeRate[];
+    serviceCategories: AgentServiceCategory[];
+  };
+  agentQuoteSettings: {
+    letterTemplate: LetterTemplate;
+    serviceDescription: ServiceDescriptionTemplate;
   };
 }
 
@@ -255,6 +260,17 @@ export interface Quote {
     installation: Address;
     useSeparateAddresses: boolean;
   };
+  clientSignature?: ClientSignature;
+  serviceDescription?: {
+    nature: string;
+    lieu: string;
+    periode: string;
+    horaires: string;
+    tenue: string;
+    pause: string;
+    deplacement: string;
+    remarque: string;
+  };
 }
 
 export interface QuoteItem {
@@ -299,6 +315,33 @@ export interface QuoteItem {
 export interface AgentTypeRate {
   type: string;
   suggestedRate: number;
+}
+
+export interface AgentServiceCategory {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ServiceDescriptionTemplate {
+  enabled: boolean;
+  title: string;
+  fields: {
+    nature: string;
+    lieu: string;
+    periode: string;
+    horaires: string;
+    tenue: string;
+    pause: string;
+    deplacement: string;
+    remarque: string;
+  };
+}
+
+export interface ClientSignature {
+  signature: string;
+  date: string;
+  location: string;
 }
 
 export interface QuoteTotals {

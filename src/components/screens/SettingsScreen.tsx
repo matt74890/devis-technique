@@ -22,6 +22,7 @@ import LogoUpload from '../settings/LogoUpload';
 import TemplateColors from '../settings/TemplateColors';
 import PDFLayoutSettings from '../settings/PDFLayoutSettings';
 import FontSelector from '../settings/FontSelector';
+import AgentQuoteSettings from '../settings/AgentQuoteSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -90,7 +91,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -99,13 +100,17 @@ const SettingsScreen = () => {
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Catalogue</span>
           </TabsTrigger>
-            <TabsTrigger value="pdf" className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">PDF & Lettre</span>
-            </TabsTrigger>
+          <TabsTrigger value="pdf" className="flex items-center space-x-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">PDF & Lettre</span>
+          </TabsTrigger>
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
+          </TabsTrigger>
+          <TabsTrigger value="agent" className="flex items-center space-x-2">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Devis Agent</span>
           </TabsTrigger>
         </TabsList>
 
@@ -574,6 +579,10 @@ const SettingsScreen = () => {
 
         <TabsContent value="currency">
           <CurrencySettings />
+        </TabsContent>
+
+        <TabsContent value="agent">
+          <AgentQuoteSettings />
         </TabsContent>
 
       </Tabs>

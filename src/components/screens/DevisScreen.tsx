@@ -213,7 +213,12 @@ const DevisScreen = () => {
 
       if (error) throw error;
 
-      const { client, addresses, items, subscriptions, feesInstallHT, feesDossierHT, discountMode } = data;
+      if (!data?.quote) {
+        throw new Error('Format de données invalide');
+      }
+
+      const { quote } = data;
+      const { client, addresses, items, subscriptions, feesInstallHT, feesDossierHT, discountMode } = quote;
 
       // Mise à jour du devis avec les informations extraites
       const updates: any = {};
@@ -504,7 +509,7 @@ const DevisScreen = () => {
               <span>Actions rapides</span>
             </div>
             <div className="flex items-center space-x-2">
-              <PDFPreview />
+              <PDFPreviewWithSignature />
               <Button onClick={downloadPDF} variant="outline">
                 <FileDown className="h-4 w-4 mr-2" />
                 Télécharger PDF

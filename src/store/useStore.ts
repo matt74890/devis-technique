@@ -274,7 +274,51 @@ const defaultSettings: Settings = {
       { type: 'Maître-chien', suggestedRate: 50 },
       { type: 'Patrouilleur', suggestedRate: 40 },
       { type: 'Garde du corps', suggestedRate: 60 }
+    ],
+    serviceCategories: [
+      { id: '1', name: 'Sécurité', description: 'Services de sécurité classique' },
+      { id: '2', name: 'Sécurité armée', description: 'Services de sécurité avec port d\'arme' },
+      { id: '3', name: 'Maître-chien', description: 'Services de sécurité avec chien' },
+      { id: '4', name: 'Patrouilleur', description: 'Services de patrouille mobile' },
+      { id: '5', name: 'Garde du corps', description: 'Protection rapprochée' }
     ]
+  },
+  agentQuoteSettings: {
+    letterTemplate: {
+      enabled: true,
+      companyName: '',
+      contactName: '',
+      contactTitle: '',
+      contactPhone: '',
+      contactEmail: '',
+      companyAddress: '',
+      subject: 'Proposition commerciale - Services de sécurité',
+      civility: 'Monsieur',
+      opening: 'Suite à votre demande, nous avons le plaisir de vous adresser notre proposition pour des services de sécurité.',
+      body: 'Notre entreprise, spécialisée dans les services de sécurité, vous propose une solution adaptée à vos besoins spécifiques.\n\nNous mettons à votre disposition des agents qualifiés et formés selon les standards les plus élevés de la profession.',
+      closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.',
+      textAlignment: 'left',
+      boldOptions: {
+        subject: false,
+        opening: false,
+        body: false,
+        closing: false
+      }
+    },
+    serviceDescription: {
+      enabled: true,
+      title: 'Description de la prestation',
+      fields: {
+        nature: '',
+        lieu: '',
+        periode: '',
+        horaires: '',
+        tenue: '',
+        pause: '',
+        deplacement: '',
+        remarque: ''
+      }
+    }
   }
 };
 
