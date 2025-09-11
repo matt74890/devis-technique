@@ -833,11 +833,200 @@ const RecapScreen = () => {
         
         toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès ! Utilisez Ctrl+P ou Cmd+P pour sauvegarder en PDF.`);
       } else {
-        toast.error('Impossible d\'ouvrir la fenêtre de génération PDF. Vérifiez que les popups ne sont pas bloquées.');
+        toast.error("Impossible d'ouvrir la fenêtre de génération PDF. Vérifiez que les popups ne sont pas bloquées.");
       }
     } catch (error) {
       console.error('Erreur lors de la génération PDF:', error);
       toast.error('Erreur lors de la génération du PDF');
+    }
+  };
+
+  const downloadWord = () => {
+    try {
+      console.log('Début génération Word');
+      
+      // Validation des données requises
+      if (!currentQuote.ref) {
+        toast.error('Veuillez renseigner une référence pour le devis');
+        return;
+      }
+      
+      if (!currentQuote.client) {
+        toast.error('Veuillez sélectionner ou renseigner un client');
+        return;
+      }
+      
+      if (currentQuote.items.length === 0) {
+        toast.error('Veuillez ajouter au moins une ligne au devis');
+        return;
+      }
+      
+      // Créer le contenu HTML complet pour Word
+      const colors = settings.templateColors || { 
+        primary: '#000000',
+        secondary: '#666666',
+        accent: '#333333',
+        titleColor: '#000000',
+        subtitleColor: '#666666',
+        textColor: '#000000',
+        tableHeader: '#f5f5f5',
+        tableHeaderText: '#000000',
+        tableBorder: '#cccccc'
+      };
+      
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <meta name="ProgId" content="Word.Document">
+          <meta name="Generator" content="Microsoft Word">
+          <title>Devis ${currentQuote.ref}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 11pt;
+              line-height: 1.3;
+              margin: 0;
+              color: ${colors.textColor};
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              margin: 10pt 0;
+            }
+            th, td { 
+              border: 1pt solid ${colors.tableBorder}; 
+              padding: 4pt; 
+              font-size: 9pt;
+            }
+            th { 
+              background-color: ${colors.tableHeader}; 
+              font-weight: bold;
+              color: ${colors.tableHeaderText};
+            }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            h1 { font-size: 16pt; margin: 15pt 0 10pt 0; color: ${colors.titleColor}; }
+            h3 { font-size: 12pt; margin: 10pt 0 6pt 0; color: ${colors.titleColor}; }
+            p { margin: 4pt 0; }
+          </style>
+        </head>
+        <body>
+          <div style="text-align: center; margin-bottom: 20pt;">
+            <h1>${settings.pdfTitle}</h1>
+            <p style="font-size: 12pt; color: ${colors.subtitleColor};">Devis N° ${currentQuote.ref}</p>
+            <p>Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
+          </div>
+          
+          <div style="margin: 15pt 0;">
+            <p><strong>Client:</strong> ${currentQuote.client}</p>
+            <p><strong>Adresse:</strong></p>
+            <p>${currentQuote.addresses.contact.company}<br>
+            ${currentQuote.addresses.contact.name}<br>
+            ${currentQuote.addresses.contact.street}<br>
+            ${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</p>
+          </div>
+
+          ${calculatedItems.some(item => item.kind === 'TECH') ? `
+          <h3>Prestations techniques</h3>
+          <table>
+            <tr>
+              <th>Type</th>
+              <th>Référence</th>
+              <th>Mode</th>
+              <th class="text-center">Qté</th>
+              <th class="text-right">PU TTC</th>
+              <th class="text-right">Total TTC</th>
+            </tr>
+            ${calculatedItems.filter(item => item.kind === 'TECH').map(item => `
+            <tr>
+              <td>${item.type}</td>
+              <td>${item.reference}</td>
+              <td class="text-center">${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}</td>
+              <td class="text-center">${item.qty || 1}</td>
+              <td class="text-right">${(item.puTTC || 0).toFixed(2)} CHF</td>
+              <td class="text-right">${(item.totalTTC || 0).toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}</td>
+            </tr>
+            `).join('')}
+          </table>
+          ` : ''}
+
+          ${calculatedItems.some(item => item.kind === 'AGENT') ? `
+          <h3>Prestations d'agents de sécurité</h3>
+          <table style="font-size: 8pt;">
+            <tr>
+              <th>Date début</th>
+              <th>H début</th>
+              <th>Date fin</th>
+              <th>H fin</th>
+              <th>Type</th>
+              <th>H norm.</th>
+              <th>H nuit</th>
+              <th>H dim.</th>
+              <th>H JF</th>
+              <th>Tarif CHF/h</th>
+              <th>HT</th>
+              <th>TTC</th>
+            </tr>
+            ${calculatedItems.filter(item => item.kind === 'AGENT').map(item => `
+            <tr>
+              <td>${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
+              <td>${item.timeStart || '-'}</td>
+              <td>${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
+              <td>${item.timeEnd || '-'}</td>
+              <td>${item.agentType || '-'}</td>
+              <td class="text-center">${(item.hoursNormal || 0).toFixed(1)}</td>
+              <td class="text-center">${(item.hoursNight || 0).toFixed(1)}</td>
+              <td class="text-center">${(item.hoursSunday || 0).toFixed(1)}</td>
+              <td class="text-center">${(item.hoursHoliday || 0).toFixed(1)}</td>
+              <td class="text-right">${(item.rateCHFh || 0).toFixed(2)}</td>
+              <td class="text-right">${(item.lineHT || 0).toFixed(2)}</td>
+              <td class="text-right">${(item.lineTTC || 0).toFixed(2)}</td>
+            </tr>
+            `).join('')}
+          </table>
+          ` : ''}
+
+          <div style="margin-top: 20pt; text-align: center; border: 2pt solid ${colors.primary}; padding: 10pt;">
+            <h3>TOTAL GÉNÉRAL</h3>
+            <p style="font-size: 14pt;"><strong>Total HT: ${totals.global.htAfterDiscount.toFixed(2)} CHF</strong></p>
+            <p style="font-size: 14pt;"><strong>TVA (${settings.tvaPct}%): ${totals.global.tva.toFixed(2)} CHF</strong></p>
+            <p style="font-size: 16pt; color: ${colors.primary};"><strong>TOTAL TTC: ${totals.global.totalTTC.toFixed(2)} CHF</strong></p>
+          </div>
+
+          ${currentQuote.comment ? `
+          <div style="margin-top: 15pt;">
+            <h3>Commentaires</h3>
+            <p>${currentQuote.comment}</p>
+          </div>
+          ` : ''}
+
+          <div style="margin-top: 20pt; text-align: center; font-size: 10pt; color: ${colors.subtitleColor};">
+            <p>${settings.pdfFooter}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([htmlContent], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `devis-${currentQuote.ref}.doc`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Document Word téléchargé avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la génération Word:', error);
+      toast.error('Erreur lors de la génération du document Word');
     }
   };
 
@@ -856,6 +1045,10 @@ const RecapScreen = () => {
               <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
                 <FileDown className="h-4 w-4 mr-2" />
                 Générer PDF
+              </Button>
+              <Button onClick={downloadWord} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Télécharger Word
               </Button>
             </div>
           </CardTitle>
@@ -945,43 +1138,110 @@ const RecapScreen = () => {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Type</th>
-                  <th className="text-left p-2">Référence</th>
-                  <th className="text-left p-2">Mode</th>
-                  <th className="text-left p-2">Qté</th>
-                  <th className="text-left p-2">PU TTC</th>
-                  <th className="text-left p-2">Remise</th>
-                  <th className="text-left p-2">Total TTC</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calculatedItems.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="p-2">
-                      <Badge variant="outline">{item.type}</Badge>
-                    </td>
-                    <td className="p-2">{item.reference}</td>
-                    <td className="p-2">
-                      <Badge variant={item.mode === 'mensuel' ? 'default' : 'secondary'}>
-                        {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-                      </Badge>
-                    </td>
-                    <td className="p-2">{item.qty || 1}</td>
-                    <td className="p-2">{(item.puTTC || 0).toFixed(2)} CHF</td>
-                    <td className="p-2">
-                      {currentQuote.discountMode === 'per_line' 
-                        ? `${item.lineDiscountPct || 0}%` 
-                        : 'Globale'
-                      }
-                    </td>
-                    <td className="p-2 font-medium">{(item.totalTTC || 0).toFixed(2)} CHF</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Prestations TECH */}
+            {calculatedItems.some(item => item.kind === 'TECH') && (
+              <div className="mb-6">
+                <h4 className="font-semibold mb-3 text-primary">Prestations techniques</h4>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Type</th>
+                      <th className="text-left p-2">Référence</th>
+                      <th className="text-left p-2">Mode</th>
+                      <th className="text-left p-2">Qté</th>
+                      <th className="text-left p-2">PU TTC</th>
+                      <th className="text-left p-2">Remise</th>
+                      <th className="text-left p-2">Total TTC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {calculatedItems.filter(item => item.kind === 'TECH').map((item) => (
+                      <tr key={item.id} className="border-b">
+                        <td className="p-2">
+                          <Badge variant="outline">{item.type}</Badge>
+                        </td>
+                        <td className="p-2">{item.reference}</td>
+                        <td className="p-2">
+                          <Badge variant={item.mode === 'mensuel' ? 'default' : 'secondary'}>
+                            {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                          </Badge>
+                        </td>
+                        <td className="p-2">{item.qty || 1}</td>
+                        <td className="p-2">{(item.puTTC || 0).toFixed(2)} CHF</td>
+                        <td className="p-2">
+                          {currentQuote.discountMode === 'per_line' 
+                            ? `${item.lineDiscountPct || 0}%` 
+                            : 'Globale'
+                          }
+                        </td>
+                        <td className="p-2 font-medium">{(item.totalTTC || 0).toFixed(2)} CHF</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Prestations AGENT */}
+            {calculatedItems.some(item => item.kind === 'AGENT') && (
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Prestations d'agents de sécurité</h4>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-1">Date début</th>
+                      <th className="text-left p-1">H début</th>
+                      <th className="text-left p-1">Date fin</th>
+                      <th className="text-left p-1">H fin</th>
+                      <th className="text-left p-1">Type</th>
+                      <th className="text-center p-1">H norm.</th>
+                      <th className="text-center p-1">H nuit</th>
+                      <th className="text-center p-1">H dim.</th>
+                      <th className="text-center p-1">H JF</th>
+                      <th className="text-right p-1">Tarif CHF/h</th>
+                      <th className="text-right p-1">Dépl.</th>
+                      <th className="text-right p-1">HT</th>
+                      <th className="text-right p-1">TTC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {calculatedItems.filter(item => item.kind === 'AGENT').map((item) => (
+                      <tr key={item.id} className="border-b">
+                        <td className="p-1">
+                          {item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
+                        </td>
+                        <td className="p-1">{item.timeStart || '-'}</td>
+                        <td className="p-1">
+                          {item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
+                        </td>
+                        <td className="p-1">{item.timeEnd || '-'}</td>
+                        <td className="p-1">
+                          <Badge variant="outline" className="text-xs">{item.agentType || 'Agent'}</Badge>
+                        </td>
+                        <td className="p-1 text-center">{(item.hoursNormal || 0).toFixed(1)}</td>
+                        <td className="p-1 text-center">{(item.hoursNight || 0).toFixed(1)}</td>
+                        <td className="p-1 text-center">{(item.hoursSunday || 0).toFixed(1)}</td>
+                        <td className="p-1 text-center">{(item.hoursHoliday || 0).toFixed(1)}</td>
+                        <td className="p-1 text-right font-medium">{(item.rateCHFh || 0).toFixed(2)}</td>
+                        <td className="p-1 text-right">{(item.travelCHF || 0).toFixed(2)}</td>
+                        <td className="p-1 text-right font-medium">{(item.lineHT || 0).toFixed(2)}</td>
+                        <td className="p-1 text-right font-bold text-primary">{(item.lineTTC || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {/* Règles appliquées */}
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs">
+                  <h5 className="font-semibold mb-2">Règles appliquées :</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <p><span className="font-medium">Heures de nuit:</span> {settings.agentSettings?.nightStartTime || '23:00'} → {settings.agentSettings?.nightEndTime || '06:00'} (+{settings.agentSettings?.nightMarkupPct || 10}%)</p>
+                    <p><span className="font-medium">Dimanche:</span> {settings.agentSettings?.sundayStartTime || '06:00'} → {settings.agentSettings?.sundayEndTime || '23:00'} (+{settings.agentSettings?.sundayMarkupPct || 10}%)</p>
+                    <p><span className="font-medium">Jours fériés:</span> +{settings.agentSettings?.holidayMarkupPct || 10}%</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
