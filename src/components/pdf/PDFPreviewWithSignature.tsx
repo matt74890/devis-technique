@@ -393,12 +393,51 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
         
         <div style="margin: 20px 0; line-height: 1.6; text-align: ${letterTemplate.textAlignment || 'left'};">
           <div style="margin-bottom: 20px;">
-            ${quote.clientCivility === 'Madame' ? 'Chère Madame' : 'Cher Monsieur'},
+            ${quote.clientCivility === 'Madame' ? `Chère Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Cher Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`},
           </div>
           
           <p style="${letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${letterTemplate.opening.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
           <p style="${letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${letterTemplate.body.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
           <p style="${letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${letterTemplate.closing.replace(/\n/g, '</p><p style="' + (letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
+          
+          <div style="margin-top: 30px;">
+            <p>Veuillez agréer, ${quote.clientCivility === 'Madame' ? `Madame ${quote.addresses.contact.name.split(' ').slice(-1)[0]}` : `Monsieur ${quote.addresses.contact.name.split(' ').slice(-1)[0]}`}, l'expression de nos salutations distinguées.</p>
+          </div>
+        </div>
+        
+        <!-- Signatures de la lettre -->
+        <div style="margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+          <div>
+            <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
+            <div style="font-size: 12px; color: ${colors.textColor};">
+              Date et lieu: ${new Date().toLocaleDateString('fr-FR')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
+            </div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
+              Signature du vendeur
+            </div>
+          </div>
+          
+          <div>
+            ${quote.clientSignature ? `
+              <div style="margin-bottom: 10px;">
+                <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
+              </div>
+              <div style="font-size: 12px; color: ${colors.textColor};">
+                ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
+              </div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
+                Signature du client
+              </div>
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.primary}; width: 200px; height: 60px; margin-bottom: 10px;"></div>
+              <div style="font-size: 12px; color: ${colors.textColor};">
+                Date et lieu:
+              </div>
+              <div style="font-size: 12px; color: ${colors.textColor}; margin-top: 5px;">
+                Signature du client
+              </div>
+            `}
+          </div>
         </div>
       </div>
     `;
@@ -441,14 +480,19 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
           ` : ''}
         </div>
         
-        <div style="text-align: right;">
-          ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 16px;">${quote.addresses.contact.company}</div>` : ''}
-          <div>${quote.addresses.contact.name}</div>
-          <div>${quote.addresses.contact.street}</div>
-          <div>${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
-          <div>${quote.addresses.contact.country}</div>
-          ${quote.addresses.contact.email ? `<div style="color: ${colors.subtitleColor};">${quote.addresses.contact.email}</div>` : ''}
-          ${quote.addresses.contact.phone ? `<div>${quote.addresses.contact.phone}</div>` : ''}
+        <div style="text-align: right; border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 10px; text-align: center;">DEVIS N° ${quote.ref}</div>
+          <div style="color: ${colors.subtitleColor}; margin-bottom: 15px; text-align: center;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
+          <div style="border-top: 1px solid ${colors.secondary}; padding-top: 10px;">
+            <div style="font-weight: bold; color: ${colors.primary}; margin-bottom: 8px;">CLIENT:</div>
+            ${quote.addresses.contact.company ? `<div style="font-weight: bold; font-size: 14px; margin-bottom: 2px;">${quote.addresses.contact.company}</div>` : ''}
+            <div style="font-size: 13px; margin-bottom: 2px;">${quote.addresses.contact.name}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.street}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</div>
+            <div style="font-size: 12px; color: ${colors.textColor}; margin-bottom: 1px;">${quote.addresses.contact.country}</div>
+            ${quote.addresses.contact.email ? `<div style="font-size: 11px; color: ${colors.subtitleColor}; margin-bottom: 1px;">${quote.addresses.contact.email}</div>` : ''}
+            ${quote.addresses.contact.phone ? `<div style="font-size: 11px; color: ${colors.subtitleColor};">${quote.addresses.contact.phone}</div>` : ''}
+          </div>
         </div>
       </div>
   `;
@@ -566,21 +610,80 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
       )
     );
 
+    // Grouper les vacations similaires
+    const groupedAgentItems = [];
+    const processedItems = new Set();
+    
     agentItemsWithValues.forEach((item, index) => {
+      if (processedItems.has(index)) return;
+      
+      // Chercher des items similaires
+      const similarItems = [item];
+      const baseKey = `${item.agentType || ''}_${item.rateCHFh || 0}_${item.travelCHF || 0}`;
+      
+      for (let i = index + 1; i < agentItemsWithValues.length; i++) {
+        const otherItem = agentItemsWithValues[i];
+        const otherKey = `${otherItem.agentType || ''}_${otherItem.rateCHFh || 0}_${otherItem.travelCHF || 0}`;
+        
+        if (baseKey === otherKey && 
+           (otherItem.hoursNormal || 0) === (item.hoursNormal || 0) &&
+           (otherItem.hoursNight || 0) === (item.hoursNight || 0) &&
+           (otherItem.hoursSunday || 0) === (item.hoursSunday || 0) &&
+           (otherItem.hoursHoliday || 0) === (item.hoursHoliday || 0)) {
+          similarItems.push(otherItem);
+          processedItems.add(i);
+        }
+      }
+      
+      processedItems.add(index);
+      
+      if (similarItems.length > 1) {
+        // Créer une entrée groupée
+        const totalHT = similarItems.reduce((sum, item) => sum + (item.lineHT || 0), 0);
+        const totalTVA = similarItems.reduce((sum, item) => sum + (item.lineTVA || 0), 0);
+        const totalTTC = similarItems.reduce((sum, item) => sum + (item.lineTTC || 0), 0);
+        
+        const dates = similarItems.map(item => {
+          const start = item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '';
+          const end = item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '';
+          return start === end ? start : `${start} → ${end}`;
+        }).join(', ');
+        
+        groupedAgentItems.push({
+          ...item,
+          dateRange: dates,
+          count: similarItems.length,
+          lineHT: totalHT,
+          lineTVA: totalTVA,
+          lineTTC: totalTTC,
+          isGrouped: true
+        });
+      } else {
+        groupedAgentItems.push(item);
+      }
+    });
+
+    groupedAgentItems.forEach((item, index) => {
       const nightRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.nightMarkupPct || 10) / 100));
       const sundayHolidayRate = ((item.rateCHFh || 0) * (1 + (settings.agentSettings?.sundayMarkupPct || 10) / 100));
       
       html += `
         <tr style="background: ${index % 2 === 0 ? colors.tableRowAlt : colors.tableRow};">
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.agentType || '-'}</td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
-            ${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}
+            ${item.agentType || '-'}${item.isGrouped ? ` (×${item.count})` : ''}
           </td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.timeStart || '-'}</td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
-            ${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}
+            ${item.isGrouped ? item.dateRange : (item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-')}
           </td>
-          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">${item.timeEnd || '-'}</td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
+            ${item.isGrouped ? '-' : (item.timeStart || '-')}
+          </td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
+            ${item.isGrouped ? '-' : (item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-')}
+          </td>
+          <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; font-size: 9px;">
+            ${item.isGrouped ? '-' : (item.timeEnd || '-')}
+          </td>
           <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center; font-size: 9px;">
             ${(item.hoursNormal || 0) > 0 ? (item.hoursNormal || 0).toFixed(1) : ''}
           </td>
@@ -629,7 +732,6 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             <div><strong>Heures de nuit:</strong> ${settings.agentSettings?.nightStartTime || '23:00'} → ${settings.agentSettings?.nightEndTime || '06:00'} (+${settings.agentSettings?.nightMarkupPct || 10}%)</div>
             <div><strong>Dimanche/JF:</strong> ${settings.agentSettings?.sundayStartTime || '06:00'} → ${settings.agentSettings?.sundayEndTime || '23:00'} (+${settings.agentSettings?.sundayMarkupPct || 10}%)</div>
             <div><strong>Jours fériés:</strong> +${settings.agentSettings?.holidayMarkupPct || 10}%</div>
-            <div><strong>Règle spéciale:</strong> Passage à 23h/06h pile = 1h pleine</div>
           </div>
         </div>
       </div>
@@ -753,6 +855,10 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
             ${quote.addresses.contact.company || ''}
           </div>
           
+          <div style="border-top: 1px solid ${colors.primary}; margin-top: 20px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
+            Date et lieu:
+          </div>
+          
           ${quote.clientSignature ? `
             <div style="margin: 10px 0;">
               <img src="${quote.clientSignature.dataUrl}" alt="Signature client" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd;">
@@ -761,8 +867,8 @@ const generatePDFHTML = (quote: Quote, settings: Settings, totals: any, quoteTyp
               ${quote.clientSignature.date}${quote.clientSignature.location ? ` à ${quote.clientSignature.location}` : ''}
             </div>
           ` : `
-            <div style="border-top: 1px solid ${colors.primary}; margin-top: 40px; padding-top: 8px; font-size: 12px; color: ${colors.textColor};">
-              Date et signature
+            <div style="margin-top: 10px; font-size: 12px; color: ${colors.textColor};">
+              Signature du client
             </div>
           `}
         </div>

@@ -101,11 +101,6 @@ const calculateHours = (
 };
 
 const isNightTime = (timeStr: string, nightStart: string, nightEnd: string): boolean => {
-  // Special rule: exactly 23:00 or 06:00 counts as full hour in respective category
-  if (timeStr === '23:00' || timeStr === '06:00') {
-    return timeStr === '23:00';
-  }
-  
   // Night period crosses midnight (e.g., 23:00 to 06:00)
   if (nightStart > nightEnd) {
     return timeStr >= nightStart || timeStr < nightEnd;
