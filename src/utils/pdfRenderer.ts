@@ -1,5 +1,5 @@
 import { Quote, Settings } from '@/types';
-import { PDFLayoutConfig, LayoutBlock, TableColumn } from '@/types/layout';
+import { PDFLayoutConfig, LayoutBlock, TableColumn, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
 import { calculateQuoteTotals } from './calculations';
 
 /**
@@ -320,4 +320,36 @@ export const renderPDFFromLayout = (
       </body>
     </html>
   `;
+};
+
+/**
+ * Récupère le layout approprié pour un devis selon sa variante
+ */
+export const getLayoutForQuote = (quote: Quote, settings: Settings): PDFLayoutConfig => {
+  // Déterminer la variante du devis
+  const hasTech = quote.items.some(i => i.kind === 'TECH');
+  const hasAgent = quote.items.some(i => i.kind === 'AGENT');
+  
+  let variant: LayoutVariant;
+  if (hasTech && hasAgent) {
+    variant = 'mixte';
+  } else if (hasAgent) {
+    variant = 'agent';
+  } else {
+    variant = 'technique';
+  }
+  
+  // Récupérer le layout actif pour cette variante
+  const activeLayoutId = settings.activePDFLayouts?.[variant];
+  
+  if (activeLayoutId && settings.pdfLayouts?.[variant]) {
+    const layouts = settings.pdfLayouts[variant];
+    const activeLayout = layouts.find(l => l.id === activeLayoutId);
+    if (activeLayout) {
+      return activeLayout;
+    }
+  }
+  
+  // Fallback sur le layout par défaut
+  return getDefaultLayoutForVariant(variant);
 };

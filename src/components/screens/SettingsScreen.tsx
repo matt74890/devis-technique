@@ -826,10 +826,7 @@ const SettingsScreen = () => {
               </CardContent>
             </Card>
             
-            <TemplateColors />
-            <LetterTemplate />
-            <PDFSources />
-            <PDFConfiguration />
+            <PDFCenter />
           </div>
         </TabsContent>
 
