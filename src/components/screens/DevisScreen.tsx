@@ -509,7 +509,7 @@ const DevisScreen = () => {
             </div>
             <div className="flex items-center space-x-2">
               {currentQuote && (
-                <PDFPreview quote={currentQuote} settings={settings} />
+                <PDFPreview quote={currentQuote} />
               )}
               <Button onClick={downloadPDF} variant="outline">
                 <FileDown className="h-4 w-4 mr-2" />

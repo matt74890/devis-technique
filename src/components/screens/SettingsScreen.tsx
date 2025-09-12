@@ -14,14 +14,15 @@ import { Plus, Trash2, Edit } from 'lucide-react';
 import { useSettings } from '@/components/SettingsProvider';
 import { Subscription } from '@/types';
 import ProductCatalog from '../catalog/ProductCatalog';
-import PDFConfiguration from '../settings/PDFConfiguration';
-import CurrencySettings from '../settings/CurrencySettings';
-import LetterTemplate from '../settings/LetterTemplate';
-import SellerInfo from '../settings/SellerInfo';
-import LogoUpload from '../settings/LogoUpload';
-import TemplateColors from '../settings/TemplateColors';
-import PDFLayoutSettings from '../settings/PDFLayoutSettings';
-import FontSelector from '../settings/FontSelector';
+import LogoUpload from '@/components/settings/LogoUpload';
+import FontSelector from '@/components/settings/FontSelector';
+import FontUpload from '@/components/settings/FontUpload';
+import PDFConfiguration from '@/components/settings/PDFConfiguration';
+import { PDFSources } from '@/components/settings/PDFSources';
+import CurrencySettings from '@/components/settings/CurrencySettings';
+import SellerInfo from '@/components/settings/SellerInfo';
+import LetterTemplate from '@/components/settings/LetterTemplate';
+import TemplateColors from '@/components/settings/TemplateColors';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -830,7 +831,7 @@ const SettingsScreen = () => {
             
             <TemplateColors />
             <LetterTemplate />
-            <PDFLayoutSettings />
+            <PDFSources />
             <PDFConfiguration />
           </div>
         </TabsContent>
