@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useSettings } from '@/components/SettingsProvider';
 import { Quote, Settings } from '@/types';
 import { PDFLayoutConfig, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
-import { renderPDFFromLayout } from '@/utils/pdfRenderer';
+import { renderPDFFromLayout, getLayoutForQuote } from '@/utils/pdfRenderer';
 import { PDFSourceSelector } from './PDFSourceSelector';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -31,23 +31,8 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({ quote }) => {
 
   const currentVariant = getQuoteVariant();
 
-  // Récupérer le layout actif ou par défaut
-  const getActiveLayout = (): PDFLayoutConfig | null => {
-    const activePDFLayouts = settings.activePDFLayouts || {};
-    const pdfLayouts = settings.pdfLayouts || {};
-    
-    const activeLayoutId = activePDFLayouts[currentVariant];
-    
-    if (activeLayoutId && pdfLayouts[currentVariant]) {
-      const layout = pdfLayouts[currentVariant].find(l => l.id === activeLayoutId);
-      if (layout) return layout;
-    }
-    
-    // Retourner le layout par défaut
-    return getDefaultLayoutForVariant(currentVariant);
-  };
-
-  const activeLayout = getActiveLayout();
+  // Récupérer le layout actif
+  const activeLayout = getLayoutForQuote ? getLayoutForQuote(quote, settings) : getDefaultLayoutForVariant(currentVariant);
 
   // Générer le HTML pour la preview
   const generatePreviewHTML = (): string => {

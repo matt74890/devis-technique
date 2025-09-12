@@ -17,12 +17,9 @@ import ProductCatalog from '../catalog/ProductCatalog';
 import LogoUpload from '@/components/settings/LogoUpload';
 import FontSelector from '@/components/settings/FontSelector';
 import FontUpload from '@/components/settings/FontUpload';
-import PDFConfiguration from '@/components/settings/PDFConfiguration';
-import { PDFSources } from '@/components/settings/PDFSources';
+import { PDFCenter } from '@/components/settings/PDFCenter';
 import CurrencySettings from '@/components/settings/CurrencySettings';
 import SellerInfo from '@/components/settings/SellerInfo';
-import LetterTemplate from '@/components/settings/LetterTemplate';
-import TemplateColors from '@/components/settings/TemplateColors';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
