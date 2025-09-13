@@ -201,25 +201,27 @@ export const renderPDFFromLayout = (
     
     if (!dataset || dataset.length === 0) return '';
 
-    // En-tête du tableau
+    // En-tête du tableau avec couleurs personnalisées
+    const colors = context.settings.templateColors || {};
     let tableHTML = `
-      <table style="width: 100%; border-collapse: collapse; font-size: inherit;">
-        <thead>
-          <tr style="background-color: #f5f5f5;">
+      <table style="width: 100%; border-collapse: collapse; font-size: inherit; page-break-inside: auto;">
+        <thead style="display: table-header-group;">
+          <tr style="background-color: ${colors.tableHeader || '#f5f5f5'};">
     `;
     
     config.columns
       .filter(col => col.visible)
       .sort((a, b) => a.order - b.order)
       .forEach(col => {
-        tableHTML += `<th style="border: 1px solid #ddd; padding: 4px; text-align: ${col.align}; width: ${col.width}${col.widthUnit};">${col.label}</th>`;
+        tableHTML += `<th style="border: 1px solid ${colors.tableBorder || '#ddd'}; padding: 8px; text-align: ${col.align}; width: ${col.width}${col.widthUnit}; color: ${colors.tableHeaderText || '#333'}; font-weight: bold;">${col.label}</th>`;
       });
     
     tableHTML += `</tr></thead><tbody>`;
 
-    // Corps du tableau
-    dataset.forEach((item: any) => {
-      tableHTML += '<tr>';
+    // Corps du tableau avec gestion des couleurs et pagination
+    dataset.forEach((item: any, index: number) => {
+      const rowBg = index % 2 === 0 ? (colors.tableRow || '#ffffff') : (colors.tableRowAlt || '#f8fafc');
+      tableHTML += `<tr style="background-color: ${rowBg}; page-break-inside: avoid;">`;
       config.columns
         .filter(col => col.visible)
         .sort((a, b) => a.order - b.order)
@@ -235,7 +237,7 @@ export const renderPDFFromLayout = (
             value = value.toFixed(1) + 'h';
           }
           
-          tableHTML += `<td style="border: 1px solid #ddd; padding: 4px; text-align: ${col.align};">${value}</td>`;
+          tableHTML += `<td style="border: 1px solid ${colors.tableBorder || '#ddd'}; padding: 8px; text-align: ${col.align}; color: ${colors.textColor || '#333'};">${value}</td>`;
         });
       tableHTML += '</tr>';
     });
@@ -335,27 +337,40 @@ export const buildDomFromLayout = async (
     /* Mise en page A4 stricte avec marges imprimables */
     @page {
       size: A4;
-      margin: 18mm;
+      margin: 15mm;
     }
-    [data-a4-root] { max-width: 174mm; margin: 0 auto; }
-    .intro-page { page-break-after: always; } /* Présentation = 1 page */
+    [data-a4-root] { 
+      max-width: 180mm; 
+      margin: 0 auto; 
+      background: ${colors.background || '#ffffff'};
+      color: ${colors.textColor || '#333'};
+    }
+    .intro-page { 
+      page-break-after: always !important; 
+      min-height: 267mm !important;
+      max-height: 267mm !important;
+      overflow: hidden !important;
+    } /* Présentation = 1 page */
 
     /* Badges : centrage vertical/ horizontal garanti */
     .badge {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 2px 8px !important;
-      line-height: 1 !important;
+      padding: 4px 12px !important;
+      line-height: 1.2 !important;
       vertical-align: middle !important;
       border-radius: 6px !important;
-      font-size: 12px !important;
-      min-height: 20px !important;
+      font-size: 11px !important;
+      min-height: 24px !important;
       font-weight: 600 !important;
+      text-align: center !important;
+      box-sizing: border-box !important;
+      white-space: nowrap !important;
     }
-    .badge--agent { background: ${colors.badgeAgent} !important; color: #ffffff !important; }
-    .badge--unique { background: ${colors.badgeUnique} !important; color: #ffffff !important; }
-    .badge--mensuel { background: ${colors.badgeMensuel} !important; color: #ffffff !important; }
+    .badge--agent { background: ${colors.badgeAgent || '#8b5cf6'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
+    .badge--unique { background: ${colors.badgeUnique || '#10b981'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
+    .badge--mensuel { background: ${colors.badgeMensuel || '#f59e0b'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
 
     /* Signatures : image/canvas bien visibles sous les noms/titres */
     .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; page-break-inside: avoid; }
@@ -365,23 +380,64 @@ export const buildDomFromLayout = async (
     .signature-image { margin-top: 6mm; max-height: 28mm; max-width: 80mm; }
 
     /* Tableaux multi-pages stables */
-    table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
-    thead { display: table-header-group; }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      page-break-inside: auto;
+      margin: 10px 0;
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
+    }
+    thead { 
+      display: table-header-group;
+      background: ${colors.tableHeader || '#f8fafc'} !important;
+    }
     tfoot { display: table-footer-group; }
-    tr, td, th { page-break-inside: avoid; }
+    tr { page-break-inside: avoid; }
+    td, th { 
+      page-break-inside: avoid;
+      padding: 8px 10px;
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
+      vertical-align: middle;
+    }
     tbody tr { page-break-inside: avoid; page-break-after: auto; }
+    tbody tr:nth-child(even) { background: ${colors.tableRowAlt || '#f8fafc'}; }
+    tbody tr:nth-child(odd) { background: ${colors.tableRow || '#ffffff'}; }
     .no-break { page-break-inside: avoid; }
 
     /* Cadres de résumé/signatures non coupés */
     .box, .recap, .signatures, .totals-section { page-break-inside: avoid; }
     
     /* Styles spécifiques pour les cellules de tableau */
-    .cell { padding: 8px 10px; border: 1px solid #E5E7EB; vertical-align: middle; }
-    .th { background: ${colors.headerBackground}; font-weight: 700; color: ${colors.tableHeaderText}; }
+    .cell { 
+      padding: 8px 10px; 
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'}; 
+      vertical-align: middle; 
+      color: ${colors.textColor || '#333'};
+    }
+    .th { 
+      background: ${colors.tableHeader || '#f8fafc'} !important; 
+      font-weight: 700; 
+      color: ${colors.tableHeaderText || '#333'} !important; 
+    }
     
     /* Conteneurs de totaux centrés */
-    .totals-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 30px 0; }
-    .total-box { background: ${colors.cardBackground}; padding: 15px; border-radius: 8px; border: 2px solid ${colors.primary}; min-width: 250px; text-align: center; }
+    .totals-container { 
+      display: flex; 
+      justify-content: center; 
+      gap: 20px; 
+      flex-wrap: wrap; 
+      margin: 30px 0; 
+      page-break-inside: avoid;
+    }
+    .total-box { 
+      background: ${colors.cardBackground || '#f8fafc'}; 
+      padding: 15px; 
+      border-radius: 8px; 
+      border: 2px solid ${colors.primary || '#2563eb'}; 
+      min-width: 250px; 
+      text-align: center; 
+      page-break-inside: avoid;
+    }
   `;
   container.prepend(style);
 
@@ -554,30 +610,30 @@ export const buildDomFromLayout = async (
       <!-- Prestations TECH -->
       <div style="margin: 20px 0;">
         <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations techniques</h3>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary};">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
           <thead>
-            <tr style="background: ${colors.primary}; color: white;">
-              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Type</th>
-              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Référence</th>
-              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Mode</th>
-              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Qté</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">PU TTC</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Total TTC</th>
+            <tr style="background: ${colors.tableHeader || '#f8fafc'}; color: ${colors.tableHeaderText || '#334155'};">
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Type</th>
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Référence</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Mode</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Qté</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">PU TTC</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Total TTC</th>
             </tr>
           </thead>
           <tbody>
             ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
-              <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
-                <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.type}</td>
-                <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.reference}</td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">
-                  <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}" style="background: ${item.mode === 'mensuel' ? colors.badgeMensuel : colors.badgeUnique}; color: ${colors.badgeText};">
+              <tr style="background: ${index % 2 === 0 ? (colors.tableRow || '#ffffff') : (colors.tableRowAlt || '#f8fafc')}; page-break-inside: avoid;">
+                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.type}</td>
+                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.reference}</td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
+                  <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}">
                     ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
                   </span>
                 </td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty || 1}</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.qty || 1}</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
               </tr>
             `).join('')}
           </tbody>
@@ -609,20 +665,20 @@ export const buildDomFromLayout = async (
           </thead>
           <tbody>
             ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
-              <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
-                <td class="cell">
+              <tr style="background: ${index % 2 === 0 ? (colors.tableRowAlt || '#f8fafc') : (colors.tableRow || '#ffffff')}; page-break-inside: avoid;">
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">
                   <div style="font-weight: bold;">${item.reference}</div>
                   <span class="badge badge--agent">Agent</span>
                 </td>
-                <td class="cell">${item.agentType || item.type}</td>
-                <td class="cell">${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
-                <td class="cell">${item.timeStart || '-'}</td>
-                <td class="cell">${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
-                <td class="cell">${item.timeEnd || '-'}</td>
-                <td class="cell">${(item.hoursNormal || 0).toFixed(2)} h</td>
-                <td class="cell">${((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(2)} h</td>
-                <td class="cell">${(item.rateCHFh || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td class="cell">${(item.lineTTC || item.totalTTC || 0).toFixed(2)} CHF</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.agentType || item.type}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeStart || '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeEnd || '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.hoursNormal || 0).toFixed(2)} h</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(2)} h</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.rateCHFh || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.lineTTC || item.totalTTC || 0).toFixed(2)} CHF</td>
               </tr>
             `).join('')}
           </tbody>
