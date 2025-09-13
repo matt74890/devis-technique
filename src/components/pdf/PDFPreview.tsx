@@ -6,20 +6,45 @@ export default function PDFPreview({
   quote, settings, variant
 }: { quote: Quote; settings: Settings; variant: "technique" | "agent" | "mixte" }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    (async () => {
-      if (!containerRef.current) return;
-      containerRef.current.innerHTML = "";
+    let isCancelled = false;
+    
+    const loadPreview = async () => {
+      const container = containerRef.current;
+      if (!container || !mountedRef.current) return;
+      
+      // Clear previous content
+      container.innerHTML = "";
+      
       try {
         const dom = await renderPDFFromLayout(quote, settings, variant);
-        containerRef.current.appendChild(dom);
+        
+        // Check if component is still mounted and this request wasn't cancelled
+        if (!isCancelled && mountedRef.current && containerRef.current) {
+          containerRef.current.appendChild(dom);
+        }
       } catch (e) {
-        containerRef.current.innerHTML =
-          `<div class="text-destructive p-4">Erreur preview PDF: ${(e as Error).message}</div>`;
+        if (!isCancelled && mountedRef.current && containerRef.current) {
+          containerRef.current.innerHTML =
+            `<div class="text-destructive p-4">Erreur preview PDF: ${(e as Error).message}</div>`;
+        }
       }
-    })();
+    };
+
+    loadPreview();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [quote, settings, variant]);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return <div ref={containerRef} className="bg-white shadow-soft rounded-md p-4" />;
 }
