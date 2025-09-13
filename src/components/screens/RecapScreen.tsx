@@ -122,10 +122,10 @@ const RecapScreen = () => {
       const simpleLayout = { 
         id: layoutId, 
         name: 'Default', 
-        variant: variant === 'technique' ? 'technique' : 'agent',
+        variant: variant as import('@/types/layout').LayoutVariant,
         blocks: [], 
         visibilityRules: {},
-        page: { size: 'A4', orientation: 'portrait', margins: { top: 12, right: 10, bottom: 12, left: 10 }, grid: 10, unit: 'mm' },
+        page: { size: 'A4' as const, orientation: 'portrait' as const, margins: { top: 12, right: 10, bottom: 12, left: 10 }, grid: 10, unit: 'mm' as const },
         metadata: { description: '', createdAt: '', updatedAt: '', isDefault: true }
       };
       await exportToPDF(quote, settings, simpleLayout);
