@@ -10,11 +10,15 @@ import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
 import PDFPreview from '@/components/pdf/PDFPreview';
-import html2pdf from 'html2pdf.js';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
+import { useState } from "react";
+import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
+import { exportDomToPdf } from "@/utils/pdfRenderer";
+import type { Quote, Settings } from "@/types";
 
 const RecapScreen = () => {
   const { currentQuote, settings, updateQuote } = useStore();
+  const [exporting, setExporting] = useState(false);
 
   if (!currentQuote) return null;
 
@@ -92,177 +96,61 @@ const RecapScreen = () => {
   const quoteWithCalculatedItems = { ...currentQuote, items: calculatedItems };
   const totals = calculateQuoteTotals(quoteWithCalculatedItems, settings.tvaPct);
   
-  const downloadPDF = async () => {
-    console.log('Début téléchargement PDF direct');
-    
-    // Validation des données requises
-    if (!currentQuote.ref) {
-      console.log('Erreur: Référence manquante');
-      toast.error('Veuillez renseigner une référence pour le devis');
-      return;
-    }
-    
-    if (!currentQuote.client) {
-      console.log('Erreur: Client manquant');  
-      toast.error('Veuillez sélectionner ou renseigner un client');
-      return;
-    }
-    
-    if (currentQuote.items.length === 0) {
-      console.log('Erreur: Aucune ligne dans le devis');
-      toast.error('Veuillez ajouter au moins une ligne au devis');
-      return;
-    }
-    
+  // Fonction unifié pour télécharger le PDF en utilisant le même DOM que la preview
+  async function handleDownloadPdf(quote: Quote, settings: Settings, variant: "technique"|"agent"|"mixte") {
+    if (exporting) return;
+    setExporting(true);
     try {
-      // Créer le contenu HTML pour le PDF directement ici
-      const colors = settings.templateColors || { 
-        primary: '#000000',
-        secondary: '#666666', 
-        accent: '#333333',
-        titleColor: '#000000',
-        subtitleColor: '#666666',
-        textColor: '#000000',
-        mutedTextColor: '#999999',
-        background: '#ffffff',
-        cardBackground: '#ffffff',
-        headerBackground: '#ffffff',
-        tableHeader: '#f5f5f5',
-        tableHeaderText: '#000000',
-        tableRow: '#ffffff',
-        tableRowAlt: '#f9f9f9',
-        tableBorder: '#cccccc',
-        badgeUnique: '#666666',
-        badgeMensuel: '#666666',
-        badgeText: '#ffffff',
-        totalCardBorder: '#cccccc',
-        totalUniqueBackground: '#ffffff',
-        totalMensuelBackground: '#ffffff',
-        grandTotalBackground: '#f5f5f5',
-        grandTotalBorder: '#000000',
-        borderPrimary: '#000000',
-        borderSecondary: '#cccccc',
-        separatorColor: '#e0e0e0',
-        letterHeaderColor: '#000000',
-        letterDateColor: '#000000',
-        letterSubjectColor: '#000000',
-        letterSignatureColor: '#000000',
-        signatureBoxBorder: '#000000',
-        signatureBoxBackground: '#ffffff',
-        signatureTitleColor: '#000000',
-        signatureTextColor: '#666666'
-      };
+      // Validation des données requises
+      if (!quote.ref) {
+        toast.error('Veuillez renseigner une référence pour le devis');
+        return;
+      }
       
-      const getFontFamily = () => {
-        const fontMap: { [key: string]: string } = {
-          'inter': 'Inter, sans-serif',
-          'dm-sans': 'DM Sans, sans-serif',
-          'nunito-sans': 'Nunito Sans, sans-serif',
-          'source-sans-pro': 'Source Sans Pro, sans-serif',
-          'work-sans': 'Work Sans, sans-serif',
-          'lato': 'Lato, sans-serif',
-          'rubik': 'Rubik, sans-serif',
-          'open-sans': 'Open Sans, sans-serif'
-        };
-        return fontMap[settings.selectedFont || 'dm-sans'] || 'DM Sans, sans-serif';
-      };
+      if (!quote.client) {
+        toast.error('Veuillez sélectionner ou renseigner un client');
+        return;
+      }
+      
+      if (quote.items.length === 0) {
+        toast.error('Veuillez ajouter au moins une ligne au devis');
+        return;
+      }
 
-      // Créer un élément temporaire invisible pour le contenu PDF
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.innerHTML = `
-        <div style="font-family: ${getFontFamily()}; color: ${colors.textColor}; background: ${colors.background}; padding: 20px; max-width: 800px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: ${colors.titleColor}; font-size: 24px; margin: 0;">${settings.pdfTitle || 'DEVIS'}</h1>
-            <p style="color: ${colors.subtitleColor}; font-size: 16px; margin: 10px 0;">N° ${currentQuote.ref}</p>
-          </div>
-          
-          <div style="margin: 20px 0;">
-            <p><strong>Client:</strong> ${currentQuote.client}</p>
-            <p><strong>Date:</strong> ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
-          </div>
+      // 1) même DOM que la preview
+      const dom = await renderPDFFromLayout(quote, settings, variant);
 
-          ${groupedAgentItemsArray.length > 0 ? `
-          <h3 style="color: ${colors.primary}; margin: 20px 0 10px 0;">Prestations d'agents de sécurité</h3>
-          <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px;">
-            <tr style="background: ${colors.tableHeader};">
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Type</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Date début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Heure début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Date fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: left;">Heure fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">H. Normal</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: center;">H. Majorée</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right;">Total HT</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 8px; text-align: right;">Total TTC</th>
-            </tr>
-            ${groupedAgentItemsArray.map(group => {
-              const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
-              const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
-              const timeStart = group.items[0]?.timeStart || '-';
-              const timeEnd = group.items[0]?.timeEnd || '-';
-              const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
-              
-              return `
-              <tr>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${group.agentType} ${group.canton ? `(${group.canton})` : ''}${group.count > 1 ? ` x${group.count}` : ''}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${dateStart}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${timeStart}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${dateEnd}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px;">${timeEnd}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">${group.normalHours.toFixed(1)}h</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">${majoredHours.toFixed(1)}h</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">${group.totalHT.toFixed(2)} CHF</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">${group.totalTTC.toFixed(2)} CHF</td>
-              </tr>`;
-            }).join('')}
-          </table>
-          ` : ''}
+      // (optionnel) attendre les fonts/images
+      if ((document as any).fonts?.ready) {
+        await (document as any).fonts.ready;
+      }
 
-          <div style="margin-top: 30px; text-align: center; border: 2px solid ${colors.primary}; padding: 15px;">
-            <h3>TOTAL GÉNÉRAL</h3>
-            <p style="font-size: 18px;"><strong>Total HT: ${totals.global.htAfterDiscount.toFixed(2)} CHF</strong></p>
-            <p style="font-size: 18px;"><strong>TVA (${settings.tvaPct}%): ${totals.global.tva.toFixed(2)} CHF</strong></p>
-            <p style="font-size: 20px; color: ${colors.primary};"><strong>TOTAL TTC: ${totals.global.totalTTC.toFixed(2)} CHF</strong></p>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(tempDiv);
-      
-      // Use html2pdf
-      const html2pdfLib = html2pdf;
-      
-      const options = {
-        margin: [10, 10, 10, 10],
-        filename: `devis-${currentQuote.ref}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { 
-          scale: 1.5,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait'
-        }
-      };
+      // 2) exporter en binaire
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const blob = await exportDomToPdf(dom, filename);
 
-      await html2pdfLib().set(options).from(tempDiv).save();
-      
-      // Nettoyer l'élément temporaire
-      document.body.removeChild(tempDiv);
-      
-      console.log('PDF téléchargé avec succès');
-      toast.success('PDF téléchargé avec succès');
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du PDF:', error);
-      toast.error('Erreur lors du téléchargement du PDF. Veuillez réessayer.');
+      // 3) download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success("PDF téléchargé");
+    } catch (e) {
+      toast.error(`Échec PDF: ${(e as Error).message}`);
+    } finally {
+      setExporting(false);
     }
+  }
+
+  // Déterminer la variante du devis
+  const getQuoteVariant = (): "technique" | "agent" | "mixte" => {
+    const hasTech = currentQuote.items.some(i => i.kind === 'TECH');
+    const hasAgent = currentQuote.items.some(i => i.kind === 'AGENT');
+    
+    if (hasTech && hasAgent) return 'mixte';
+    if (hasAgent) return 'agent';
+    return 'technique';
   };
 
   const generatePDF = () => {
@@ -1288,14 +1176,18 @@ const RecapScreen = () => {
               <span>Récapitulatif du devis</span>
             </div>
             <div className="flex space-x-2">
-              <PDFPreview quote={currentQuote} />
-              <Button onClick={generatePDF} className="bg-primary hover:bg-primary-hover">
+              <PDFPreview 
+                quote={currentQuote} 
+                settings={settings} 
+                variant={getQuoteVariant()} 
+              />
+              <Button 
+                onClick={() => handleDownloadPdf(currentQuote, settings, getQuoteVariant())} 
+                className="bg-primary hover:bg-primary-hover"
+                disabled={exporting}
+              >
                 <FileDown className="h-4 w-4 mr-2" />
-                Générer PDF
-              </Button>
-              <Button onClick={downloadPDF} variant="secondary">
-                <FileDown className="h-4 w-4 mr-2" />
-                Télécharger PDF
+                {exporting ? 'Génération...' : 'Télécharger PDF'}
               </Button>
               <Button onClick={downloadWord} variant="outline">
                 <FileDown className="h-4 w-4 mr-2" />

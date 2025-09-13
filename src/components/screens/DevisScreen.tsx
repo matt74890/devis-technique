@@ -178,11 +178,24 @@ const DevisScreen = () => {
     });
   };
 
-  const downloadPDF = () => {
-    // Déclencher le téléchargement depuis le composant PDFPreview
-    const downloadEvent = new CustomEvent('downloadPDF');
-    document.dispatchEvent(downloadEvent);
-  };
+  async function handleDownloadPdf(quote: any, settings: any, variant: "technique"|"agent"|"mixte") {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const dom = await renderPDFFromLayout(quote, settings, variant);
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const blob = await exportDomToPdf(dom, filename);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF téléchargé" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const handleItemUpdate = (itemId: string, field: string, value: any) => {
     const item = currentQuote.items.find(i => i.id === itemId);
@@ -509,11 +522,19 @@ const DevisScreen = () => {
             </div>
             <div className="flex items-center space-x-2">
               {currentQuote && (
-                <PDFPreview quote={currentQuote} />
+              <PDFPreview 
+                quote={currentQuote} 
+                settings={settings} 
+                variant={currentQuote.items.some(i => i.kind === 'TECH') && currentQuote.items.some(i => i.kind === 'AGENT') ? 'mixte' : currentQuote.items.some(i => i.kind === 'AGENT') ? 'agent' : 'technique'} 
+              />
               )}
-              <Button onClick={downloadPDF} variant="outline">
+              <Button 
+                onClick={() => currentQuote && handleDownloadPdf(currentQuote, settings, currentQuote.items.some(i => i.kind === 'TECH') && currentQuote.items.some(i => i.kind === 'AGENT') ? 'mixte' : currentQuote.items.some(i => i.kind === 'AGENT') ? 'agent' : 'technique')} 
+                variant="outline"
+                disabled={exporting}
+              >
                 <FileDown className="h-4 w-4 mr-2" />
-                Télécharger PDF
+                {exporting ? 'Génération...' : 'Télécharger PDF'}
               </Button>
             </div>
           </CardTitle>

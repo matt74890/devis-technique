@@ -1,4 +1,5 @@
-import { Quote, Settings } from '@/types';
+import html2pdf from "html2pdf.js";
+import type { Quote, Settings } from '@/types';
 import { PDFLayoutConfig, LayoutBlock, TableColumn, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
 import { calculateQuoteTotals } from './calculations';
 
@@ -321,6 +322,204 @@ export const renderPDFFromLayout = (
     </html>
   `;
 };
+
+/**
+ * Construit un DOM A4 à partir d'un layout JSON + données.
+ * Retourne un <div data-a4-root> prêt pour PREVIEW et EXPORT (même DOM).
+ */
+export async function buildDomFromLayout(
+  layoutId: string,
+  quote: Quote,
+  settings: Settings
+): Promise<HTMLDivElement> {
+  const root = document.createElement("div");
+  root.setAttribute("data-a4-root", "true");
+  // A4 strict
+  root.style.width = "210mm";
+  root.style.minHeight = "297mm";
+  root.style.margin = "0 auto";
+  root.style.background = "#ffffff";
+  root.style.color = "#000000";
+  root.style.fontFamily = "Arial, sans-serif";
+  root.style.fontSize = "12px";
+  root.style.lineHeight = "1.4";
+  root.style.padding = "20mm";
+
+  // Générer le contenu HTML basé sur le devis
+  const totals = calculateQuoteTotals(quote, settings.tvaPct);
+  const colors = settings.templateColors || {
+    primary: '#2563eb',
+    secondary: '#64748b',
+    accent: '#059669',
+    titleColor: '#000000',
+    subtitleColor: '#666666',
+    textColor: '#000000'
+  };
+
+  root.innerHTML = `
+    <!-- En-tête avec logo et adresses -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+      <!-- Logo et vendeur (gauche) -->
+      <div style="flex: 1;">
+        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;" />` : ''}
+        ${settings.sellerInfo?.name ? `
+          <div style="font-size: 11pt;">
+            <p style="font-weight: bold; color: ${colors.primary}; margin: 4px 0;">${settings.sellerInfo.name}</p>
+            ${settings.sellerInfo.title ? `<p style="color: #666; margin: 2px 0;">${settings.sellerInfo.title}</p>` : ''}
+            ${settings.sellerInfo.email ? `<p style="margin: 2px 0;">${settings.sellerInfo.email}</p>` : ''}
+            ${settings.sellerInfo.phone ? `<p style="margin: 2px 0;">${settings.sellerInfo.phone}</p>` : ''}
+          </div>
+        ` : ''}
+      </div>
+      
+      <!-- Adresse client (droite) -->
+      <div style="text-align: right;">
+        <div>
+          <p style="font-weight: bold; font-size: 14pt; margin: 4px 0;">${quote.addresses.contact.company || quote.client}</p>
+          <p style="margin: 2px 0;">${quote.addresses.contact.name}</p>
+          <p style="margin: 2px 0;">${quote.addresses.contact.street}</p>
+          <p style="margin: 2px 0;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</p>
+          <p style="margin: 2px 0;">${quote.addresses.contact.country}</p>
+          ${quote.addresses.contact.email ? `<p style="font-size: 10pt; color: ${colors.secondary}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
+          ${quote.addresses.contact.phone ? `<p style="font-size: 10pt; margin: 2px 0;">${quote.addresses.contact.phone}</p>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- Titre du devis -->
+    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary};">
+      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.primary}; margin: 0 0 8px 0;">${settings.pdfTitle || 'DEVIS'}</h1>
+      <p style="font-size: 14pt; margin: 4px 0; color: ${colors.secondary};">Devis N° ${quote.ref}</p>
+      <p style="color: #666; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
+    </div>
+
+    ${(quote.site || quote.contact || quote.canton) ? `
+      <!-- Informations complémentaires -->
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary}; font-size: 12pt;">Détails du projet</h3>
+        <div style="font-size: 10pt;">
+          ${quote.site ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Site:</span> ${quote.site}</p>` : ''}
+          ${quote.contact ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Contact:</span> ${quote.contact}</p>` : ''}
+          ${quote.canton ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Canton:</span> ${quote.canton}</p>` : ''}
+        </div>
+      </div>
+    ` : ''}
+
+    ${quote.items.some(item => item.kind === 'TECH') ? `
+      <!-- Prestations TECH -->
+      <div style="margin: 20px 0;">
+        <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations techniques</h3>
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary};">
+          <thead>
+            <tr style="background: ${colors.primary}; color: white;">
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Type</th>
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Référence</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Mode</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Qté</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">PU TTC</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Total TTC</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
+              <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
+                <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.type}</td>
+                <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.reference}</td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">
+                  <span style="padding: 2px 6px; border-radius: 3px; font-size: 9pt; background: ${item.mode === 'mensuel' ? colors.accent : colors.secondary}; color: white;">
+                    ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                  </span>
+                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty}</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${item.puTTC?.toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary}; color: ${colors.primary};">
+                  ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : ''}
+
+    <!-- Total général -->
+    <div style="padding: 20px; border-radius: 8px; text-align: center; border: 3px solid ${colors.primary}; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); margin: 20px 0;">
+      <h4 style="font-weight: bold; font-size: 18pt; margin-bottom: 15px; color: ${colors.primary};">TOTAL GÉNÉRAL</h4>
+      <div style="display: flex; gap: 20px; margin-bottom: 15px; justify-content: center;">
+        <div>
+          <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">Total HT</p>
+          <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
+        </div>
+        <div>
+          <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">TVA totale</p>
+          <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
+        </div>
+      </div>
+      <div style="padding-top: 15px; border-top: 2px solid ${colors.primary};">
+        <p style="font-size: 24pt; font-weight: bold; color: ${colors.primary};">
+          ${totals.global.totalTTC.toFixed(2)} CHF
+        </p>
+        ${totals.mensuel.totalTTC > 0 ? `
+          <p style="font-size: 16pt; font-weight: bold; margin-top: 8px; color: ${colors.accent};">
+            + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
+          </p>
+        ` : ''}
+      </div>
+    </div>
+
+    ${quote.comment ? `
+      <!-- Commentaire -->
+      <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+        <h4 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary};">Commentaires</h4>
+        <p style="margin: 0; white-space: pre-wrap;">${quote.comment}</p>
+      </div>
+    ` : ''}
+
+    <!-- Pied de page -->
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid ${colors.secondary}; text-align: center; color: ${colors.secondary}; font-size: 10pt;">
+      <p style="margin: 0;">${settings.pdfFooter || 'Mentions légales - #NousRendonsLaSuisseSure'}</p>
+    </div>
+  `;
+
+  // Règles anti-débordement/coupures
+  const style = document.createElement("style");
+  style.textContent = `
+    @page { size: A4; margin: 12mm; }
+    [data-a4-root] { max-width: 190mm; }
+    table { table-layout: fixed; width: 100%; word-break: break-word; }
+    thead { display: table-header-group; } 
+    tfoot { display: table-footer-group; }
+    tr, td, th { page-break-inside: avoid; }
+    .section { page-break-inside: avoid; }
+    .hard-break { page-break-before: always; }
+  `;
+  root.prepend(style);
+
+  return root;
+}
+
+/**
+ * Exporte un DOM en PDF A4 via html2pdf.js (binaire fiable).
+ * Guard : blob.size >= 10KB pour éviter les pages blanches.
+ */
+export async function exportDomToPdf(dom: HTMLElement, filename: string): Promise<Blob> {
+  const worker = html2pdf()
+    .set({
+      margin: [12, 12, 12, 12],
+      filename,
+      image: { type: "jpeg", quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["css", "legacy"] }
+    })
+    .from(dom);
+
+  const blob = await worker.outputPdf("blob");
+  if (!blob || blob.size < 10000) {
+    throw new Error("Échec PDF: taille trop petite (<10KB). Vérifier le DOM/ressources.");
+  }
+  return blob;
+}
 
 /**
  * Récupère le layout approprié pour un devis selon sa variante
