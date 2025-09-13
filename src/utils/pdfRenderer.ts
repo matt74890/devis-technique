@@ -332,51 +332,57 @@ export const buildDomFromLayout = async (
   // CSS GLOBAL A4 selon spécifications exactes
   const style = document.createElement("style");
   style.textContent = `
-    @page { size: A4; margin: 12mm; }
-    [data-a4-root]{max-width:190mm;}
-
-    /* --- Couverture / Présentation --- */
-    .cover-page { page-break-after: always; }
-    .cover-page .content { min-height: 230mm; display:flex; flex-direction:column; }
-    .cover-page .footer-sign { margin-top:auto; }
-
-    /* --- Signatures --- */
-    .signatures { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:24px; }
-    .signature-box { border-top:1px solid #ddd; padding-top:8px; }
-    .signature-title { font-weight:600; margin-bottom:4px; }
-    .signature-name { font-weight:600; }
-    .signature-role { color:#6b7280; font-size:12px; }
-    .signature-draw { height:40px; margin-top:8px; }
-
-    /* --- Badges --- */
-    .badge { 
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:2px 8px; border-radius:6px; font-size:12px; line-height:1; 
-      min-height:20px; vertical-align:middle;
+    /* Mise en page A4 stricte */
+    @page {
+      size: A4;
+      margin: 12mm;
     }
-    .badge--agent { background:${colors.badgeAgent}; color:#ffffff; }
+    .a4 { width: 190mm; margin: 0 auto; }
+    .intro-page { page-break-after: always; } /* Présentation = 1 page */
 
-    /* --- Tableaux --- */
-    table { table-layout:fixed; width:100%; border-collapse:collapse; }
+    /* Badges : centrage vertical/ horizontal garanti */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      line-height: 1;
+      vertical-align: middle;
+      border-radius: 6px;
+      font-size: 12px;
+      min-height: 20px;
+    }
+    .badge--agent { background: ${colors.badgeAgent}; color: #ffffff; }
+    .badge--unique { background: ${colors.badgeUnique}; color: #ffffff; }
+    .badge--mensuel { background: ${colors.badgeMensuel}; color: #ffffff; }
+
+    /* Signatures : image/canvas bien visibles sous les noms/titres */
+    .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .signature-block { margin-top: 8mm; }
+    .signature-name { font-weight: 600; }
+    .signature-title { color: #6b7280; font-size: 12px; }
+    .signature-image { margin-top: 6mm; max-height: 28mm; max-width: 80mm; }
+
+    /* Tableaux multi-pages stables */
+    table { border-collapse: collapse; width: 100%; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr, td, th { page-break-inside: avoid; }
-    tbody { page-break-inside: auto; }
-    .cell { padding:8px 10px; border:1px solid #E5E7EB; }
-    .th { background:${colors.headerBackground}; font-weight:700; }
+    .no-break { page-break-inside: avoid; }
 
-    /* Encarts récap */
-    .recap { border:2px solid ${colors.headerBackground}; border-radius:12px; padding:16px; }
-
-    /* Utilitaires */
-    .hard-break { page-break-before: always; }
+    /* Cadres de résumé/signatures non coupés */
+    .box, .recap, .signatures { page-break-inside: avoid; }
+    
+    /* Styles spécifiques pour les cellules de tableau */
+    .cell { padding: 8px 10px; border: 1px solid #E5E7EB; }
+    .th { background: ${colors.headerBackground}; font-weight: 700; }
   `;
   container.prepend(style);
 
   // PAGE 1: LETTRE DE PRÉSENTATION (si activée)
   if (settings.letterTemplate?.enabled) {
-    const letterPage = document.createElement('section');
-    letterPage.className = 'cover-page';
+    const letterPage = document.createElement('div');
+    letterPage.className = 'intro-page a4';
     letterPage.innerHTML = `
       <div class="content">
         <!-- En-tête avec logo et vendeur -->
@@ -446,20 +452,18 @@ export const buildDomFromLayout = async (
         </div>
 
         <!-- Signatures en bas de page -->
-        <div class="footer-sign">
-          <div class="signatures">
-            <div class="signature-box">
-              <div class="signature-title">Le Vendeur</div>
-              <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
-              <div class="signature-role">${settings.sellerInfo?.title || ''}</div>
-              ${settings.sellerInfo?.signature ? `<img class="signature-draw" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-draw"></div>'}
-            </div>
-            <div class="signature-box">
-              <div class="signature-title">Le Client</div>
-              <div class="signature-name">${quote.client}</div>
-              <div class="signature-role">${quote.clientCivility || ''}</div>
-              <div class="signature-draw"></div>
-            </div>
+        <div class="signatures">
+          <div class="signature-block">
+            <div>Le Vendeur</div>
+            <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+            <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
+            ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+          </div>
+          <div class="signature-block">
+            <div>Le Client</div>
+            <div class="signature-name">${quote.client}</div>
+            <div class="signature-title">${quote.clientCivility || ''}</div>
+            <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
           </div>
         </div>
       </div>
@@ -576,12 +580,17 @@ export const buildDomFromLayout = async (
         <div style="text-align:center; color:#6b7280; margin-bottom:8mm;">
           Devis N° ${quote.ref} — Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}
         </div>
-        <table>
+        <table class="table-agent">
           <thead>
             <tr>
               <th class="cell th">Description</th>
               <th class="cell th">Type</th>
-              <th class="cell th">Durée (h)</th>
+              <th class="cell th">Date début</th>
+              <th class="cell th">Heure début</th>
+              <th class="cell th">Date fin</th>
+              <th class="cell th">Heure fin</th>
+              <th class="cell th">Heures normales</th>
+              <th class="cell th">Heures majorées</th>
               <th class="cell th">Tarif/h</th>
               <th class="cell th">Total</th>
             </tr>
@@ -591,12 +600,17 @@ export const buildDomFromLayout = async (
               <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
                 <td class="cell">
                   <div style="font-weight: bold;">${item.reference}</div>
-                  <span class="badge badge--agent" style="margin-top: 4px;">Agent</span>
+                  <span class="badge badge--agent" style="background: ${colors.badgeAgent}; color: #ffffff;">Agent</span>
                 </td>
                 <td class="cell">${item.type}</td>
-                <td class="cell">${item.qty || 1}h</td>
-                <td class="cell">${(item.rateCHFh || item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td class="cell">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+                <td class="cell">-</td>
+                <td class="cell">-</td>
+                <td class="cell">-</td>
+                <td class="cell">-</td>
+                <td class="cell">${(item.qty || 0).toFixed(2)} h</td>
+                <td class="cell">0.00 h</td>
+                <td class="cell">${(item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td class="cell">${((item.qty || 0) * (item.unitPriceValue || 0)).toFixed(2)} CHF</td>
               </tr>
             `).join('')}
           </tbody>
@@ -633,17 +647,17 @@ export const buildDomFromLayout = async (
     <div style="margin-top: 40px; page-break-inside: avoid;">
       <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
       <div class="signatures">
-        <div class="signature-box">
-          <div class="signature-title">Le Vendeur</div>
+        <div class="signature-block">
+          <div>Le Vendeur</div>
           <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
-          <div class="signature-role">${settings.sellerInfo?.title || ''}</div>
-          ${settings.sellerInfo?.signature ? `<img class="signature-draw" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-draw"></div>'}
+          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
+          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
         </div>
-        <div class="signature-box">
-          <div class="signature-title">Le Client</div>
+        <div class="signature-block">
+          <div>Le Client</div>
           <div class="signature-name">${quote.client}</div>
-          <div class="signature-role">${quote.clientCivility || ''}</div>
-          <div class="signature-draw"></div>
+          <div class="signature-title">${quote.clientCivility || ''}</div>
+          <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
         </div>
       </div>
     </div>
