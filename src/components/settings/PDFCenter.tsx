@@ -464,6 +464,27 @@ export const PDFCenter: React.FC = () => {
                   </div>
                   <Switch defaultChecked />
                 </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Remarque importante (sous le total)</Label>
+                  <textarea
+                    className="w-full border rounded-md p-2 text-sm resize-none"
+                    rows={3}
+                    value={settings.pdfSettings?.importantRemark ?? ""}
+                    onChange={(e) => updateSettings({ 
+                      pdfSettings: { 
+                        ...settings.pdfSettings, 
+                        importantRemark: e.target.value 
+                      } 
+                    })}
+                    placeholder="Ex: Les heures de nuit, dimanche et jours fériés sont majorées de 10 % selon la CCT."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Affichée sous le total du devis. Modifiable à tout moment.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

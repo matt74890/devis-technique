@@ -21,7 +21,7 @@ import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomToPdf } from "@/utils/pdfRenderer";
+import { exportToPDF } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -186,12 +186,10 @@ const DevisScreen = () => {
     setExporting(true);
     try {
       const dom = await renderPDFFromLayout(quote, settings, variant);
-      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
-      const blob = await exportDomToPdf(dom, filename);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
+      // Ajouter le DOM au document temporairement pour l'export
+      document.body.appendChild(dom);
+      await exportToPDF('', quote);
+      document.body.removeChild(dom);
       toast({ title: "PDF téléchargé" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
