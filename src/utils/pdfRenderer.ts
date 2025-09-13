@@ -1,5 +1,5 @@
 import html2pdf from "html2pdf.js";
-import type { Quote, Settings, QuoteItem } from '@/types';
+import type { Quote, Settings } from '@/types';
 import { PDFLayoutConfig, LayoutBlock, TableColumn, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
 import { calculateQuoteTotals } from './calculations';
 
@@ -169,7 +169,7 @@ export const renderPDFFromLayout = (
               </div>
             </div>
             <div style="border: 1px solid #ccc; padding: 8px; width: 45%; height: 100%;">
-              <div style="font-weight: bold; margin-bottom: 10px;">${resolveBinding(block.bindings?.clientTitle || 'Le client')}</div>
+              <div style="font-weight: bold; margin-bottom: 10px;">${resolveBinding(block.bindings.clientTitle || 'Le client')}</div>
               <div style="margin-top: auto; font-size: 8pt;">
                 Nom et signature :
               </div>
@@ -179,9 +179,9 @@ export const renderPDFFromLayout = (
         break;
 
       case 'description':
-        content = Object.entries(block.bindings || {})
+        content = Object.entries(block.bindings)
           .filter(([key, value]) => value && key !== 'text')
-          .map(([key, value]) => `<div><strong>${key.charAt(0).toUpperCase() + key.slice(1)} :</strong> ${resolveBinding(value as string)}</div>`)
+          .map(([key, value]) => `<div><strong>${key.charAt(0).toUpperCase() + key.slice(1)} :</strong> ${resolveBinding(value)}</div>`)
           .join('');
         break;
 
@@ -262,7 +262,7 @@ export const renderPDFFromLayout = (
         <style>
           @page { 
             size: A4; 
-            margin: ${layout.page?.margins?.top || 10}mm ${layout.page?.margins?.right || 12}mm ${layout.page?.margins?.bottom || 10}mm ${layout.page?.margins?.left || 12}mm;
+            margin: ${layout.page.margins.top}mm ${layout.page.margins.right}mm ${layout.page.margins.bottom}mm ${layout.page.margins.left}mm;
           }
           body { 
             font-family: Arial, sans-serif; 
@@ -288,7 +288,7 @@ export const buildDomFromLayout = async (
   settings: Settings
 ): Promise<HTMLElement> => {
   const colors = settings.templateColors || {
-    primary: '#fbbf24',
+    primary: '#2563eb',
     secondary: '#64748b',
     accent: '#7c3aed',
     titleColor: '#1e293b',
@@ -298,7 +298,7 @@ export const buildDomFromLayout = async (
     background: '#ffffff',
     cardBackground: '#f8fafc',
     headerBackground: '#f1f5f9',
-    tableHeader: '#f8fafc',
+    tableHeader: '#e2e8f0',
     tableHeaderText: '#334155',
     tableRow: '#ffffff',
     tableRowAlt: '#f8fafc',
@@ -331,35 +331,156 @@ export const buildDomFromLayout = async (
   const container = document.createElement('div');
   container.setAttribute('data-a4-root', 'true');
 
-  // Injecter la feuille de styles PDF spécialisée
-  const pdfStyleLink = document.createElement('link');
-  pdfStyleLink.rel = 'stylesheet';
-  pdfStyleLink.href = '/src/components/pdf/pdf-print.css';
-  if (!document.head.querySelector(`link[href="${pdfStyleLink.href}"]`)) {
-    document.head.appendChild(pdfStyleLink);
-  }
+  // CSS GLOBAL A4 selon spécifications exactes
+  const style = document.createElement("style");
+  style.textContent = `
+    /* Mise en page A4 stricte avec marges imprimables sécurisées */
+    @page {
+      size: A4;
+      margin: 12mm 10mm 12mm 10mm; /* top right bottom left - marges sécurisées */
+    }
+    [data-a4-root] { 
+      max-width: 190mm; /* Largeur adaptée aux nouvelles marges */
+      margin: 0 auto; 
+      background: ${colors.background || '#ffffff'};
+      color: ${colors.textColor || '#333'};
+      box-sizing: border-box;
+      padding: 0;
+    }
+    .intro-page { 
+      page-break-after: always !important; 
+      height: 273mm !important; /* Hauteur exacte A4 - marges */
+      max-height: 273mm !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+    } /* Présentation = 1 page stricte */
 
-  // Fonction pour générer l'en-tête commun
-  const generateHeader = (subtitle: string) => `
-    <div class="pdf-header" style="--header-accent: ${colors.primary};">
-      <div class="pdf-header__logo">GPA</div>
-      <div class="pdf-header__meta">
-        <div>${quote.client || ''}</div>
-        <div>${settings.sellerInfo?.name || ''}</div>
-        <div>${subtitle}</div>
-      </div>
-    </div>
+    /* Badges : centrage vertical/ horizontal garanti */
+    .badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 4px 12px !important;
+      line-height: 1.2 !important;
+      vertical-align: middle !important;
+      border-radius: 6px !important;
+      font-size: 11px !important;
+      min-height: 24px !important;
+      font-weight: 600 !important;
+      text-align: center !important;
+      box-sizing: border-box !important;
+      white-space: nowrap !important;
+    }
+    .badge--agent { background: ${colors.badgeAgent || '#8b5cf6'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
+    .badge--unique { background: ${colors.badgeUnique || '#10b981'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
+    .badge--mensuel { background: ${colors.badgeMensuel || '#f59e0b'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
+
+    /* Signatures : image/canvas bien visibles sous les noms/titres */
+    .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; page-break-inside: avoid; }
+    .signature-block { margin-top: 8mm; }
+    .signature-name { font-weight: 600; }
+    .signature-title { color: #6b7280; font-size: 12px; }
+    .signature-image { margin-top: 6mm; max-height: 28mm; max-width: 80mm; }
+
+    /* Tableaux multi-pages stables - RÈGLES STRICTES */
+    table { 
+      border-collapse: collapse; 
+      width: 100% !important; 
+      max-width: 190mm !important;
+      page-break-inside: auto;
+      margin: 15px 0;
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
+      table-layout: fixed !important; /* Force le respect des largeurs */
+    }
+    thead { 
+      display: table-header-group !important;
+      background: ${colors.tableHeader || '#f8fafc'} !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+    }
+    tfoot { 
+      display: table-footer-group !important; 
+      page-break-inside: avoid !important;
+    }
+    tr { 
+      page-break-inside: avoid !important; 
+      width: 100% !important;
+    }
+    td, th { 
+      page-break-inside: avoid !important;
+      padding: 6px 8px !important;
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
+      vertical-align: middle;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      max-width: 0 !important; /* Force le respect des largeurs de colonnes */
+    }
+    tbody tr { 
+      page-break-inside: avoid !important; 
+      page-break-after: auto;
+    }
+    tbody tr:nth-child(even) { background: ${colors.tableRowAlt || '#f8fafc'}; }
+    tbody tr:nth-child(odd) { background: ${colors.tableRow || '#ffffff'}; }
+    .no-break { page-break-inside: avoid; }
+
+    /* Cadres de résumé/signatures non coupés - RÈGLES STRICTES */
+    .box, .recap, .signatures, .totals-section, .total-box, .signature-block { 
+      page-break-inside: avoid !important; 
+      page-break-before: auto;
+    }
+    
+    /* Zone de contenu respecte les limites */
+    .content-zone {
+      max-width: 190mm !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    
+    /* Styles spécifiques pour les cellules de tableau */
+    .cell { 
+      padding: 8px 10px; 
+      border: 1px solid ${colors.tableBorder || '#e5e7eb'}; 
+      vertical-align: middle; 
+      color: ${colors.textColor || '#333'};
+    }
+    .th { 
+      background: ${colors.tableHeader || '#f8fafc'} !important; 
+      font-weight: 700; 
+      color: ${colors.tableHeaderText || '#333'} !important; 
+    }
+    
+    /* Conteneurs de totaux centrés */
+    .totals-container { 
+      display: flex; 
+      justify-content: center; 
+      gap: 20px; 
+      flex-wrap: wrap; 
+      margin: 30px 0; 
+      page-break-inside: avoid;
+    }
+    .total-box { 
+      background: ${colors.cardBackground || '#f8fafc'}; 
+      padding: 15px; 
+      border-radius: 8px; 
+      border: 2px solid ${colors.primary || '#2563eb'}; 
+      min-width: 250px; 
+      text-align: center; 
+      page-break-inside: avoid;
+    }
   `;
+  container.prepend(style);
 
   // PAGE 1: LETTRE DE PRÉSENTATION (si activée)
   if (settings.letterTemplate?.enabled) {
     const letterPage = document.createElement('div');
-    letterPage.className = 'pdf-container cover-page';
+    letterPage.className = 'intro-page a4';
     letterPage.innerHTML = `
-      ${generateHeader(`Le ${new Date(quote.date).toLocaleDateString('fr-CH')}`)}
-      <div class="cover-content">
-        <!-- Logo et informations vendeur -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+      <div class="content">
+        <!-- En-tête avec logo et vendeur -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid ${colors.primary};">
           <!-- Logo (gauche) -->
           <div style="flex: 0 0 auto; max-width: 40%;">
             ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 80px; max-width: 100%; object-fit: contain;" />` : `<div style="color: ${colors.letterHeaderColor}; font-size: 18pt; font-weight: bold;">${settings.sellerInfo?.name || 'Votre Entreprise'}</div>`}
@@ -423,174 +544,350 @@ export const buildDomFromLayout = async (
             </p>
           </div>
         </div>
-      </div>
 
-      <!-- Signatures en bas de page présentation -->
-      <div class="cover-signatures">
-        <div class="signature-block">
-          <h5>Le Vendeur</h5>
-          <div class="signature-identity">${settings.sellerInfo?.name || ''}</div>
-          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
-          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-placeholder">Signature vendeur</div>'}
-        </div>
-        <div class="signature-block">
-          <h5>Le Client</h5>
-          <div class="signature-identity">${quote.client}</div>
-          <div class="signature-title">${quote.clientCivility || ''}</div>
-          ${quote.clientSignature ? `<img class="signature-image" src="${quote.clientSignature}" alt="Signature client" />` : '<div class="signature-placeholder">Signature client</div>'}
+        <!-- Signatures en bas de page -->
+        <div class="signatures">
+          <div class="signature-block">
+            <div>Le Vendeur</div>
+            <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+            <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
+            ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+          </div>
+          <div class="signature-block">
+            <div>Le Client</div>
+            <div class="signature-name">${quote.client}</div>
+            <div class="signature-title">${quote.clientCivility || ''}</div>
+            <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
         </div>
       </div>
     </div>
+    </div> <!-- Fermeture content-zone -->
   `;
 
     container.appendChild(letterPage);
   }
 
-  // PAGES DEVIS avec en-tête répété et tableaux paginés
-  const createQuotePage = (itemsToDisplay: QuoteItem[], pageTitle: string) => {
-    const quotePage = document.createElement('div');
-    quotePage.className = 'pdf-container force-new-page';
-    
-    const renderBadge = (mode: string, kind: string) => {
-      if (kind === 'AGENT') return '<span class="badge badge--agent">Agent</span>';
-      if (mode === 'unique') return '<span class="badge badge--unique">Unique</span>';
-      if (mode === 'mensuel') return '<span class="badge badge--mensuel">Mensuel</span>';
-      return '<span class="badge badge--muted">-</span>';
-    };
+  // PAGE 2+: DEVIS
+  const quotePage = document.createElement('div');
+  quotePage.style.cssText = `
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    font-family: Arial, sans-serif;
+    background: ${colors.background};
+    color: ${colors.textColor};
+    box-sizing: border-box;
+  `;
 
-    const tableHTML = itemsToDisplay.length > 0 ? `
-      <table style="--table-header: ${colors.tableHeader}; --table-border: ${colors.tableBorder}; --table-header-text: ${colors.tableHeaderText}; --table-row: ${colors.tableRow}; --table-row-alt: ${colors.tableRowAlt}; --text-color: ${colors.textColor};">
-        <thead>
-          <tr>
-            <th style="width: 15%;">Type</th>
-            <th style="width: 25%;">Référence</th>
-            <th style="width: 12%;">Mode</th>
-            <th style="width: 10%;">Qté</th>
-            <th style="width: 15%;">Prix unit.</th>
-            <th style="width: 15%;">Total HT</th>
-            <th style="width: 8%;">Rem.</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsToDisplay.map(item => `
-            <tr>
-              <td>${item.type || ''}</td>
-              <td>${item.reference || ''}</td>
-              <td>${renderBadge(item.mode, item.kind)}</td>
-              <td style="text-align: center;">${item.qty || 0}</td>
-              <td style="text-align: right;">${(item.puHT || 0).toFixed(2)} CHF</td>
-              <td style="text-align: right;">${(item.totalHT_net || 0).toFixed(2)} CHF</td>
-              <td style="text-align: center;">${item.lineDiscountPct ? `${item.lineDiscountPct}%` : '-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    ` : '<p class="text-center" style="margin: 40px 0; color: #6b7280;">Aucun élément à afficher</p>';
-
-    quotePage.innerHTML = `
-      ${generateHeader(`Devis N° ${quote.ref} — ${pageTitle}`)}
-      <div class="page-content">
-        <h2 style="margin: 8mm 0 4mm 0; font-size: 14px; font-weight: 700; color: ${colors.titleColor};">${pageTitle}</h2>
-        ${tableHTML}
-      </div>
-    `;
-
-    return quotePage;
-  };
-
-  // Créer les pages de devis selon les types d'items
-  const techItems = quote.items.filter(item => item.kind === 'TECH');
-  const agentItems = quote.items.filter(item => item.kind === 'AGENT');
-
-  if (techItems.length > 0) {
-    container.appendChild(createQuotePage(techItems, 'Prestations Techniques'));
-  }
-
-  if (agentItems.length > 0) {
-    container.appendChild(createQuotePage(agentItems, 'Prestations d\'Agent'));
-  }
-
-  // PAGE FINALE: TOTAUX ET SIGNATURES
-  const finalPage = document.createElement('div');
-  finalPage.className = 'pdf-container force-new-page';
-  
-  // Calcul des totaux par catégorie
-  const techTotal = techItems.reduce((sum, item) => sum + (item.totalTTC || 0), 0);
-  const agentTotal = agentItems.reduce((sum, item) => sum + (item.totalTTC || 0), 0);
-  const grandTotal = totals.global.totalTTC;
-
-  finalPage.innerHTML = `
-    ${generateHeader(`Devis N° ${quote.ref} — Récapitulatif`)}
-    <div class="page-content">
-      <div class="totals-section" style="--primary-color: ${colors.primary};">
-        <h2 style="margin: 8mm 0 6mm 0; font-size: 16px; font-weight: 800; color: ${colors.titleColor}; text-align: center;">RÉCAPITULATIF DES TOTAUX</h2>
-        
-        <div class="totals-row">
-          ${techTotal > 0 ? `
-            <div class="total-card">
-              <div class="total-card__title">Technique</div>
-              <div class="total-card__amount">${techTotal.toFixed(2)} CHF</div>
-            </div>
-          ` : ''}
-          ${agentTotal > 0 ? `
-            <div class="total-card">
-              <div class="total-card__title">Agent</div>
-              <div class="total-card__amount">${agentTotal.toFixed(2)} CHF</div>
-            </div>
-          ` : ''}
-        </div>
-        
-        <div class="grand-total">
-          TOTAL GÉNÉRAL TTC : ${grandTotal.toFixed(2)} CHF
-        </div>
-        
-        ${settings.pdfSettings?.importantRemark ? `
-          <div class="important-remark">
-            ${settings.pdfSettings.importantRemark}
+  quotePage.innerHTML = `
+    <div class="content-zone">
+    <!-- En-tête du devis -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid ${colors.borderSecondary};">
+      <!-- Logo et vendeur (gauche) -->
+      <div style="flex: 0 0 auto; max-width: 50%;">
+        ${settings.logoUrl ? `
+          <div style="margin-bottom: 15px;">
+            <img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px; max-width: 100%; object-fit: contain;" />
           </div>
         ` : ''}
-      </div>
-
-      <!-- Signatures finales -->
-      <div class="cover-signatures" style="margin-top: 15mm;">
-        <div class="signature-block">
-          <h5>Le Vendeur</h5>
-          <div class="signature-identity">${settings.sellerInfo?.name || ''}</div>
-          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
-          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-placeholder">Signature vendeur</div>'}
+        <div>
+          <p style="font-weight: bold; font-size: 12pt; margin: 2px 0; color: ${colors.letterHeaderColor};">${settings.sellerInfo?.name || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.title || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.email || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.phone || ''}</p>
+          <p style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</p>
         </div>
-        <div class="signature-block">
-          <h5>Le Client</h5>
-          <div class="signature-identity">${quote.client}</div>
-          <div class="signature-title">${quote.clientCivility || ''}</div>
-          ${quote.clientSignature ? `<img class="signature-image" src="${quote.clientSignature}" alt="Signature client" />` : '<div class="signature-placeholder">Signature client</div>'}
+      </div>
+      
+      <!-- Adresse client (droite) -->
+      <div style="flex: 1; max-width: 45%; text-align: right;">
+        <div>
+          <p style="font-weight: bold; font-size: 14pt; margin: 4px 0; color: ${colors.titleColor};">${quote.addresses?.contact?.company || quote.client}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.name || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.street || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.country || ''}</p>
+          ${quote.addresses?.contact?.email ? `<p style="font-size: 10pt; color: ${colors.mutedTextColor}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
+          ${quote.addresses?.contact?.phone ? `<p style="font-size: 10pt; margin: 2px 0; color: ${colors.textColor};">${quote.addresses.contact.phone}</p>` : ''}
         </div>
       </div>
     </div>
+
+    <!-- Titre du devis -->
+    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.borderSecondary}; margin-bottom: 20px;">
+      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.titleColor}; margin: 0 0 8px 0;">
+        ${(() => {
+          const hasTech = quote.items.some(item => item.kind === 'TECH');
+          const hasAgent = quote.items.some(item => item.kind === 'AGENT');
+          if (hasTech && hasAgent) return 'DEVIS TECHNIQUE & AGENT';
+          if (hasAgent) return 'DEVIS AGENT';
+          return 'DEVIS TECHNIQUE';
+        })()}
+      </h1>
+      <p style="font-size: 14pt; margin: 4px 0; color: ${colors.subtitleColor};">Devis N° ${quote.ref}</p>
+      <p style="color: ${colors.letterDateColor || colors.mutedTextColor}; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
+    </div>
+
+    ${(quote.site || quote.contact || quote.canton) ? `
+      <!-- Informations complémentaires -->
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary}; font-size: 12pt;">Détails du projet</h3>
+        <div style="font-size: 10pt;">
+          ${quote.site ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Site:</span> ${quote.site}</p>` : ''}
+          ${quote.contact ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Contact:</span> ${quote.contact}</p>` : ''}
+          ${quote.canton ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Canton:</span> ${quote.canton}</p>` : ''}
+        </div>
+      </div>
+    ` : ''}
+
+    ${quote.items.some(item => item.kind === 'TECH') ? `
+      <!-- Prestations TECH -->
+      <div style="margin: 20px 0;">
+        <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations techniques</h3>
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
+          <thead>
+            <tr style="background: ${colors.tableHeader || '#f8fafc'}; color: ${colors.tableHeaderText || '#334155'};">
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Type</th>
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Référence</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Mode</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Qté</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">PU TTC</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Total TTC</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
+              <tr style="background: ${index % 2 === 0 ? (colors.tableRow || '#ffffff') : (colors.tableRowAlt || '#f8fafc')}; page-break-inside: avoid;">
+                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.type}</td>
+                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.reference}</td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
+                  <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}">
+                    ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                  </span>
+                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.qty || 1}</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : ''}
+
+    ${quote.items.some(item => item.kind === 'AGENT') ? `
+      <!-- Services AGENT -->
+      <div style="margin: 20px 0;">
+        <h2 style="text-align:center; margin: 8mm 0 4mm 0;">Devis Agent</h2>
+        <div style="text-align:center; color:#6b7280; margin-bottom:8mm;">
+          Devis N° ${quote.ref} — Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}
+        </div>
+        <table class="table-agent">
+          <thead>
+            <tr>
+              <th class="cell th">Description</th>
+              <th class="cell th">Type</th>
+              <th class="cell th">Date début</th>
+              <th class="cell th">Heure début</th>
+              <th class="cell th">Date fin</th>
+              <th class="cell th">Heure fin</th>
+              <th class="cell th">Heures normales</th>
+              <th class="cell th">Heures majorées</th>
+              <th class="cell th">Tarif/h</th>
+              <th class="cell th">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
+              <tr style="background: ${index % 2 === 0 ? (colors.tableRowAlt || '#f8fafc') : (colors.tableRow || '#ffffff')}; page-break-inside: avoid;">
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">
+                  <div style="font-weight: bold;">${item.reference}</div>
+                  <span class="badge badge--agent">Agent</span>
+                </td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.agentType || item.type}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeStart || '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeEnd || '-'}</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.hoursNormal || 0).toFixed(2)} h</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(2)} h</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.rateCHFh || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.lineTTC || item.totalTTC || 0).toFixed(2)} CHF</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : ''}
+
+    <!-- Totaux séparés par catégorie -->
+    <div class="totals-section">
+      ${totals.unique.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE UNIQUE</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              ${totals.unique.discountHT > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Remise:</span>
+                  <span>-${totals.unique.discountHT.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Net HT:</span>
+                  <span>${totals.unique.htAfterDiscount.toFixed(2)} CHF</span>
+                </div>
+              ` : ''}
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.unique.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${totals.mensuel.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE MENSUEL</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              ${totals.mensuel.discountHT > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Remise:</span>
+                  <span>-${totals.mensuel.discountHT.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Net HT:</span>
+                  <span>${totals.mensuel.htAfterDiscount.toFixed(2)} CHF</span>
+                </div>
+              ` : ''}
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.mensuel.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${totals.agents.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">AGENT</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.agents.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.agents.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      <!-- Total général -->
+      <div class="totals-container" style="margin-top: 20px;">
+        <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground};">
+          <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">TOTAL GÉNÉRAL</h3>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary}; margin-top: 10px;">
+            <span>TOTAL TTC:</span>
+            <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div style="margin-top: 40px; page-break-inside: avoid;">
+      <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
+      <div class="signatures">
+        <div class="signature-block">
+          <div>Le Vendeur</div>
+          <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
+          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+        </div>
+        <div class="signature-block">
+          <div>Le Client</div>
+          <div class="signature-name">${quote.client}</div>
+          <div class="signature-title">${quote.clientCivility || ''}</div>
+          ${quote.clientSignature ? 
+            `<canvas class="signature-image" style="border: 1px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; max-height: 28mm; max-width: 80mm;" data-signature="${quote.clientSignature}"></canvas>` : 
+            `<div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>`
+          }
+        </div>
+      </div>
+    </div>
+    </div> <!-- Fermeture content-zone -->
   `;
 
-  container.appendChild(finalPage);
+  container.appendChild(quotePage);
+
+  // Traitement des signatures client après insertion DOM
+  if (quote.clientSignature) {
+    setTimeout(() => {
+      const canvases = container.querySelectorAll('canvas[data-signature]');
+      canvases.forEach((canvas: any) => {
+        const signatureData = canvas.getAttribute('data-signature');
+        if (signatureData) {
+          try {
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+            };
+            img.src = signatureData;
+          } catch (error) {
+            console.warn('Erreur lors du rendu de la signature client:', error);
+          }
+        }
+      });
+    }, 100);
+  }
 
   return container;
 };
 
 export async function exportDomToPdf(dom: HTMLElement, filename: string): Promise<Blob> {
   const opt = {
-    margin: [10, 12, 10, 12], // marges sécurisées pour impression
+    margin: 0,
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
       scale: 2,
       useCORS: true,
-      allowTaint: true,
-      letterRendering: true
+      allowTaint: true
     },
     jsPDF: { 
       unit: 'mm', 
       format: 'a4', 
       orientation: 'portrait' 
-    },
-    pagebreak: { mode: ['css', 'legacy'] }
+    }
   };
 
   try {
@@ -598,6 +895,6 @@ export async function exportDomToPdf(dom: HTMLElement, filename: string): Promis
     return pdf;
   } catch (error) {
     console.error('Erreur lors de l\'export PDF:', error);
-    throw new Error('Impossible de générer le PDF. Vérifiez le contenu et réessayez.');
+    throw new Error('Impossible de générer le PDF');
   }
 }

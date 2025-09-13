@@ -222,9 +222,6 @@ const defaultSettings: Settings = {
   letterTemplate: defaultLetterTemplate,
   sellerInfo: defaultSellerInfo,
   templateColors: defaultTemplateColors,
-  pdfSettings: {
-    importantRemark: 'Les heures de nuit, dimanche et jours fériés sont majorées de 10% selon la CCT.'
-  },
   subscriptions: [
     {
       id: '1',
