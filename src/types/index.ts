@@ -124,6 +124,9 @@ export interface Settings {
   letterTemplate: LetterTemplate;
   sellerInfo: SellerInfo;
   templateColors: TemplateColors;
+  pdfSettings: {
+    importantRemark?: string;
+  };
   defaults: {
     feesInstallHT?: number;
     feesDossierHT?: number;
