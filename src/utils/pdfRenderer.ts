@@ -353,7 +353,35 @@ export async function buildDomFromLayout(
     accent: '#059669',
     titleColor: '#000000',
     subtitleColor: '#666666',
-    textColor: '#000000'
+    textColor: '#000000',
+    mutedTextColor: '#666666',
+    background: '#ffffff',
+    cardBackground: '#fafafa',
+    headerBackground: '#f8fafc',
+    tableHeader: '#f5f5f5',
+    tableHeaderText: '#000000',
+    tableRow: '#ffffff',
+    tableRowAlt: '#f8fafc',
+    tableBorder: '#e2e8f0',
+    badgeUnique: '#059669',
+    badgeMensuel: '#7c3aed',
+    badgeText: '#ffffff',
+    totalCardBorder: '#2563eb',
+    totalUniqueBackground: '#f0f9ff',
+    totalMensuelBackground: '#faf5ff',
+    grandTotalBackground: '#f8fafc',
+    grandTotalBorder: '#2563eb',
+    borderPrimary: '#e2e8f0',
+    borderSecondary: '#f1f5f9',
+    separatorColor: '#e2e8f0',
+    letterHeaderColor: '#2563eb',
+    letterDateColor: '#666666',
+    letterSubjectColor: '#2563eb',
+    letterSignatureColor: '#000000',
+    signatureBoxBorder: '#e2e8f0',
+    signatureBoxBackground: '#fafafa',
+    signatureTitleColor: '#2563eb',
+    signatureTextColor: '#666666'
   };
 
   root.innerHTML = `
@@ -467,6 +495,40 @@ export async function buildDomFromLayout(
       </div>
     </div>
 
+    ${settings.letterTemplate?.enabled ? `
+      <!-- Lettre de présentation -->
+      <div class="section" style="margin: 30px 0; page-break-inside: avoid;">
+        <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'}; font-size: 11pt; line-height: 1.6;">
+          <div style="margin-bottom: 20px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor || colors.primary}; margin: 8px 0; font-size: 12pt;">
+              ${settings.letterTemplate.subject}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0;">
+              ${settings.letterTemplate.civility} ${quote.client},
+            </p>
+            <p style="margin: 8px 0;">
+              ${settings.letterTemplate.opening}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; margin: 8px 0; white-space: pre-wrap;">
+              ${settings.letterTemplate.body}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'}; margin: 8px 0;">
+              ${settings.letterTemplate.closing}
+            </p>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
     ${quote.comment ? `
       <!-- Commentaire -->
       <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
@@ -475,8 +537,37 @@ export async function buildDomFromLayout(
       </div>
     ` : ''}
 
+    <!-- Signatures -->
+    <div class="section" style="margin: 40px 0 20px 0; page-break-inside: avoid;">
+      <div style="display: flex; justify-content: space-between; gap: 20px;">
+        <!-- Signature vendeur -->
+        <div style="flex: 1; border: 2px solid ${colors.signatureBoxBorder || colors.borderPrimary}; border-radius: 8px; padding: 15px; background: ${colors.signatureBoxBackground || '#fafafa'}; min-height: 100px;">
+          <h4 style="font-weight: bold; margin: 0 0 15px 0; color: ${colors.signatureTitleColor || colors.primary}; font-size: 12pt;">
+            Le vendeur
+          </h4>
+          <div style="margin-top: 50px; color: ${colors.signatureTextColor || colors.textColor}; font-size: 9pt;">
+            <p style="margin: 2px 0;">Le ${new Date().toLocaleDateString('fr-CH')}, à ${settings.sellerInfo?.location || 'Genève'}</p>
+            ${settings.sellerInfo?.name ? `<p style="margin: 2px 0; font-weight: bold;">${settings.sellerInfo.name}</p>` : ''}
+            ${settings.sellerInfo?.signature ? `<img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 40px; margin-top: 10px;" />` : ''}
+          </div>
+        </div>
+        
+        <!-- Signature client -->
+        <div style="flex: 1; border: 2px solid ${colors.signatureBoxBorder || colors.borderPrimary}; border-radius: 8px; padding: 15px; background: ${colors.signatureBoxBackground || '#fafafa'}; min-height: 100px;">
+          <h4 style="font-weight: bold; margin: 0 0 15px 0; color: ${colors.signatureTitleColor || colors.primary}; font-size: 12pt;">
+            Le client
+          </h4>
+          <div style="margin-top: 30px; color: ${colors.signatureTextColor || colors.textColor}; font-size: 9pt;">
+            <p style="margin: 2px 0;">Nom et signature :</p>
+            <div style="border-bottom: 1px solid #ccc; height: 40px; margin-top: 10px;"></div>
+            ${quote.clientSignature ? `<img src="${quote.clientSignature}" alt="Signature client" style="max-height: 40px; margin-top: 5px;" />` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Pied de page -->
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid ${colors.secondary}; text-align: center; color: ${colors.secondary}; font-size: 10pt;">
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid ${colors.separatorColor || colors.borderSecondary}; text-align: center; color: ${colors.mutedTextColor || colors.secondary}; font-size: 10pt;">
       <p style="margin: 0;">${settings.pdfFooter || 'Mentions légales - #NousRendonsLaSuisseSure'}</p>
     </div>
   `;

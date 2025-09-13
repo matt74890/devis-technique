@@ -20,6 +20,8 @@ import FontUpload from '@/components/settings/FontUpload';
 import { PDFCenter } from '@/components/settings/PDFCenter';
 import CurrencySettings from '@/components/settings/CurrencySettings';
 import SellerInfo from '@/components/settings/SellerInfo';
+import TemplateColors from '@/components/settings/TemplateColors';
+import LetterTemplate from '@/components/settings/LetterTemplate';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -88,7 +90,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -96,6 +98,10 @@ const SettingsScreen = () => {
           <TabsTrigger value="catalog" className="flex items-center space-x-2">
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Catalogue</span>
+          </TabsTrigger>
+          <TabsTrigger value="pdf" className="flex items-center space-x-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">PDF</span>
           </TabsTrigger>
           <TabsTrigger value="agent" className="flex items-center space-x-2">
             <Activity className="h-4 w-4" />
@@ -827,6 +833,8 @@ const SettingsScreen = () => {
             </Card>
             
             <PDFCenter />
+            <TemplateColors />
+            <LetterTemplate />
           </div>
         </TabsContent>
 
