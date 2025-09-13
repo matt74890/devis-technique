@@ -13,7 +13,7 @@ import PDFPreview from '@/components/pdf/PDFPreview';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 import { useState } from "react";
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportToPDF } from "@/utils/pdfRenderer";
+import { exportDomToPdf } from "@/utils/pdfRenderer";
 import type { Quote, Settings } from "@/types";
 
 const RecapScreen = () => {
@@ -125,10 +125,15 @@ const RecapScreen = () => {
         await (document as any).fonts.ready;
       }
 
-      // 2) Ajouter le DOM au document temporairement pour l'export
-      document.body.appendChild(dom);
-      await exportToPDF('', quote);
-      document.body.removeChild(dom);
+      // 2) exporter en binaire
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const blob = await exportDomToPdf(dom, filename);
+
+      // 3) download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
 
       toast.success("PDF téléchargé");
     } catch (e) {

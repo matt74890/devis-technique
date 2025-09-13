@@ -133,9 +133,6 @@ export interface Settings {
     enabled: boolean;
     helpText: string;
   };
-  pdfSettings?: {
-    importantRemark?: string;
-  };
   agentSettings: {
     nightStartTime: string;
     nightEndTime: string;
