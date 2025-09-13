@@ -329,96 +329,138 @@ export const buildDomFromLayout = async (
   const container = document.createElement('div');
   container.setAttribute('data-a4-root', 'true');
 
+  // CSS GLOBAL A4 selon spécifications exactes
+  const style = document.createElement("style");
+  style.textContent = `
+    @page { size: A4; margin: 12mm; }
+    [data-a4-root]{max-width:190mm;}
+
+    /* --- Couverture / Présentation --- */
+    .cover-page { page-break-after: always; }
+    .cover-page .content { min-height: 230mm; display:flex; flex-direction:column; }
+    .cover-page .footer-sign { margin-top:auto; }
+
+    /* --- Signatures --- */
+    .signatures { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:24px; }
+    .signature-box { border-top:1px solid #ddd; padding-top:8px; }
+    .signature-title { font-weight:600; margin-bottom:4px; }
+    .signature-name { font-weight:600; }
+    .signature-role { color:#6b7280; font-size:12px; }
+    .signature-draw { height:40px; margin-top:8px; }
+
+    /* --- Badges --- */
+    .badge { 
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:2px 8px; border-radius:6px; font-size:12px; line-height:1; 
+      min-height:20px; vertical-align:middle;
+    }
+    .badge--agent { background:${colors.badgeAgent}; color:#ffffff; }
+
+    /* --- Tableaux --- */
+    table { table-layout:fixed; width:100%; border-collapse:collapse; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr, td, th { page-break-inside: avoid; }
+    tbody { page-break-inside: auto; }
+    .cell { padding:8px 10px; border:1px solid #E5E7EB; }
+    .th { background:${colors.headerBackground}; font-weight:700; }
+
+    /* Encarts récap */
+    .recap { border:2px solid ${colors.headerBackground}; border-radius:12px; padding:16px; }
+
+    /* Utilitaires */
+    .hard-break { page-break-before: always; }
+  `;
+  container.prepend(style);
+
   // PAGE 1: LETTRE DE PRÉSENTATION (si activée)
   if (settings.letterTemplate?.enabled) {
-    const letterPage = document.createElement('div');
-    letterPage.style.cssText = `
-      width: 210mm;
-      min-height: 297mm;
-      page-break-after: always;
-      padding: 20mm;
-      font-family: Arial, sans-serif;
-      background: ${colors.background};
-      color: ${colors.textColor};
-      box-sizing: border-box;
-    `;
-
+    const letterPage = document.createElement('section');
+    letterPage.className = 'cover-page';
     letterPage.innerHTML = `
-      <!-- En-tête avec logo et vendeur -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid ${colors.primary};">
-        <!-- Logo (gauche) -->
-        <div style="flex: 0 0 auto; max-width: 40%;">
-          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 80px; max-width: 100%; object-fit: contain;" />` : `<div style="color: ${colors.letterHeaderColor}; font-size: 18pt; font-weight: bold;">${settings.sellerInfo?.name || 'Votre Entreprise'}</div>`}
-        </div>
-        
-        <!-- Informations vendeur (droite) -->
-        <div style="flex: 0 0 auto; max-width: 55%; text-align: right;">
-          <div style="font-weight: bold; font-size: 12pt; color: ${colors.letterHeaderColor}; margin-bottom: 4px;">${settings.sellerInfo?.name || ''}</div>
-          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.title || ''}</div>
-          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.email || ''}</div>
-          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.phone || ''}</div>
-          <div style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</div>
-        </div>
-      </div>
-
-      <!-- Adresse client -->
-      <div style="margin: 40px 0; text-align: right;">
-        <div style="font-weight: bold; font-size: 14pt; color: ${colors.titleColor}; margin-bottom: 8px;">${quote.addresses?.contact?.company || quote.client}</div>
-        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.name || ''}</div>
-        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.street || ''}</div>
-        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</div>
-        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.country || ''}</div>
-      </div>
-
-      <!-- Référence du devis -->
-      <div style="margin: 30px 0; padding: 15px; background: ${colors.cardBackground}; border-radius: 8px; border-left: 4px solid ${colors.primary};">
-        <div style="font-size: 12pt; font-weight: bold; color: ${colors.primary};">Devis N° ${quote.ref}</div>
-        <div style="font-size: 10pt; color: ${colors.mutedTextColor}; margin-top: 4px;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
-      </div>
-
-      <!-- Contenu de la lettre -->
-      <div style="line-height: 1.7; font-size: 11pt;">
-        <!-- Objet -->
-        <div style="margin: 25px 0;">
-          <div style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor}; font-size: 12pt; margin-bottom: 8px;">
-            ${settings.letterTemplate.subject}
+      <div class="content">
+        <!-- En-tête avec logo et vendeur -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid ${colors.primary};">
+          <!-- Logo (gauche) -->
+          <div style="flex: 0 0 auto; max-width: 40%;">
+            ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 80px; max-width: 100%; object-fit: contain;" />` : `<div style="color: ${colors.letterHeaderColor}; font-size: 18pt; font-weight: bold;">${settings.sellerInfo?.name || 'Votre Entreprise'}</div>`}
+          </div>
+          
+          <!-- Informations vendeur (droite) -->
+          <div style="flex: 0 0 auto; max-width: 55%; text-align: right;">
+            <div style="font-weight: bold; font-size: 12pt; color: ${colors.letterHeaderColor}; margin-bottom: 4px;">${settings.sellerInfo?.name || ''}</div>
+            <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.title || ''}</div>
+            <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.email || ''}</div>
+            <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.phone || ''}</div>
+            <div style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</div>
           </div>
         </div>
-        
-        <!-- Civilité et ouverture -->
-        <div style="margin: 20px 0;">
-          <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0;">
-            ${settings.letterTemplate.civility} ${quote.client},
-          </p>
-          <p style="margin: 12px 0;">
-            ${settings.letterTemplate.opening}
-          </p>
+
+        <!-- Adresse client -->
+        <div style="margin: 40px 0; text-align: right;">
+          <div style="font-weight: bold; font-size: 14pt; color: ${colors.titleColor}; margin-bottom: 8px;">${quote.addresses?.contact?.company || quote.client}</div>
+          <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.name || ''}</div>
+          <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.street || ''}</div>
+          <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</div>
+          <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.country || ''}</div>
         </div>
-        
-        <!-- Corps de la lettre -->
-        <div style="margin: 20px 0;">
-          <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; white-space: pre-wrap; line-height: 1.6;">
-            ${settings.letterTemplate.body}
-          </p>
+
+        <!-- Référence du devis -->
+        <div style="margin: 30px 0; padding: 15px; background: ${colors.cardBackground}; border-radius: 8px; border-left: 4px solid ${colors.primary};">
+          <div style="font-size: 12pt; font-weight: bold; color: ${colors.primary};">Devis N° ${quote.ref}</div>
+          <div style="font-size: 10pt; color: ${colors.mutedTextColor}; margin-top: 4px;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
         </div>
-        
-        <!-- Clôture -->
-        <div style="margin: 20px 0;">
-          <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'};">
-            ${settings.letterTemplate.closing}
-          </p>
-        </div>
-        
-        <!-- Signature -->
-        <div style="margin-top: 40px; text-align: right;">
-          <div style="color: ${colors.letterSignatureColor}; font-style: italic; font-size: 11pt;">
-            ${settings.sellerInfo?.name || ''}
-          </div>
-          ${settings.sellerInfo?.signature ? `
-            <div style="margin-top: 10px;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; max-width: 200px;" />
+
+        <!-- Contenu de la lettre -->
+        <div style="line-height: 1.7; font-size: 11pt;">
+          <!-- Objet -->
+          <div style="margin: 25px 0;">
+            <div style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor}; font-size: 12pt; margin-bottom: 8px;">
+              ${settings.letterTemplate.subject}
             </div>
-          ` : ''}
+          </div>
+          
+          <!-- Civilité et ouverture -->
+          <div style="margin: 20px 0;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0;">
+              ${settings.letterTemplate.civility} ${quote.client},
+            </p>
+            <p style="margin: 12px 0;">
+              ${settings.letterTemplate.opening}
+            </p>
+          </div>
+          
+          <!-- Corps de la lettre -->
+          <div style="margin: 20px 0;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; white-space: pre-wrap; line-height: 1.6;">
+              ${settings.letterTemplate.body}
+            </p>
+          </div>
+          
+          <!-- Clôture -->
+          <div style="margin: 20px 0;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'};">
+              ${settings.letterTemplate.closing}
+            </p>
+          </div>
+        </div>
+
+        <!-- Signatures en bas de page -->
+        <div class="footer-sign">
+          <div class="signatures">
+            <div class="signature-box">
+              <div class="signature-title">Le Vendeur</div>
+              <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+              <div class="signature-role">${settings.sellerInfo?.title || ''}</div>
+              ${settings.sellerInfo?.signature ? `<img class="signature-draw" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-draw"></div>'}
+            </div>
+            <div class="signature-box">
+              <div class="signature-title">Le Client</div>
+              <div class="signature-name">${quote.client}</div>
+              <div class="signature-role">${quote.clientCivility || ''}</div>
+              <div class="signature-draw"></div>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -473,7 +515,9 @@ export const buildDomFromLayout = async (
 
     <!-- Titre du devis -->
     <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.borderSecondary}; margin-bottom: 20px;">
-      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.titleColor}; margin: 0 0 8px 0;">${settings.pdfTitle || 'DEVIS'}</h1>
+      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.titleColor}; margin: 0 0 8px 0;">
+        ${quote.items.some(item => item.kind === 'AGENT') ? 'DEVIS AGENT' : settings.pdfTitle || 'DEVIS'}
+      </h1>
       <p style="font-size: 14pt; margin: 4px 0; color: ${colors.subtitleColor};">Devis N° ${quote.ref}</p>
       <p style="color: ${colors.letterDateColor || colors.mutedTextColor}; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
     </div>
@@ -511,7 +555,7 @@ export const buildDomFromLayout = async (
                 <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.type}</td>
                 <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.reference}</td>
                 <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">
-                  <span style="padding: 2px 6px; border-radius: 3px; font-size: 9pt; background: ${item.mode === 'mensuel' ? colors.badgeMensuel : colors.badgeUnique}; color: ${colors.badgeText};">
+                  <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}" style="background: ${item.mode === 'mensuel' ? colors.badgeMensuel : colors.badgeUnique}; color: ${colors.badgeText};">
                     ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
                   </span>
                 </td>
@@ -528,29 +572,31 @@ export const buildDomFromLayout = async (
     ${quote.items.some(item => item.kind === 'AGENT') ? `
       <!-- Services AGENT -->
       <div style="margin: 20px 0;">
-        <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Services agent</h3>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary};">
+        <h2 style="text-align:center; margin: 8mm 0 4mm 0;">Devis Agent</h2>
+        <div style="text-align:center; color:#6b7280; margin-bottom:8mm;">
+          Devis N° ${quote.ref} — Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}
+        </div>
+        <table>
           <thead>
-            <tr style="background: ${colors.primary}; color: white;">
-              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Description</th>
-              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Durée (h)</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Tarif/h</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Total</th>
+            <tr>
+              <th class="cell th">Description</th>
+              <th class="cell th">Type</th>
+              <th class="cell th">Durée (h)</th>
+              <th class="cell th">Tarif/h</th>
+              <th class="cell th">Total</th>
             </tr>
           </thead>
           <tbody>
             ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
               <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
-                <td style="padding: 6px; border: 1px solid ${colors.secondary};">
+                <td class="cell">
                   <div style="font-weight: bold;">${item.reference}</div>
-                  <div style="font-size: 9pt; color: ${colors.mutedTextColor};">${item.type}</div>
-                  <span style="display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 8pt; background: ${colors.badgeAgent}; color: ${colors.badgeText}; margin-top: 4px;">
-                    Agent
-                  </span>
+                  <span class="badge badge--agent" style="margin-top: 4px;">Agent</span>
                 </td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty || 1}h</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.rateCHFh || item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+                <td class="cell">${item.type}</td>
+                <td class="cell">${item.qty || 1}h</td>
+                <td class="cell">${(item.rateCHFh || item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td class="cell">${(item.totalTTC || 0).toFixed(2)} CHF</td>
               </tr>
             `).join('')}
           </tbody>
@@ -586,18 +632,18 @@ export const buildDomFromLayout = async (
     <!-- Signatures -->
     <div style="margin-top: 40px; page-break-inside: avoid;">
       <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div style="border: 2px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 20px; text-align: center;">Le Vendeur</div>
-          <div style="margin-top: 60px; text-align: center; color: ${colors.signatureTextColor}; font-size: 9pt;">
-            Nom et signature
-          </div>
+      <div class="signatures">
+        <div class="signature-box">
+          <div class="signature-title">Le Vendeur</div>
+          <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+          <div class="signature-role">${settings.sellerInfo?.title || ''}</div>
+          ${settings.sellerInfo?.signature ? `<img class="signature-draw" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : '<div class="signature-draw"></div>'}
         </div>
-        <div style="border: 2px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 8px; min-height: 120px;">
-          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 20px; text-align: center;">Le Client</div>
-          <div style="margin-top: 60px; text-align: center; color: ${colors.signatureTextColor}; font-size: 9pt;">
-            Nom et signature
-          </div>
+        <div class="signature-box">
+          <div class="signature-title">Le Client</div>
+          <div class="signature-name">${quote.client}</div>
+          <div class="signature-role">${quote.clientCivility || ''}</div>
+          <div class="signature-draw"></div>
         </div>
       </div>
     </div>
