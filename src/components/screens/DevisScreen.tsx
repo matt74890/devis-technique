@@ -20,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
+import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
+import { exportDomToPdf } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -39,6 +41,7 @@ const DevisScreen = () => {
   const [emailRaw, setEmailRaw] = useState('');
   const [isProcessingEmail, setIsProcessingEmail] = useState(false);
   const [showVacationGenerator, setShowVacationGenerator] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Auto-save when client changes
   useEffect(() => {
