@@ -386,40 +386,81 @@ export async function buildDomFromLayout(
 
   root.innerHTML = `
     <!-- En-tête avec logo et adresses -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; gap: 20px;">
       <!-- Logo et vendeur (gauche) -->
-      <div style="flex: 1;">
+      <div style="flex: 1; max-width: 45%;">
         ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;" />` : ''}
         ${settings.sellerInfo?.name ? `
-          <div style="font-size: 11pt;">
-            <p style="font-weight: bold; color: ${colors.primary}; margin: 4px 0;">${settings.sellerInfo.name}</p>
-            ${settings.sellerInfo.title ? `<p style="color: #666; margin: 2px 0;">${settings.sellerInfo.title}</p>` : ''}
-            ${settings.sellerInfo.email ? `<p style="margin: 2px 0;">${settings.sellerInfo.email}</p>` : ''}
-            ${settings.sellerInfo.phone ? `<p style="margin: 2px 0;">${settings.sellerInfo.phone}</p>` : ''}
+          <div style="font-size: 11pt; color: ${colors.textColor};">
+            <p style="font-weight: bold; color: ${colors.letterHeaderColor || colors.primary}; margin: 4px 0; font-size: 12pt;">${settings.sellerInfo.name}</p>
+            ${settings.sellerInfo.title ? `<p style="color: ${colors.subtitleColor}; margin: 2px 0;">${settings.sellerInfo.title}</p>` : ''}
+            ${settings.sellerInfo.email ? `<p style="margin: 2px 0; color: ${colors.textColor};">${settings.sellerInfo.email}</p>` : ''}
+            ${settings.sellerInfo.phone ? `<p style="margin: 2px 0; color: ${colors.textColor};">${settings.sellerInfo.phone}</p>` : ''}
+            ${settings.sellerInfo.location ? `<p style="margin: 2px 0; color: ${colors.mutedTextColor};">${settings.sellerInfo.location}</p>` : ''}
           </div>
         ` : ''}
       </div>
       
       <!-- Adresse client (droite) -->
-      <div style="text-align: right;">
+      <div style="flex: 1; max-width: 45%; text-align: right;">
         <div>
-          <p style="font-weight: bold; font-size: 14pt; margin: 4px 0;">${quote.addresses.contact.company || quote.client}</p>
-          <p style="margin: 2px 0;">${quote.addresses.contact.name}</p>
-          <p style="margin: 2px 0;">${quote.addresses.contact.street}</p>
-          <p style="margin: 2px 0;">${quote.addresses.contact.postalCode} ${quote.addresses.contact.city}</p>
-          <p style="margin: 2px 0;">${quote.addresses.contact.country}</p>
-          ${quote.addresses.contact.email ? `<p style="font-size: 10pt; color: ${colors.secondary}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
-          ${quote.addresses.contact.phone ? `<p style="font-size: 10pt; margin: 2px 0;">${quote.addresses.contact.phone}</p>` : ''}
+          <p style="font-weight: bold; font-size: 14pt; margin: 4px 0; color: ${colors.titleColor};">${quote.addresses?.contact?.company || quote.client}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.name || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.street || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.country || ''}</p>
+          ${quote.addresses?.contact?.email ? `<p style="font-size: 10pt; color: ${colors.mutedTextColor}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
+          ${quote.addresses?.contact?.phone ? `<p style="font-size: 10pt; margin: 2px 0; color: ${colors.textColor};">${quote.addresses.contact.phone}</p>` : ''}
         </div>
       </div>
     </div>
 
     <!-- Titre du devis -->
-    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.secondary};">
-      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.primary}; margin: 0 0 8px 0;">${settings.pdfTitle || 'DEVIS'}</h1>
-      <p style="font-size: 14pt; margin: 4px 0; color: ${colors.secondary};">Devis N° ${quote.ref}</p>
-      <p style="color: #666; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
+    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.borderSecondary}; margin-bottom: 20px;">
+      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.titleColor}; margin: 0 0 8px 0;">${settings.pdfTitle || 'DEVIS'}</h1>
+      <p style="font-size: 14pt; margin: 4px 0; color: ${colors.subtitleColor};">Devis N° ${quote.ref}</p>
+      <p style="color: ${colors.letterDateColor || colors.mutedTextColor}; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
     </div>
+
+    ${settings.letterTemplate?.enabled ? `
+      <!-- Lettre de présentation -->
+      <div class="section" style="margin: 20px 0 30px 0; page-break-inside: avoid; background: ${colors.cardBackground}; padding: 20px; border-radius: 8px; border: 1px solid ${colors.borderSecondary};">
+        <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'}; font-size: 11pt; line-height: 1.6; color: ${colors.textColor};">
+          <div style="margin-bottom: 20px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor || colors.primary}; margin: 8px 0; font-size: 13pt;">
+              ${settings.letterTemplate.subject}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0; color: ${colors.textColor};">
+              ${settings.letterTemplate.civility} ${quote.client},
+            </p>
+            <p style="margin: 8px 0; color: ${colors.textColor};">
+              ${settings.letterTemplate.opening}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; margin: 8px 0; white-space: pre-wrap; color: ${colors.textColor};">
+              ${settings.letterTemplate.body}
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 10px;">
+            <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'}; margin: 8px 0; color: ${colors.textColor};">
+              ${settings.letterTemplate.closing}
+            </p>
+          </div>
+          
+          <div style="text-align: right; margin-top: 20px;">
+            <p style="color: ${colors.letterSignatureColor || colors.textColor}; font-style: italic;">
+              ${settings.sellerInfo?.name || ''}
+            </p>
+          </div>
+        </div>
+      </div>
+    ` : ''}
 
     ${(quote.site || quote.contact || quote.canton) ? `
       <!-- Informations complémentaires -->
@@ -539,30 +580,58 @@ export async function buildDomFromLayout(
 
     <!-- Signatures -->
     <div class="section" style="margin: 40px 0 20px 0; page-break-inside: avoid;">
-      <div style="display: flex; justify-content: space-between; gap: 20px;">
+      <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.titleColor}; margin-bottom: 20px; text-align: center;">
+        Validation du devis
+      </h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch;">
         <!-- Signature vendeur -->
-        <div style="flex: 1; border: 2px solid ${colors.signatureBoxBorder || colors.borderPrimary}; border-radius: 8px; padding: 15px; background: ${colors.signatureBoxBackground || '#fafafa'}; min-height: 100px;">
-          <h4 style="font-weight: bold; margin: 0 0 15px 0; color: ${colors.signatureTitleColor || colors.primary}; font-size: 12pt;">
-            Le vendeur
-          </h4>
-          <div style="margin-top: 50px; color: ${colors.signatureTextColor || colors.textColor}; font-size: 9pt;">
-            <p style="margin: 2px 0;">Le ${new Date().toLocaleDateString('fr-CH')}, à ${settings.sellerInfo?.location || 'Genève'}</p>
-            ${settings.sellerInfo?.name ? `<p style="margin: 2px 0; font-weight: bold;">${settings.sellerInfo.name}</p>` : ''}
-            ${settings.sellerInfo?.signature ? `<img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 40px; margin-top: 10px;" />` : ''}
+        <div style="border: 2px solid ${colors.signatureBoxBorder}; border-radius: 12px; padding: 20px; background: ${colors.signatureBoxBackground}; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h4 style="font-weight: bold; margin: 0 0 10px 0; color: ${colors.signatureTitleColor}; font-size: 12pt; text-align: center;">
+              Le vendeur
+            </h4>
+            <div style="text-align: center; color: ${colors.signatureTextColor}; font-size: 10pt; margin-bottom: 15px;">
+              <p style="margin: 2px 0;">Le ${new Date().toLocaleDateString('fr-CH')}</p>
+              <p style="margin: 2px 0;">à ${settings.sellerInfo?.location || 'Genève'}</p>
+            </div>
+          </div>
+          <div style="text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+            ${settings.sellerInfo?.signature ? `
+              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 50px; margin: 10px auto;" />
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.borderSecondary}; height: 50px; margin: 10px 0;"></div>
+            `}
+            <p style="margin: 5px 0; font-weight: bold; color: ${colors.signatureTextColor}; font-size: 10pt;">
+              ${settings.sellerInfo?.name || 'Nom du vendeur'}
+            </p>
           </div>
         </div>
         
         <!-- Signature client -->
-        <div style="flex: 1; border: 2px solid ${colors.signatureBoxBorder || colors.borderPrimary}; border-radius: 8px; padding: 15px; background: ${colors.signatureBoxBackground || '#fafafa'}; min-height: 100px;">
-          <h4 style="font-weight: bold; margin: 0 0 15px 0; color: ${colors.signatureTitleColor || colors.primary}; font-size: 12pt;">
-            Le client
-          </h4>
-          <div style="margin-top: 30px; color: ${colors.signatureTextColor || colors.textColor}; font-size: 9pt;">
-            <p style="margin: 2px 0;">Nom et signature :</p>
-            <div style="border-bottom: 1px solid #ccc; height: 40px; margin-top: 10px;"></div>
-            ${quote.clientSignature ? `<img src="${quote.clientSignature}" alt="Signature client" style="max-height: 40px; margin-top: 5px;" />` : ''}
+        <div style="border: 2px solid ${colors.signatureBoxBorder}; border-radius: 12px; padding: 20px; background: ${colors.signatureBoxBackground}; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h4 style="font-weight: bold; margin: 0 0 10px 0; color: ${colors.signatureTitleColor}; font-size: 12pt; text-align: center;">
+              Le client
+            </h4>
+            <div style="text-align: center; color: ${colors.signatureTextColor}; font-size: 10pt; margin-bottom: 15px;">
+              <p style="margin: 2px 0;">Date : _______________</p>
+            </div>
+          </div>
+          <div style="text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+            ${quote.clientSignature ? `
+              <img src="${quote.clientSignature}" alt="Signature client" style="max-height: 50px; margin: 10px auto;" />
+            ` : `
+              <div style="border-bottom: 1px solid ${colors.borderSecondary}; height: 50px; margin: 10px 0;"></div>
+            `}
+            <p style="margin: 5px 0; color: ${colors.signatureTextColor}; font-size: 10pt;">
+              Nom et signature du client
+            </p>
           </div>
         </div>
+      </div>
+      
+      <div style="margin-top: 20px; text-align: center; color: ${colors.mutedTextColor}; font-size: 9pt; font-style: italic;">
+        En signant ce devis, le client accepte les conditions générales de vente
       </div>
     </div>
 
