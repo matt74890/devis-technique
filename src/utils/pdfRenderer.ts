@@ -334,23 +334,27 @@ export const buildDomFromLayout = async (
   // CSS GLOBAL A4 selon spécifications exactes
   const style = document.createElement("style");
   style.textContent = `
-    /* Mise en page A4 stricte avec marges imprimables */
+    /* Mise en page A4 stricte avec marges imprimables sécurisées */
     @page {
       size: A4;
-      margin: 15mm;
+      margin: 12mm 10mm 12mm 10mm; /* top right bottom left - marges sécurisées */
     }
     [data-a4-root] { 
-      max-width: 180mm; 
+      max-width: 190mm; /* Largeur adaptée aux nouvelles marges */
       margin: 0 auto; 
       background: ${colors.background || '#ffffff'};
       color: ${colors.textColor || '#333'};
+      box-sizing: border-box;
+      padding: 0;
     }
     .intro-page { 
       page-break-after: always !important; 
-      min-height: 267mm !important;
-      max-height: 267mm !important;
+      height: 273mm !important; /* Hauteur exacte A4 - marges */
+      max-height: 273mm !important;
       overflow: hidden !important;
-    } /* Présentation = 1 page */
+      box-sizing: border-box !important;
+      padding: 0 !important;
+    } /* Présentation = 1 page stricte */
 
     /* Badges : centrage vertical/ horizontal garanti */
     .badge {
@@ -379,33 +383,61 @@ export const buildDomFromLayout = async (
     .signature-title { color: #6b7280; font-size: 12px; }
     .signature-image { margin-top: 6mm; max-height: 28mm; max-width: 80mm; }
 
-    /* Tableaux multi-pages stables */
+    /* Tableaux multi-pages stables - RÈGLES STRICTES */
     table { 
       border-collapse: collapse; 
-      width: 100%; 
+      width: 100% !important; 
+      max-width: 190mm !important;
       page-break-inside: auto;
-      margin: 10px 0;
+      margin: 15px 0;
       border: 1px solid ${colors.tableBorder || '#e5e7eb'};
+      table-layout: fixed !important; /* Force le respect des largeurs */
     }
     thead { 
-      display: table-header-group;
+      display: table-header-group !important;
       background: ${colors.tableHeader || '#f8fafc'} !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
     }
-    tfoot { display: table-footer-group; }
-    tr { page-break-inside: avoid; }
+    tfoot { 
+      display: table-footer-group !important; 
+      page-break-inside: avoid !important;
+    }
+    tr { 
+      page-break-inside: avoid !important; 
+      width: 100% !important;
+    }
     td, th { 
-      page-break-inside: avoid;
-      padding: 8px 10px;
+      page-break-inside: avoid !important;
+      padding: 6px 8px !important;
       border: 1px solid ${colors.tableBorder || '#e5e7eb'};
       vertical-align: middle;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      max-width: 0 !important; /* Force le respect des largeurs de colonnes */
     }
-    tbody tr { page-break-inside: avoid; page-break-after: auto; }
+    tbody tr { 
+      page-break-inside: avoid !important; 
+      page-break-after: auto;
+    }
     tbody tr:nth-child(even) { background: ${colors.tableRowAlt || '#f8fafc'}; }
     tbody tr:nth-child(odd) { background: ${colors.tableRow || '#ffffff'}; }
     .no-break { page-break-inside: avoid; }
 
-    /* Cadres de résumé/signatures non coupés */
-    .box, .recap, .signatures, .totals-section { page-break-inside: avoid; }
+    /* Cadres de résumé/signatures non coupés - RÈGLES STRICTES */
+    .box, .recap, .signatures, .totals-section, .total-box, .signature-block { 
+      page-break-inside: avoid !important; 
+      page-break-before: auto;
+    }
+    
+    /* Zone de contenu respecte les limites */
+    .content-zone {
+      max-width: 190mm !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
     
     /* Styles spécifiques pour les cellules de tableau */
     .cell { 
@@ -526,10 +558,11 @@ export const buildDomFromLayout = async (
             <div class="signature-name">${quote.client}</div>
             <div class="signature-title">${quote.clientCivility || ''}</div>
             <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
-          </div>
         </div>
       </div>
-    `;
+    </div>
+    </div> <!-- Fermeture content-zone -->
+  `;
 
     container.appendChild(letterPage);
   }
@@ -547,6 +580,7 @@ export const buildDomFromLayout = async (
   `;
 
   quotePage.innerHTML = `
+    <div class="content-zone">
     <!-- En-tête du devis -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid ${colors.borderSecondary};">
       <!-- Logo et vendeur (gauche) -->
@@ -800,13 +834,41 @@ export const buildDomFromLayout = async (
           <div>Le Client</div>
           <div class="signature-name">${quote.client}</div>
           <div class="signature-title">${quote.clientCivility || ''}</div>
-          <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
+          ${quote.clientSignature ? 
+            `<canvas class="signature-image" style="border: 1px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; max-height: 28mm; max-width: 80mm;" data-signature="${quote.clientSignature}"></canvas>` : 
+            `<div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>`
+          }
         </div>
       </div>
     </div>
+    </div> <!-- Fermeture content-zone -->
   `;
 
   container.appendChild(quotePage);
+
+  // Traitement des signatures client après insertion DOM
+  if (quote.clientSignature) {
+    setTimeout(() => {
+      const canvases = container.querySelectorAll('canvas[data-signature]');
+      canvases.forEach((canvas: any) => {
+        const signatureData = canvas.getAttribute('data-signature');
+        if (signatureData) {
+          try {
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+            };
+            img.src = signatureData;
+          } catch (error) {
+            console.warn('Erreur lors du rendu de la signature client:', error);
+          }
+        }
+      });
+    }, 100);
+  }
 
   return container;
 };
