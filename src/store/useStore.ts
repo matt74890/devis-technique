@@ -182,6 +182,7 @@ const defaultTemplateColors: TemplateColors = {
   // Couleurs des badges
   badgeUnique: '#000000',
   badgeMensuel: '#000000',
+  badgeAgent: '#000000',
   badgeText: '#000000',
   
   // Couleurs des totaux

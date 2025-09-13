@@ -102,100 +102,70 @@ export const renderPDFFromLayout = (
     });
   };
 
-  // Générer le HTML d'un bloc
+  // Rendu d'un bloc
   const renderBlock = (block: LayoutBlock): string => {
-    // Vérifier la visibilité
     if (!block.visible || (block.visibleIf && !evaluateCondition(block.visibleIf))) {
       return '';
     }
 
-    const style = `
-      position: absolute;
-      left: ${block.x}mm;
-      top: ${block.y}mm;
-      width: ${block.width}mm;
-      height: ${block.height}mm;
-      font-size: ${block.style.fontSize}pt;
-      font-family: ${block.style.fontFamily};
-      font-weight: ${block.style.fontWeight};
-      font-style: ${block.style.fontStyle};
-      text-align: ${block.style.textAlign};
-      color: ${block.style.color};
-      background-color: ${block.style.backgroundColor};
-      border: ${block.style.borderWidth}px solid ${block.style.borderColor};
-      border-radius: ${block.style.borderRadius}px;
-      padding: ${block.style.padding}mm;
-      line-height: ${block.style.lineHeight};
-      z-index: ${block.zIndex};
-      overflow: hidden;
-    `;
+    // Styles CSS du bloc
+    const style = [
+      `position: absolute`,
+      `top: ${block.y}mm`,
+      `left: ${block.x}mm`,
+      `width: ${block.width}mm`,
+      `height: ${block.height}mm`,
+      block.style ? Object.entries(block.style).map(([k, v]) => `${k}: ${v}`).join('; ') : ''
+    ].filter(Boolean).join('; ');
 
+    // Contenu selon le type
     let content = '';
-
+    
     switch (block.type) {
-      case 'header':
-        content = `
-          <div style="display: flex; justify-content: space-between; width: 100%; height: 100%;">
-            <div>${resolveBinding(block.bindings.left || '')}</div>
-            <div>${resolveBinding(block.bindings.right || '')}</div>
-          </div>
-        `;
-        break;
-
-      case 'footer':
-        content = `
-          <div style="display: flex; justify-content: space-between; width: 100%; height: 100%; align-items: center;">
-            <div>${resolveBinding(block.bindings.left || '')}</div>
-            <div>${resolveBinding(block.bindings.right || '')}</div>
-          </div>
-        `;
-        break;
-
-      case 'intent':
-        content = `
-          <div>
-            <strong>À l'attention de :</strong><br>
-            ${resolveBinding(block.bindings.civility || '')} ${resolveBinding(block.bindings.name || '')}<br>
-            ${resolveBinding(block.bindings.company || '')}<br>
-            ${resolveBinding(block.bindings.address || '')}
-          </div>
-        `;
-        break;
-
       case 'text':
-        content = block.content ? resolveBinding(block.content) : '';
+        content = resolveBinding(block.bindings?.text || block.content || '');
         break;
-
-      case 'letter':
-        content = resolveBinding(block.bindings.text || '');
-        break;
-
-      case 'table_tech':
-      case 'table_agent':
-        if (block.tableConfig) {
-          content = renderTable(block, dataContext);
-        }
-        break;
-
-      case 'totals':
+        
+      case 'header':
+        // Génération d'en-tête avec logo et infos vendeur
         content = `
-          <div style="text-align: right;">
-            <div>Sous-total HT : ${dataContext.totals.global.ht.toFixed(2)} CHF</div>
-            <div>TVA (${settings.tvaPct}%) : ${dataContext.totals.global.tva.toFixed(2)} CHF</div>
-            <div style="font-weight: bold; border-top: 1px solid #000; margin-top: 4px; padding-top: 4px;">
-              <strong>Total TTC : ${dataContext.totals.global.ttc.toFixed(2)} CHF</strong>
+          <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+            <div>
+              ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px;" />` : ''}
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
+              <div style="font-size: 10pt;">${settings.sellerInfo?.email || ''}</div>
+              <div style="font-size: 10pt;">${settings.sellerInfo?.phone || ''}</div>
             </div>
           </div>
         `;
         break;
-
+        
+      case 'table_tech':
+      case 'table_agent':
+        content = renderTable(block, dataContext);
+        break;
+        
+      case 'totals':
+        // Génération de totaux
+        content = `
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14pt;">
+              <span>Total TTC:</span>
+              <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
+            </div>
+          </div>
+        `;
+        break;
+        
       case 'signatures':
         content = `
-          <div style="display: flex; justify-content: space-between; width: 100%; height: 100%;">
-            <div style="border: 1px solid #ccc; padding: 8px; width: 45%; height: 100%;">
-              <div style="font-weight: bold; margin-bottom: 10px;">${resolveBinding(block.bindings.vendorTitle || 'Le vendeur')}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%;">
+            <div style="border: 1px solid #ccc; padding: 8px; height: 100%;">
+              <div style="font-weight: bold; margin-bottom: 10px;">${resolveBinding(block.bindings?.sellerTitle || 'Le vendeur')}</div>
               <div style="margin-top: auto; font-size: 8pt;">
-                Le ${resolveBinding(block.bindings.date || '')}, à ${resolveBinding(block.bindings.location || '')}
+                Nom et signature :
               </div>
             </div>
             <div style="border: 1px solid #ccc; padding: 8px; width: 45%; height: 100%;">
@@ -298,107 +268,193 @@ export const renderPDFFromLayout = (
             padding: 0;
             color: #000; 
             position: relative;
-            width: ${210 - layout.page.margins.left - layout.page.margins.right}mm;
-            height: ${297 - layout.page.margins.top - layout.page.margins.bottom}mm;
+            width: 210mm;
+            min-height: 297mm;
           }
-          .page-content {
-            position: relative;
-            width: 100%;
-            height: 100%;
-          }
-          /* Éviter les coupures dans les tableaux */
-          table { page-break-inside: avoid; }
-          tr { page-break-inside: avoid; }
-          td, th { page-break-inside: avoid; }
-          thead { display: table-header-group; }
-          tfoot { display: table-footer-group; }
         </style>
       </head>
       <body>
-        <div class="page-content">
-          ${blocksHTML}
-        </div>
+        ${blocksHTML}
       </body>
     </html>
   `;
 };
 
-/**
- * Construit un DOM A4 à partir d'un layout JSON + données.
- * Retourne un <div data-a4-root> prêt pour PREVIEW et EXPORT (même DOM).
- */
-export async function buildDomFromLayout(
+export const buildDomFromLayout = async (
   layoutId: string,
   quote: Quote,
   settings: Settings
-): Promise<HTMLDivElement> {
-  const root = document.createElement("div");
-  root.setAttribute("data-a4-root", "true");
-  // A4 strict
-  root.style.width = "210mm";
-  root.style.minHeight = "297mm";
-  root.style.margin = "0 auto";
-  root.style.background = "#ffffff";
-  root.style.color = "#000000";
-  root.style.fontFamily = "Arial, sans-serif";
-  root.style.fontSize = "12px";
-  root.style.lineHeight = "1.4";
-  root.style.padding = "20mm";
-
-  // Générer le contenu HTML basé sur le devis
-  const totals = calculateQuoteTotals(quote, settings.tvaPct);
+): Promise<HTMLElement> => {
   const colors = settings.templateColors || {
     primary: '#2563eb',
     secondary: '#64748b',
-    accent: '#059669',
-    titleColor: '#000000',
-    subtitleColor: '#666666',
-    textColor: '#000000',
-    mutedTextColor: '#666666',
+    accent: '#7c3aed',
+    titleColor: '#1e293b',
+    subtitleColor: '#475569',
+    textColor: '#334155',
+    mutedTextColor: '#64748b',
     background: '#ffffff',
-    cardBackground: '#fafafa',
-    headerBackground: '#f8fafc',
-    tableHeader: '#f5f5f5',
-    tableHeaderText: '#000000',
+    cardBackground: '#f8fafc',
+    headerBackground: '#f1f5f9',
+    tableHeader: '#e2e8f0',
+    tableHeaderText: '#334155',
     tableRow: '#ffffff',
     tableRowAlt: '#f8fafc',
     tableBorder: '#e2e8f0',
-    badgeUnique: '#059669',
-    badgeMensuel: '#7c3aed',
+    badgeUnique: '#10b981',
+    badgeMensuel: '#f59e0b',
+    badgeAgent: '#8b5cf6',
     badgeText: '#ffffff',
-    totalCardBorder: '#2563eb',
-    totalUniqueBackground: '#f0f9ff',
-    totalMensuelBackground: '#faf5ff',
+    totalCardBorder: '#e2e8f0',
+    totalUniqueBackground: '#f0fdf4',
+    totalMensuelBackground: '#fef3c7',
     grandTotalBackground: '#f8fafc',
     grandTotalBorder: '#2563eb',
     borderPrimary: '#e2e8f0',
     borderSecondary: '#f1f5f9',
-    separatorColor: '#e2e8f0',
-    letterHeaderColor: '#2563eb',
-    letterDateColor: '#666666',
+    separatorColor: '#e5e7eb',
+    letterHeaderColor: '#1e293b',
+    letterDateColor: '#64748b',
     letterSubjectColor: '#2563eb',
-    letterSignatureColor: '#000000',
-    signatureBoxBorder: '#e2e8f0',
-    signatureBoxBackground: '#fafafa',
-    signatureTitleColor: '#2563eb',
-    signatureTextColor: '#666666'
+    letterSignatureColor: '#475569',
+    signatureBoxBorder: '#d1d5db',
+    signatureBoxBackground: '#f9fafb',
+    signatureTitleColor: '#374151',
+    signatureTextColor: '#6b7280'
   };
 
-  root.innerHTML = `
-    <!-- En-tête avec logo et adresses -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; gap: 20px;">
+  const totals = calculateQuoteTotals(quote, settings.tvaPct);
+
+  // Créer le conteneur principal
+  const container = document.createElement('div');
+  container.setAttribute('data-a4-root', 'true');
+
+  // PAGE 1: LETTRE DE PRÉSENTATION (si activée)
+  if (settings.letterTemplate?.enabled) {
+    const letterPage = document.createElement('div');
+    letterPage.style.cssText = `
+      width: 210mm;
+      min-height: 297mm;
+      page-break-after: always;
+      padding: 20mm;
+      font-family: Arial, sans-serif;
+      background: ${colors.background};
+      color: ${colors.textColor};
+      box-sizing: border-box;
+    `;
+
+    letterPage.innerHTML = `
+      <!-- En-tête avec logo et vendeur -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid ${colors.primary};">
+        <!-- Logo (gauche) -->
+        <div style="flex: 0 0 auto; max-width: 40%;">
+          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 80px; max-width: 100%; object-fit: contain;" />` : `<div style="color: ${colors.letterHeaderColor}; font-size: 18pt; font-weight: bold;">${settings.sellerInfo?.name || 'Votre Entreprise'}</div>`}
+        </div>
+        
+        <!-- Informations vendeur (droite) -->
+        <div style="flex: 0 0 auto; max-width: 55%; text-align: right;">
+          <div style="font-weight: bold; font-size: 12pt; color: ${colors.letterHeaderColor}; margin-bottom: 4px;">${settings.sellerInfo?.name || ''}</div>
+          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.title || ''}</div>
+          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.email || ''}</div>
+          <div style="font-size: 10pt; color: ${colors.textColor}; margin: 2px 0;">${settings.sellerInfo?.phone || ''}</div>
+          <div style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</div>
+        </div>
+      </div>
+
+      <!-- Adresse client -->
+      <div style="margin: 40px 0; text-align: right;">
+        <div style="font-weight: bold; font-size: 14pt; color: ${colors.titleColor}; margin-bottom: 8px;">${quote.addresses?.contact?.company || quote.client}</div>
+        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.name || ''}</div>
+        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.street || ''}</div>
+        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</div>
+        <div style="color: ${colors.textColor}; margin: 2px 0;">${quote.addresses?.contact?.country || ''}</div>
+      </div>
+
+      <!-- Référence du devis -->
+      <div style="margin: 30px 0; padding: 15px; background: ${colors.cardBackground}; border-radius: 8px; border-left: 4px solid ${colors.primary};">
+        <div style="font-size: 12pt; font-weight: bold; color: ${colors.primary};">Devis N° ${quote.ref}</div>
+        <div style="font-size: 10pt; color: ${colors.mutedTextColor}; margin-top: 4px;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</div>
+      </div>
+
+      <!-- Contenu de la lettre -->
+      <div style="line-height: 1.7; font-size: 11pt;">
+        <!-- Objet -->
+        <div style="margin: 25px 0;">
+          <div style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor}; font-size: 12pt; margin-bottom: 8px;">
+            ${settings.letterTemplate.subject}
+          </div>
+        </div>
+        
+        <!-- Civilité et ouverture -->
+        <div style="margin: 20px 0;">
+          <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0;">
+            ${settings.letterTemplate.civility} ${quote.client},
+          </p>
+          <p style="margin: 12px 0;">
+            ${settings.letterTemplate.opening}
+          </p>
+        </div>
+        
+        <!-- Corps de la lettre -->
+        <div style="margin: 20px 0;">
+          <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; white-space: pre-wrap; line-height: 1.6;">
+            ${settings.letterTemplate.body}
+          </p>
+        </div>
+        
+        <!-- Clôture -->
+        <div style="margin: 20px 0;">
+          <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'};">
+            ${settings.letterTemplate.closing}
+          </p>
+        </div>
+        
+        <!-- Signature -->
+        <div style="margin-top: 40px; text-align: right;">
+          <div style="color: ${colors.letterSignatureColor}; font-style: italic; font-size: 11pt;">
+            ${settings.sellerInfo?.name || ''}
+          </div>
+          ${settings.sellerInfo?.signature ? `
+            <div style="margin-top: 10px;">
+              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; max-width: 200px;" />
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(letterPage);
+  }
+
+  // PAGE 2+: DEVIS
+  const quotePage = document.createElement('div');
+  quotePage.style.cssText = `
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    font-family: Arial, sans-serif;
+    background: ${colors.background};
+    color: ${colors.textColor};
+    box-sizing: border-box;
+  `;
+
+  quotePage.innerHTML = `
+    <!-- En-tête du devis -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid ${colors.borderSecondary};">
       <!-- Logo et vendeur (gauche) -->
-      <div style="flex: 1; max-width: 45%;">
-        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 15px;" />` : ''}
-        ${settings.sellerInfo?.name ? `
-          <div style="font-size: 11pt; color: ${colors.textColor};">
-            <p style="font-weight: bold; color: ${colors.letterHeaderColor || colors.primary}; margin: 4px 0; font-size: 12pt;">${settings.sellerInfo.name}</p>
-            ${settings.sellerInfo.title ? `<p style="color: ${colors.subtitleColor}; margin: 2px 0;">${settings.sellerInfo.title}</p>` : ''}
-            ${settings.sellerInfo.email ? `<p style="margin: 2px 0; color: ${colors.textColor};">${settings.sellerInfo.email}</p>` : ''}
-            ${settings.sellerInfo.phone ? `<p style="margin: 2px 0; color: ${colors.textColor};">${settings.sellerInfo.phone}</p>` : ''}
-            ${settings.sellerInfo.location ? `<p style="margin: 2px 0; color: ${colors.mutedTextColor};">${settings.sellerInfo.location}</p>` : ''}
+      <div style="flex: 0 0 auto; max-width: 50%;">
+        ${settings.logoUrl ? `
+          <div style="margin-bottom: 15px;">
+            <img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px; max-width: 100%; object-fit: contain;" />
           </div>
         ` : ''}
+        <div>
+          <p style="font-weight: bold; font-size: 12pt; margin: 2px 0; color: ${colors.letterHeaderColor};">${settings.sellerInfo?.name || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.title || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.email || ''}</p>
+          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.phone || ''}</p>
+          <p style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</p>
+        </div>
       </div>
       
       <!-- Adresse client (droite) -->
@@ -421,46 +477,6 @@ export async function buildDomFromLayout(
       <p style="font-size: 14pt; margin: 4px 0; color: ${colors.subtitleColor};">Devis N° ${quote.ref}</p>
       <p style="color: ${colors.letterDateColor || colors.mutedTextColor}; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
     </div>
-
-    ${settings.letterTemplate?.enabled ? `
-      <!-- Lettre de présentation -->
-      <div class="section" style="margin: 20px 0 30px 0; page-break-inside: avoid; background: ${colors.cardBackground}; padding: 20px; border-radius: 8px; border: 1px solid ${colors.borderSecondary};">
-        <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'}; font-size: 11pt; line-height: 1.6; color: ${colors.textColor};">
-          <div style="margin-bottom: 20px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor || colors.primary}; margin: 8px 0; font-size: 13pt;">
-              ${settings.letterTemplate.subject}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 15px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0; color: ${colors.textColor};">
-              ${settings.letterTemplate.civility} ${quote.client},
-            </p>
-            <p style="margin: 8px 0; color: ${colors.textColor};">
-              ${settings.letterTemplate.opening}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 15px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; margin: 8px 0; white-space: pre-wrap; color: ${colors.textColor};">
-              ${settings.letterTemplate.body}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 10px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'}; margin: 8px 0; color: ${colors.textColor};">
-              ${settings.letterTemplate.closing}
-            </p>
-          </div>
-          
-          <div style="text-align: right; margin-top: 20px;">
-            <p style="color: ${colors.letterSignatureColor || colors.textColor}; font-style: italic;">
-              ${settings.sellerInfo?.name || ''}
-            </p>
-          </div>
-        </div>
-      </div>
-    ` : ''}
 
     ${(quote.site || quote.contact || quote.canton) ? `
       <!-- Informations complémentaires -->
@@ -495,15 +511,13 @@ export async function buildDomFromLayout(
                 <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.type}</td>
                 <td style="padding: 6px; border: 1px solid ${colors.secondary};">${item.reference}</td>
                 <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">
-                  <span style="padding: 2px 6px; border-radius: 3px; font-size: 9pt; background: ${item.mode === 'mensuel' ? colors.accent : colors.secondary}; color: white;">
+                  <span style="padding: 2px 6px; border-radius: 3px; font-size: 9pt; background: ${item.mode === 'mensuel' ? colors.badgeMensuel : colors.badgeUnique}; color: ${colors.badgeText};">
                     ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
                   </span>
                 </td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty}</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${item.puTTC?.toFixed(2)} CHF</td>
-                <td style="padding: 6px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary}; color: ${colors.primary};">
-                  ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
-                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty || 1}</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
               </tr>
             `).join('')}
           </tbody>
@@ -511,204 +525,111 @@ export async function buildDomFromLayout(
       </div>
     ` : ''}
 
-    <!-- Total général -->
-    <div style="padding: 20px; border-radius: 8px; text-align: center; border: 3px solid ${colors.primary}; background: linear-gradient(135deg, ${colors.primary}08, ${colors.accent}08); margin: 20px 0;">
-      <h4 style="font-weight: bold; font-size: 18pt; margin-bottom: 15px; color: ${colors.primary};">TOTAL GÉNÉRAL</h4>
-      <div style="display: flex; gap: 20px; margin-bottom: 15px; justify-content: center;">
-        <div>
-          <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">Total HT</p>
-          <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
-        </div>
-        <div>
-          <p style="font-size: 10pt; color: ${colors.secondary}; margin-bottom: 4px;">TVA totale</p>
-          <p style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-        </div>
-      </div>
-      <div style="padding-top: 15px; border-top: 2px solid ${colors.primary};">
-        <p style="font-size: 24pt; font-weight: bold; color: ${colors.primary};">
-          ${totals.global.totalTTC.toFixed(2)} CHF
-        </p>
-        ${totals.mensuel.totalTTC > 0 ? `
-          <p style="font-size: 16pt; font-weight: bold; margin-top: 8px; color: ${colors.accent};">
-            + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
-          </p>
-        ` : ''}
-      </div>
-    </div>
-
-    ${settings.letterTemplate?.enabled ? `
-      <!-- Lettre de présentation -->
-      <div class="section" style="margin: 30px 0; page-break-inside: avoid;">
-        <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'}; font-size: 11pt; line-height: 1.6;">
-          <div style="margin-bottom: 20px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.subject ? 'bold' : 'normal'}; color: ${colors.letterSubjectColor || colors.primary}; margin: 8px 0; font-size: 12pt;">
-              ${settings.letterTemplate.subject}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 15px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.opening ? 'bold' : 'normal'}; margin: 8px 0;">
-              ${settings.letterTemplate.civility} ${quote.client},
-            </p>
-            <p style="margin: 8px 0;">
-              ${settings.letterTemplate.opening}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 15px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.body ? 'bold' : 'normal'}; margin: 8px 0; white-space: pre-wrap;">
-              ${settings.letterTemplate.body}
-            </p>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <p style="font-weight: ${settings.letterTemplate.boldOptions?.closing ? 'bold' : 'normal'}; margin: 8px 0;">
-              ${settings.letterTemplate.closing}
-            </p>
-          </div>
-        </div>
+    ${quote.items.some(item => item.kind === 'AGENT') ? `
+      <!-- Services AGENT -->
+      <div style="margin: 20px 0;">
+        <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Services agent</h3>
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.secondary};">
+          <thead>
+            <tr style="background: ${colors.primary}; color: white;">
+              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.secondary};">Description</th>
+              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.secondary};">Durée (h)</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Tarif/h</th>
+              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.secondary};">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
+              <tr style="background: ${index % 2 === 0 ? '#f8fafc' : 'white'};">
+                <td style="padding: 6px; border: 1px solid ${colors.secondary};">
+                  <div style="font-weight: bold;">${item.reference}</div>
+                  <div style="font-size: 9pt; color: ${colors.mutedTextColor};">${item.type}</div>
+                  <span style="display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 8pt; background: ${colors.badgeAgent}; color: ${colors.badgeText}; margin-top: 4px;">
+                    Agent
+                  </span>
+                </td>
+                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.secondary};">${item.qty || 1}h</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.rateCHFh || item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.secondary};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
     ` : ''}
 
-    ${quote.comment ? `
-      <!-- Commentaire -->
-      <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-        <h4 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary};">Commentaires</h4>
-        <p style="margin: 0; white-space: pre-wrap;">${quote.comment}</p>
-      </div>
-    ` : ''}
-
-    <!-- Signatures -->
-    <div class="section" style="margin: 40px 0 20px 0; page-break-inside: avoid;">
-      <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.titleColor}; margin-bottom: 20px; text-align: center;">
-        Validation du devis
-      </h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch;">
-        <!-- Signature vendeur -->
-        <div style="border: 2px solid ${colors.signatureBoxBorder}; border-radius: 12px; padding: 20px; background: ${colors.signatureBoxBackground}; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <h4 style="font-weight: bold; margin: 0 0 10px 0; color: ${colors.signatureTitleColor}; font-size: 12pt; text-align: center;">
-              Le vendeur
-            </h4>
-            <div style="text-align: center; color: ${colors.signatureTextColor}; font-size: 10pt; margin-bottom: 15px;">
-              <p style="margin: 2px 0;">Le ${new Date().toLocaleDateString('fr-CH')}</p>
-              <p style="margin: 2px 0;">à ${settings.sellerInfo?.location || 'Genève'}</p>
-            </div>
+    <!-- Totaux -->
+    <div style="margin: 30px 0; display: flex; justify-content: flex-end;">
+      <div style="background: ${colors.cardBackground}; padding: 20px; border-radius: 8px; border: 2px solid ${colors.primary}; min-width: 300px;">
+        <div style="text-align: center; margin-bottom: 15px;">
+          <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">RÉCAPITULATIF</h3>
+        </div>
+        
+        <div style="border-bottom: 1px solid ${colors.borderSecondary}; padding-bottom: 10px; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Sous-total HT:</span>
+            <span>${totals.global.htAfterDiscount.toFixed(2)} CHF</span>
           </div>
-          <div style="text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-            ${settings.sellerInfo?.signature ? `
-              <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 50px; margin: 10px auto;" />
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.borderSecondary}; height: 50px; margin: 10px 0;"></div>
-            `}
-            <p style="margin: 5px 0; font-weight: bold; color: ${colors.signatureTextColor}; font-size: 10pt;">
-              ${settings.sellerInfo?.name || 'Nom du vendeur'}
-            </p>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>TVA (${settings.tvaPct}%):</span>
+            <span>${totals.global.tva.toFixed(2)} CHF</span>
           </div>
         </div>
         
-        <!-- Signature client -->
-        <div style="border: 2px solid ${colors.signatureBoxBorder}; border-radius: 12px; padding: 20px; background: ${colors.signatureBoxBackground}; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <h4 style="font-weight: bold; margin: 0 0 10px 0; color: ${colors.signatureTitleColor}; font-size: 12pt; text-align: center;">
-              Le client
-            </h4>
-            <div style="text-align: center; color: ${colors.signatureTextColor}; font-size: 10pt; margin-bottom: 15px;">
-              <p style="margin: 2px 0;">Date : _______________</p>
-            </div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary};">
+          <span>TOTAL TTC:</span>
+          <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div style="margin-top: 40px; page-break-inside: avoid;">
+      <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div style="border: 2px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 20px; text-align: center;">Le Vendeur</div>
+          <div style="margin-top: 60px; text-align: center; color: ${colors.signatureTextColor}; font-size: 9pt;">
+            Nom et signature
           </div>
-          <div style="text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-            ${quote.clientSignature ? `
-              <img src="${quote.clientSignature}" alt="Signature client" style="max-height: 50px; margin: 10px auto;" />
-            ` : `
-              <div style="border-bottom: 1px solid ${colors.borderSecondary}; height: 50px; margin: 10px 0;"></div>
-            `}
-            <p style="margin: 5px 0; color: ${colors.signatureTextColor}; font-size: 10pt;">
-              Nom et signature du client
-            </p>
+        </div>
+        <div style="border: 2px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 8px; min-height: 120px;">
+          <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 20px; text-align: center;">Le Client</div>
+          <div style="margin-top: 60px; text-align: center; color: ${colors.signatureTextColor}; font-size: 9pt;">
+            Nom et signature
           </div>
         </div>
       </div>
-      
-      <div style="margin-top: 20px; text-align: center; color: ${colors.mutedTextColor}; font-size: 9pt; font-style: italic;">
-        En signant ce devis, le client accepte les conditions générales de vente
-      </div>
-    </div>
-
-    <!-- Pied de page -->
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid ${colors.separatorColor || colors.borderSecondary}; text-align: center; color: ${colors.mutedTextColor || colors.secondary}; font-size: 10pt;">
-      <p style="margin: 0;">${settings.pdfFooter || 'Mentions légales - #NousRendonsLaSuisseSure'}</p>
     </div>
   `;
 
-  // Règles anti-débordement/coupures
-  const style = document.createElement("style");
-  style.textContent = `
-    @page { size: A4; margin: 12mm; }
-    [data-a4-root] { max-width: 190mm; }
-    table { table-layout: fixed; width: 100%; word-break: break-word; }
-    thead { display: table-header-group; } 
-    tfoot { display: table-footer-group; }
-    tr, td, th { page-break-inside: avoid; }
-    .section { page-break-inside: avoid; }
-    .hard-break { page-break-before: always; }
-  `;
-  root.prepend(style);
+  container.appendChild(quotePage);
 
-  return root;
-}
-
-/**
- * Exporte un DOM en PDF A4 via html2pdf.js (binaire fiable).
- * Guard : blob.size >= 10KB pour éviter les pages blanches.
- */
-export async function exportDomToPdf(dom: HTMLElement, filename: string): Promise<Blob> {
-  const worker = html2pdf()
-    .set({
-      margin: [12, 12, 12, 12],
-      filename,
-      image: { type: "jpeg", quality: 0.96 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"] }
-    })
-    .from(dom);
-
-  const blob = await worker.outputPdf("blob");
-  if (!blob || blob.size < 10000) {
-    throw new Error("Échec PDF: taille trop petite (<10KB). Vérifier le DOM/ressources.");
-  }
-  return blob;
-}
-
-/**
- * Récupère le layout approprié pour un devis selon sa variante
- */
-export const getLayoutForQuote = (quote: Quote, settings: Settings): PDFLayoutConfig => {
-  // Déterminer la variante du devis
-  const hasTech = quote.items.some(i => i.kind === 'TECH');
-  const hasAgent = quote.items.some(i => i.kind === 'AGENT');
-  
-  let variant: LayoutVariant;
-  if (hasTech && hasAgent) {
-    variant = 'mixte';
-  } else if (hasAgent) {
-    variant = 'agent';
-  } else {
-    variant = 'technique';
-  }
-  
-  // Récupérer le layout actif pour cette variante
-  const activeLayoutId = settings.activePDFLayouts?.[variant];
-  
-  if (activeLayoutId && settings.pdfLayouts?.[variant]) {
-    const layouts = settings.pdfLayouts[variant];
-    const activeLayout = layouts.find(l => l.id === activeLayoutId);
-    if (activeLayout) {
-      return activeLayout;
-    }
-  }
-  
-  // Fallback sur le layout par défaut
-  return getDefaultLayoutForVariant(variant);
+  return container;
 };
+
+export async function exportDomToPdf(dom: HTMLElement, filename: string): Promise<Blob> {
+  const opt = {
+    margin: 0,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { 
+      scale: 2,
+      useCORS: true,
+      allowTaint: true
+    },
+    jsPDF: { 
+      unit: 'mm', 
+      format: 'a4', 
+      orientation: 'portrait' 
+    }
+  };
+
+  try {
+    const pdf = await html2pdf().set(opt).from(dom).outputPdf('blob');
+    return pdf;
+  } catch (error) {
+    console.error('Erreur lors de l\'export PDF:', error);
+    throw new Error('Impossible de générer le PDF');
+  }
+}

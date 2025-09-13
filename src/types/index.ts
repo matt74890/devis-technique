@@ -50,6 +50,7 @@ export interface TemplateColors {
   // Couleurs des badges
   badgeUnique: string;
   badgeMensuel: string;
+  badgeAgent: string;
   badgeText: string;
   
   // Couleurs des totaux

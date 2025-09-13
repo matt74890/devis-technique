@@ -58,6 +58,7 @@ const TemplateColors = () => {
       fields: [
         { key: 'badgeUnique', label: 'Badge "Unique"', description: 'Fond du badge unique' },
         { key: 'badgeMensuel', label: 'Badge "Mensuel"', description: 'Fond du badge mensuel' },
+        { key: 'badgeAgent', label: 'Badge "Agent"', description: 'Fond du badge agent' },
         { key: 'badgeText', label: 'Texte des badges', description: 'Couleur du texte des badges' }
       ]
     },
