@@ -9,6 +9,7 @@ import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
+import { replacePlaceholders } from '@/utils/placeholderUtils';
 import PDFPreview from '@/components/pdf/PDFPreview';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 import { useState } from "react";
@@ -521,7 +522,7 @@ const RecapScreen = () => {
           </div>
           
           <div class="letter-subject" style="margin-top: ${getLayoutValue('letter', 'subjectMarginTop', '30')}px;">
-            <strong>Objet:</strong> ${settings.letterTemplate.subject}
+            <strong>Objet:</strong> ${replacePlaceholders(settings.letterTemplate.subject, currentQuote)}
           </div>
           
           <div class="letter-content">
@@ -530,9 +531,9 @@ const RecapScreen = () => {
             </div>
             
             <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              <p style="${settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${settings.letterTemplate.opening.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
-              <p style="${settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${settings.letterTemplate.body.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
-              <p style="${settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${settings.letterTemplate.closing.replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.opening, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.body, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
+              <p style="${settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.closing, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
             </div>
             
             <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">

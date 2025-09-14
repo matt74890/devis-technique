@@ -147,7 +147,42 @@ const defaultLetterTemplate: LetterTemplate = {
   body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant l\'ensemble des prestations et équipements nécessaires.',
   closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.',
   textAlignment: 'left',
-  boldOptions: {
+      placeholders: {
+        enabled: true,
+        availablePlaceholders: [
+          {
+            id: '{{CLIENT_PRENOM}}',
+            label: 'Prénom du client',
+            description: 'Insère le prénom du client',
+            example: 'Jean'
+          },
+          {
+            id: '{{CLIENT_NOM}}',
+            label: 'Nom du client',
+            description: 'Insère le nom de famille du client',
+            example: 'Dupont'
+          },
+          {
+            id: '{{CLIENT_NOM_COMPLET}}',
+            label: 'Nom complet',
+            description: 'Insère le prénom et nom du client',
+            example: 'Jean Dupont'
+          },
+          {
+            id: '{{CLIENT_CIVILITE}}',
+            label: 'Civilité',
+            description: 'Insère Monsieur ou Madame',
+            example: 'Monsieur'
+          },
+          {
+            id: '{{CLIENT_ENTREPRISE}}',
+            label: 'Entreprise',
+            description: 'Insère le nom de l\'entreprise du client',
+            example: 'ABC Sécurité SA'
+          }
+        ]
+      },
+      boldOptions: {
     subject: false,
     opening: false,
     body: false,

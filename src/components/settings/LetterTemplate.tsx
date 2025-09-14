@@ -5,9 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, User, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { FileText, User, Users, Hash, Copy } from 'lucide-react';
 import { useSettings } from '@/components/SettingsProvider';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import type { PlaceholderType } from '@/types';
 
 interface LetterTemplateType {
   id: string;
@@ -31,10 +33,48 @@ interface LetterTemplateType {
     body: boolean;
     closing: boolean;
   };
+  placeholders: {
+    enabled: boolean;
+    availablePlaceholders: PlaceholderType[];
+  };
 }
 
 const LetterTemplate = () => {
   const { settings, updateSettings } = useSettings();
+
+  // Placeholders disponibles
+  const availablePlaceholders: PlaceholderType[] = [
+    {
+      id: '{{CLIENT_PRENOM}}',
+      label: 'Prénom du client',
+      description: 'Insère le prénom du client',
+      example: 'Jean'
+    },
+    {
+      id: '{{CLIENT_NOM}}',
+      label: 'Nom du client',
+      description: 'Insère le nom de famille du client',
+      example: 'Dupont'
+    },
+    {
+      id: '{{CLIENT_NOM_COMPLET}}',
+      label: 'Nom complet',
+      description: 'Insère le prénom et nom du client',
+      example: 'Jean Dupont'
+    },
+    {
+      id: '{{CLIENT_CIVILITE}}',
+      label: 'Civilité',
+      description: 'Insère Monsieur ou Madame',
+      example: 'Monsieur'
+    },
+    {
+      id: '{{CLIENT_ENTREPRISE}}',
+      label: 'Entreprise',
+      description: 'Insère le nom de l\'entreprise du client',
+      example: 'ABC Sécurité SA'
+    }
+  ];
 
   // Templates prédéfinis
   const predefinedTemplates: LetterTemplateType[] = [
@@ -50,15 +90,19 @@ const LetterTemplate = () => {
       companyAddress: settings.letterTemplate?.companyAddress || '',
       subject: settings.letterTemplate?.subject || 'Proposition commerciale - Sécurité technique',
       civility: settings.letterTemplate?.civility || 'Monsieur',
-      opening: settings.letterTemplate?.opening || 'Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale...',
-      body: settings.letterTemplate?.body || 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant...',
-      closing: settings.letterTemplate?.closing || 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, Madame, Monsieur, l\'expression de nos salutations distinguées.',
+      opening: settings.letterTemplate?.opening || 'Suite à votre demande, {{CLIENT_CIVILITE}} {{CLIENT_NOM_COMPLET}}, nous avons le plaisir de vous adresser notre proposition commerciale...',
+      body: settings.letterTemplate?.body || 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques de {{CLIENT_ENTREPRISE}}.\n\nVous trouverez ci-joint notre devis détaillé comprenant...',
+      closing: settings.letterTemplate?.closing || 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, {{CLIENT_CIVILITE}} {{CLIENT_NOM}}, l\'expression de nos salutations distinguées.',
       textAlignment: settings.letterTemplate?.textAlignment || 'left',
       boldOptions: settings.letterTemplate?.boldOptions || {
         subject: false,
         opening: false,
         body: false,
         closing: false,
+      },
+      placeholders: {
+        enabled: true,
+        availablePlaceholders
       }
     },
     {
@@ -73,15 +117,19 @@ const LetterTemplate = () => {
       companyAddress: settings.letterTemplate?.companyAddress || '',
       subject: 'Présentation de nos services d\'agents de sécurité',
       civility: 'Monsieur',
-      opening: 'Suite à votre demande concernant nos services d\'agents de sécurité, nous avons l\'honneur de vous présenter notre équipe qualifiée.',
-      body: 'Notre société dispose d\'agents de sécurité expérimentés et certifiés, formés aux dernières techniques de surveillance et d\'intervention.\n\nNos agents sont:\n• Certifiés selon les normes en vigueur\n• Formés régulièrement aux nouvelles technologies\n• Disponibles 24h/24 et 7j/7\n• Équipés de matériel de communication moderne\n\nVous trouverez ci-joint notre proposition tarifaire détaillée.',
-      closing: 'Nous sommes convaincus que nos agents sauront répondre à vos exigences de sécurité les plus strictes.\n\nNous demeurons à votre entière disposition pour toute information complémentaire et vous prions d\'agréer, Madame, Monsieur, nos salutations les plus respectueuses.',
+      opening: 'Suite à votre demande concernant nos services d\'agents de sécurité, {{CLIENT_CIVILITE}} {{CLIENT_NOM_COMPLET}}, nous avons l\'honneur de vous présenter notre équipe qualifiée.',
+      body: 'Notre société dispose d\'agents de sécurité expérimentés et certifiés pour {{CLIENT_ENTREPRISE}}, formés aux dernières techniques de surveillance et d\'intervention.\n\nNos agents sont:\n• Certifiés selon les normes en vigueur\n• Formés régulièrement aux nouvelles technologies\n• Disponibles 24h/24 et 7j/7\n• Équipés de matériel de communication moderne\n\nVous trouverez ci-joint notre proposition tarifaire détaillée.',
+      closing: 'Nous sommes convaincus que nos agents sauront répondre à vos exigences de sécurité les plus strictes.\n\nNous demeurons à votre entière disposition pour toute information complémentaire et vous prions d\'agréer, {{CLIENT_CIVILITE}} {{CLIENT_NOM}}, nos salutations les plus respectueuses.',
       textAlignment: 'left',
       boldOptions: {
         subject: false,
         opening: false,
         body: false,
         closing: false,
+      },
+      placeholders: {
+        enabled: true,
+        availablePlaceholders
       }
     }
   ];
@@ -90,6 +138,12 @@ const LetterTemplate = () => {
     settings.letterTemplate?.templateId || 'default'
   );
   const [activeTab, setActiveTab] = useState('selection');
+  
+  // Refs pour insérer les placeholders dans les bons champs
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const openingRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const closingRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSelectTemplate = (templateId: string) => {
     const template = predefinedTemplates.find(t => t.id === templateId);
@@ -131,6 +185,55 @@ const LetterTemplate = () => {
       }
     });
   };
+
+  // Fonction pour insérer un placeholder dans un champ spécifique
+  const insertPlaceholder = (placeholder: string, fieldRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>, fieldName: string) => {
+    const element = fieldRef.current;
+    if (!element) return;
+
+    const start = element.selectionStart || 0;
+    const end = element.selectionEnd || 0;
+    const currentValue = settings.letterTemplate?.[fieldName as keyof typeof settings.letterTemplate] as string || '';
+    
+    const newValue = currentValue.slice(0, start) + placeholder + currentValue.slice(end);
+    
+    handleUpdateLetter(fieldName, newValue);
+    
+    // Restaurer la position du curseur après le placeholder
+    setTimeout(() => {
+      if (element) {
+        element.focus();
+        element.setSelectionRange(start + placeholder.length, start + placeholder.length);
+      }
+    }, 0);
+  };
+
+  // Composant pour afficher les placeholders disponibles
+  const PlaceholderPanel = ({ targetField, targetRef }: { targetField: string, targetRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement> }) => (
+    <div className="mt-2 p-3 bg-muted/30 rounded-lg border border-dashed">
+      <div className="flex items-center space-x-2 mb-2">
+        <Hash className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium text-primary">Placeholders disponibles</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {availablePlaceholders.map((placeholder) => (
+          <Badge
+            key={placeholder.id}
+            variant="secondary"
+            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+            onClick={() => insertPlaceholder(placeholder.id, targetRef, targetField)}
+            title={`${placeholder.description} - Ex: ${placeholder.example}`}
+          >
+            <Copy className="h-3 w-3 mr-1" />
+            {placeholder.label}
+          </Badge>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Cliquez sur un placeholder pour l'insérer à la position du curseur
+      </p>
+    </div>
+  );
 
   return (
     <Card className="shadow-soft">
@@ -277,28 +380,30 @@ const LetterTemplate = () => {
             <div>
               <h4 className="font-medium mb-3 text-primary">Contenu de la lettre</h4>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="letter-subject">Objet de la lettre</Label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      id="letter-subject"
-                      value={settings.letterTemplate?.subject || ''}
-                      onChange={(e) => handleUpdateLetter('subject', e.target.value)}
-                      placeholder="Proposition commerciale - Sécurité technique"
-                      className="flex-1"
-                    />
-                    <div className="flex items-center space-x-1">
-                      <input
-                        type="checkbox"
-                        id="subject-bold"
-                        checked={settings.letterTemplate?.boldOptions?.subject || false}
-                        onChange={(e) => handleUpdateBoldOption('subject', e.target.checked)}
-                        className="rounded"
+                  <div className="space-y-2">
+                    <Label htmlFor="letter-subject">Objet de la lettre</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        ref={subjectRef}
+                        id="letter-subject"
+                        value={settings.letterTemplate?.subject || ''}
+                        onChange={(e) => handleUpdateLetter('subject', e.target.value)}
+                        placeholder="Proposition commerciale - Sécurité technique"
+                        className="flex-1"
                       />
-                      <Label htmlFor="subject-bold" className="text-sm">Gras</Label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="checkbox"
+                          id="subject-bold"
+                          checked={settings.letterTemplate?.boldOptions?.subject || false}
+                          onChange={(e) => handleUpdateBoldOption('subject', e.target.checked)}
+                          className="rounded"
+                        />
+                        <Label htmlFor="subject-bold" className="text-sm">Gras</Label>
+                      </div>
                     </div>
+                    <PlaceholderPanel targetField="subject" targetRef={subjectRef} />
                   </div>
-                </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="civility-select">Civilité</Label>
@@ -316,51 +421,55 @@ const LetterTemplate = () => {
                   </Select>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="letter-opening">Formule d'ouverture</Label>
-                    <div className="flex items-center space-x-1">
-                      <input
-                        type="checkbox"
-                        id="opening-bold"
-                        checked={settings.letterTemplate?.boldOptions?.opening || false}
-                        onChange={(e) => handleUpdateBoldOption('opening', e.target.checked)}
-                        className="rounded"
-                      />
-                      <Label htmlFor="opening-bold" className="text-sm">Gras</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="letter-opening">Formule d'ouverture</Label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="checkbox"
+                          id="opening-bold"
+                          checked={settings.letterTemplate?.boldOptions?.opening || false}
+                          onChange={(e) => handleUpdateBoldOption('opening', e.target.checked)}
+                          className="rounded"
+                        />
+                        <Label htmlFor="opening-bold" className="text-sm">Gras</Label>
+                      </div>
                     </div>
+                    <Textarea
+                      ref={openingRef}
+                      id="letter-opening"
+                      value={settings.letterTemplate?.opening || ''}
+                      onChange={(e) => handleUpdateLetter('opening', e.target.value)}
+                      placeholder="Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
+                      rows={4}
+                    />
+                    <PlaceholderPanel targetField="opening" targetRef={openingRef} />
                   </div>
-                  <Textarea
-                    id="letter-opening"
-                    value={settings.letterTemplate?.opening || ''}
-                    onChange={(e) => handleUpdateLetter('opening', e.target.value)}
-                    placeholder="Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale..."
-                    rows={4}
-                  />
-                </div>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="letter-body">Corps du message</Label>
-                    <div className="flex items-center space-x-1">
-                      <input
-                        type="checkbox"
-                        id="body-bold"
-                        checked={settings.letterTemplate?.boldOptions?.body || false}
-                        onChange={(e) => handleUpdateBoldOption('body', e.target.checked)}
-                        className="rounded"
-                      />
-                      <Label htmlFor="body-bold" className="text-sm">Gras</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="letter-body">Corps du message</Label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="checkbox"
+                          id="body-bold"
+                          checked={settings.letterTemplate?.boldOptions?.body || false}
+                          onChange={(e) => handleUpdateBoldOption('body', e.target.checked)}
+                          className="rounded"
+                        />
+                        <Label htmlFor="body-bold" className="text-sm">Gras</Label>
+                      </div>
                     </div>
+                    <Textarea
+                      ref={bodyRef}
+                      id="letter-body"
+                      value={settings.letterTemplate?.body || ''}
+                      onChange={(e) => handleUpdateLetter('body', e.target.value)}
+                      placeholder="Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.&#10;&#10;Vous trouverez ci-joint notre devis détaillé comprenant..."
+                      rows={6}
+                    />
+                    <PlaceholderPanel targetField="body" targetRef={bodyRef} />
                   </div>
-                  <Textarea
-                    id="letter-body"
-                    value={settings.letterTemplate?.body || ''}
-                    onChange={(e) => handleUpdateLetter('body', e.target.value)}
-                    placeholder="Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.&#10;&#10;Vous trouverez ci-joint notre devis détaillé comprenant..."
-                    rows={6}
-                  />
-                </div>
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -376,13 +485,15 @@ const LetterTemplate = () => {
                       <Label htmlFor="closing-bold" className="text-sm">Gras</Label>
                     </div>
                   </div>
-                  <Textarea
-                    id="letter-closing"
-                    value={settings.letterTemplate?.closing || ''}
-                    onChange={(e) => handleUpdateLetter('closing', e.target.value)}
-                    placeholder="Nous restons à votre disposition pour tout complément d'information et espérons que notre proposition retiendra votre attention.&#10;&#10;Dans l'attente de votre retour, nous vous prions d'agréer, Madame, Monsieur, l'expression de nos salutations distinguées."
-                    rows={4}
-                  />
+                   <Textarea
+                     ref={closingRef}
+                     id="letter-closing"
+                     value={settings.letterTemplate?.closing || ''}
+                     onChange={(e) => handleUpdateLetter('closing', e.target.value)}
+                     placeholder="Nous restons à votre disposition pour tout complément d'information et espérons que notre proposition retiendra votre attention.&#10;&#10;Dans l'attente de votre retour, nous vous prions d'agréer, Madame, Monsieur, l'expression de nos salutations distinguées."
+                     rows={4}
+                   />
+                   <PlaceholderPanel targetField="closing" targetRef={closingRef} />
                 </div>
               </div>
             </div>

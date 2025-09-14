@@ -99,6 +99,17 @@ export interface LetterTemplate {
     body: boolean;
     closing: boolean;
   };
+  placeholders: {
+    enabled: boolean;
+    availablePlaceholders: PlaceholderType[];
+  };
+}
+
+export interface PlaceholderType {
+  id: string;
+  label: string;
+  description: string;
+  example: string;
 }
 
 export interface Settings {
