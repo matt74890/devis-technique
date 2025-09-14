@@ -22,6 +22,7 @@ import CurrencySettings from '@/components/settings/CurrencySettings';
 import SellerInfo from '@/components/settings/SellerInfo';
 import TemplateColors from '@/components/settings/TemplateColors';
 import LetterTemplate from '@/components/settings/LetterTemplate';
+import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
