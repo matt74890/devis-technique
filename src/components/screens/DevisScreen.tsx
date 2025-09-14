@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
+import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
 import { exportDomToPdf } from "@/utils/pdfRenderer";
 
@@ -1091,6 +1092,21 @@ const DevisScreen = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Description des prestations Agent */}
+      {currentQuote.items.some(item => item.kind === 'AGENT') && (
+        <AgentDescriptionEditor
+          description={currentQuote.agentDescription || {}}
+          onUpdate={(description) => updateQuote({ agentDescription: description })}
+          onPreview={() => {
+            // TODO: Implement preview functionality
+            toast({
+              title: "Aperçu PDF",
+              description: "Fonctionnalité d'aperçu PDF en cours de développement"
+            });
+          }}
+        />
+      )}
 
       {/* Boutons rapides frais par défaut */}
       {(settings.defaults.feesInstallHT > 0 || settings.defaults.feesDossierHT > 0) && (

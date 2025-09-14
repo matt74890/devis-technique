@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate, SellerInfo, TemplateColors } from '@/types';
+import { Settings, Quote, QuoteItem, Subscription, Product, PDFConfig, Currency, Address, LetterTemplate, SellerInfo, TemplateColors, AgentDescriptionTemplate } from '@/types';
 
 interface AppState {
   // Local state (non-persisted)
@@ -258,61 +258,56 @@ const defaultSettings: Settings = {
   customLetterTemplates: [],
   sellerInfo: defaultSellerInfo,
   templateColors: defaultTemplateColors,
-  subscriptions: [
-    {
-      id: '1',
-      label: 'Raccordement alarme',
-      puTTC: 50.00,
-      active: true,
-      defaultType: 'Autre',
-      defaultRef: 'Raccordement alarme'
-    },
-    {
-      id: '2', 
-      label: 'Raccordement + interventions illimitées',
-      puTTC: 109.00,
-      active: true,
-      defaultType: 'Autre',
-      defaultRef: 'Raccordement + interventions'
-    }
-  ],
-  types: [
-    'Caméra', 'Détecteur', 'Centrale', 'Enregistreur', 
-    'Serveur', 'Alimentation', 'Câblage', 'Installation', 'Autre'
-  ],
+  subscriptions: [],
+  types: ['Technique', 'Installation', 'Maintenance', 'Autre'],
   models: [],
   catalog: [],
   pdfConfig: defaultPDFConfig,
+  pdfLayout: undefined,
+  pdfLayouts: {},
+  activePDFLayouts: {},
   defaults: {
-    feesInstallHT: 150,
-    feesDossierHT: 50,
-    showFeesAsLines: true
+    feesInstallHT: 0,
+    feesDossierHT: 0,
+    showFeesAsLines: false
   },
   importEmail: {
-    enabled: true,
-    helpText: 'Collez un e-mail client, puis cliquez sur Remplir. Le parseur créera abonnements, lignes matériel, remises et frais.'
+    enabled: false,
+    helpText: 'Collez votre e-mail ci-dessous pour extraire automatiquement les informations du devis.'
   },
   agentSettings: {
-    nightStartTime: '23:00',
+    nightStartTime: '22:00',
     nightEndTime: '06:00',
-    sundayStartTime: '06:00',
-    sundayEndTime: '23:00',
-    nightMarkupPct: 10,
-    sundayMarkupPct: 10,
-    holidayMarkupPct: 10,
-    holidays: {
-      'GE': ['2024-01-01', '2024-12-25'], // Example holidays
-      'VD': ['2024-01-01', '2024-12-25'],
-      'VS': ['2024-01-01', '2024-12-25']
-    },
+    sundayStartTime: '00:00',
+    sundayEndTime: '23:59',
+    nightMarkupPct: 25,
+    sundayMarkupPct: 25,
+    holidayMarkupPct: 50,
+    holidays: {},
     agentTypes: [
-      { type: 'Sécurité', suggestedRate: 35 },
-      { type: 'Sécurité armée', suggestedRate: 45 },
-      { type: 'Maître-chien', suggestedRate: 50 },
-      { type: 'Patrouilleur', suggestedRate: 40 },
-      { type: 'Garde du corps', suggestedRate: 60 }
+      { type: 'Sécurité', suggestedRate: 50 },
+      { type: 'Surveillance', suggestedRate: 45 },
+      { type: 'Gardiennage', suggestedRate: 40 }
     ]
-  }
+  },
+  agentDescriptionTemplates: [
+    {
+      id: 'default_template',
+      name: 'Modèle par défaut',
+      isDefault: true,
+      description: {
+        nature: 'Surveillance et sécurité',
+        lieu: '',
+        effectif: '1 agent',
+        dates: '',
+        missions: 'Surveillance des locaux, contrôle des accès, rondes de sécurité, gestion des alarmes.',
+        deplacement: 'Inclus',
+        pause: '1h non payée',
+        duree: '8h par jour',
+        autre: []
+      }
+    }
+  ]
 };
 
 export { defaultSettings };

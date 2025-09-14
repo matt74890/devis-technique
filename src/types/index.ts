@@ -164,6 +164,7 @@ export interface Settings {
     holidays: { [canton: string]: string[] };
     agentTypes: AgentTypeRate[];
   };
+  agentDescriptionTemplates: AgentDescriptionTemplate[];
 }
 
 export interface Currency {
@@ -280,6 +281,32 @@ export interface Quote {
     useSeparateAddresses: boolean;
   };
   clientSignature?: string; // Données JSON de la signature client
+  agentDescription?: AgentDescription;
+}
+
+export interface AgentDescription {
+  nature?: string;
+  lieu?: string;
+  effectif?: string;
+  dates?: string;
+  missions?: string;
+  deplacement?: string;
+  pause?: string;
+  duree?: string;
+  autre?: AgentDescriptionSection[];
+}
+
+export interface AgentDescriptionSection {
+  id: string;
+  title: string;
+  content: string;
+}
+
+export interface AgentDescriptionTemplate {
+  id: string;
+  name: string;
+  isDefault?: boolean;
+  description: AgentDescription;
 }
 
 export interface QuoteItem {
