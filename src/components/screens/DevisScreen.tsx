@@ -21,7 +21,7 @@ import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportToPDF, buildDomFromLayout } from "@/utils/pdfRenderer";
+import { exportDomToPdf } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -185,17 +185,13 @@ const DevisScreen = () => {
     if (exporting) return;
     setExporting(true);
     try {
-      const layoutId = `default-${variant}`;
-      const simpleLayout = { 
-        id: layoutId, 
-        name: 'Default', 
-        variant: variant as import('@/types/layout').LayoutVariant,
-        blocks: [], 
-        visibilityRules: {},
-        page: { size: 'A4' as const, orientation: 'portrait' as const, margins: { top: 12, right: 10, bottom: 12, left: 10 }, grid: 10, unit: 'mm' as const },
-        metadata: { description: '', createdAt: '', updatedAt: '', isDefault: true }
-      };
-      await exportToPDF(quote, settings, simpleLayout);
+      const dom = await renderPDFFromLayout(quote, settings, variant);
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const blob = await exportDomToPdf(dom, filename);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
       toast({ title: "PDF téléchargé" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });

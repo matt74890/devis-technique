@@ -414,82 +414,80 @@ export const PDFCenter: React.FC = () => {
               <CardTitle>Options d'export PDF</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Qualité d'impression</Label>
-                      <div className="text-sm text-muted-foreground">
-                        Optimiser pour l'impression ou l'affichage écran
-                      </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Qualité d'impression</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Optimiser pour l'impression ou l'affichage écran
                     </div>
-                    <Select defaultValue="print">
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="print">Impression (haute qualité)</SelectItem>
-                        <SelectItem value="screen">Écran (fichier léger)</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
+                  <Select defaultValue="print">
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="print">Impression (haute qualité)</SelectItem>
+                      <SelectItem value="screen">Écran (fichier léger)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Separator />
 
-                <div className="space-y-4">
-                  <Label className="text-base">Remarque importante</Label>
-                  <div className="space-y-2">
-                    <textarea
-                      className="w-full min-h-[80px] p-3 border rounded-md text-sm resize-none"
-                      value={settings.pdfSettings?.importantRemark || ""}
-                      onChange={(e) => updateSettings({ 
-                        pdfSettings: { 
-                          ...settings.pdfSettings, 
-                          importantRemark: e.target.value 
-                        } 
-                      })}
-                      placeholder="Ex: Les heures de nuit, dimanche et jours fériés sont majorées de 10 % selon la CCT."
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Cette remarque apparaîtra sous le total du devis. Laissez vide pour ne pas l'afficher.
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Afficher les couleurs de fond</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Inclure les arrière-plans colorés dans le PDF
+                    </div>
                   </div>
+                  <Switch defaultChecked />
                 </div>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Compression des images</Label>
-                      <div className="text-sm text-muted-foreground">
-                        Réduire la taille du fichier PDF
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Préserver la mise en page</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Éviter les coupures de page inappropriées
                     </div>
-                    <Switch defaultChecked />
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Inclure les métadonnées</Label>
-                      <div className="text-sm text-muted-foreground">
-                        Informations sur le document
-                      </div>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Protéger par mot de passe</Label>
-                      <div className="text-sm text-muted-foreground">
-                        Sécuriser le PDF (optionnel)
-                      </div>
-                    </div>
-                    <Switch />
-                  </div>
+                  <Switch defaultChecked />
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Nom de fichier automatique</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Format : devis_[référence]_[date].pdf
+                    </div>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sauvegarde et import</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3">
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exporter tous les templates
+                </Button>
+                <Button variant="outline" asChild>
+                  <label>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importer templates
+                    <input type="file" accept=".json" className="hidden" />
+                  </label>
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Sauvegardez vos templates personnalisés ou importez-en depuis un autre système.
               </div>
             </CardContent>
           </Card>

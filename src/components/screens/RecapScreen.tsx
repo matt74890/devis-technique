@@ -13,7 +13,7 @@ import PDFPreview from '@/components/pdf/PDFPreview';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 import { useState } from "react";
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportToPDF, buildDomFromLayout } from "@/utils/pdfRenderer";
+import { exportDomToPdf } from "@/utils/pdfRenderer";
 import type { Quote, Settings } from "@/types";
 
 const RecapScreen = () => {
@@ -118,17 +118,23 @@ const RecapScreen = () => {
       }
 
       // 1) même DOM que la preview
-      const layoutId = `default-${variant}`;
-      const simpleLayout = { 
-        id: layoutId, 
-        name: 'Default', 
-        variant: variant as import('@/types/layout').LayoutVariant,
-        blocks: [], 
-        visibilityRules: {},
-        page: { size: 'A4' as const, orientation: 'portrait' as const, margins: { top: 12, right: 10, bottom: 12, left: 10 }, grid: 10, unit: 'mm' as const },
-        metadata: { description: '', createdAt: '', updatedAt: '', isDefault: true }
-      };
-      await exportToPDF(quote, settings, simpleLayout);
+      const dom = await renderPDFFromLayout(quote, settings, variant);
+
+      // (optionnel) attendre les fonts/images
+      if ((document as any).fonts?.ready) {
+        await (document as any).fonts.ready;
+      }
+
+      // 2) exporter en binaire
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const blob = await exportDomToPdf(dom, filename);
+
+      // 3) download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+
       toast.success("PDF téléchargé");
     } catch (e) {
       toast.error(`Échec PDF: ${(e as Error).message}`);
