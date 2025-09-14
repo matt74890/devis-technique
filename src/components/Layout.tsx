@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { FileText, Calculator, Settings, Building2, Users, LogOut, Layout as LayoutIcon, Copy } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { ConnectionStatus } from './ConnectionStatus';
 import DevisScreen from './screens/DevisScreen';
 import RecapScreen from './screens/RecapScreen';
 import SettingsScreen from './screens/SettingsScreen';
@@ -38,14 +39,18 @@ const Layout = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-muted-foreground">
-                Connecté en tant que <span className="font-medium">{user?.email}</span>
-              </div>
+              <ConnectionStatus />
+              {user?.email && (
+                <div className="text-sm text-muted-foreground">
+                  Connecté en tant que <span className="font-medium">{user.email}</span>
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
                 className="text-muted-foreground hover:text-foreground"
+                title="Se déconnecter"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Déconnexion

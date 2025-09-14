@@ -32,7 +32,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -42,11 +42,19 @@ const Auth = () => {
 
       if (error) throw error;
       
-      toast.success('Vérifiez votre email pour confirmer votre inscription');
+      if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
+      } else if (data.user && data.user.email_confirmed_at) {
+        toast.success('Inscription réussie ! Vous pouvez maintenant vous connecter.');
+      } else {
+        toast.success('Inscription en cours...');
+      }
     } catch (error: any) {
       console.error('Erreur lors de l\'inscription:', error);
-      if (error.message.includes('already registered')) {
-        toast.error('Cette adresse email est déjà enregistrée');
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+        toast.error('Cette adresse email est déjà enregistrée. Utilisez l\'onglet Connexion.');
+      } else if (error.message.includes('Password')) {
+        toast.error('Le mot de passe doit contenir au moins 6 caractères');
       } else {
         toast.error('Erreur lors de l\'inscription: ' + error.message);
       }
@@ -60,19 +68,26 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      toast.success('Connexion réussie');
-      navigate('/');
+      // Vérifier que la connexion a bien fonctionné
+      if (data.user) {
+        toast.success('Connexion réussie');
+        navigate('/');
+      } else {
+        throw new Error('Aucun utilisateur retourné');
+      }
     } catch (error: any) {
       console.error('Erreur lors de la connexion:', error);
       if (error.message.includes('Invalid login credentials')) {
-        toast.error('Email ou mot de passe incorrect');
+        toast.error('Email ou mot de passe incorrect. Vérifiez vos identifiants ou créez un compte.');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Veuillez confirmer votre email avant de vous connecter');
       } else {
         toast.error('Erreur lors de la connexion: ' + error.message);
       }
