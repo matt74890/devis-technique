@@ -142,10 +142,10 @@ const defaultLetterTemplate: LetterTemplate = {
   contactEmail: '',
   companyAddress: '',
   subject: 'Proposition commerciale - Sécurité technique',
-  civility: 'Monsieur',
-  opening: 'Suite à votre demande, nous avons le plaisir de vous adresser notre proposition commerciale.',
-  body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques.\n\nVous trouverez ci-joint notre devis détaillé comprenant l\'ensemble des prestations et équipements nécessaires.',
-  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.',
+  civility: '{{CLIENT_CIVILITE}}', // Utilise maintenant un placeholder par défaut
+  opening: 'Suite à votre demande, {{CLIENT_CIVILITE}} {{CLIENT_NOM_COMPLET}}, nous avons le plaisir de vous adresser notre proposition commerciale...',
+  body: 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques de {{CLIENT_ENTREPRISE}}.\n\nVous trouverez ci-joint notre devis détaillé comprenant...',
+  closing: 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, {{CLIENT_CIVILITE}} {{CLIENT_NOM}}, l\'expression de nos salutations distinguées.',
   textAlignment: 'left',
       placeholders: {
         enabled: true,
@@ -255,6 +255,7 @@ const defaultSettings: Settings = {
   defaultComment: 'Merci de votre confiance.',
   pdfFontFamily: 'Arial, sans-serif',
   letterTemplate: defaultLetterTemplate,
+  customLetterTemplates: [],
   sellerInfo: defaultSellerInfo,
   templateColors: defaultTemplateColors,
   subscriptions: [

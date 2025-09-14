@@ -88,7 +88,7 @@ export interface LetterTemplate {
   contactEmail: string;
   companyAddress: string;
   subject: string;
-  civility: 'Monsieur' | 'Madame';
+  civility: string; // Changé pour permettre les placeholders
   opening: string;
   body: string;
   closing: string;
@@ -103,6 +103,14 @@ export interface LetterTemplate {
     enabled: boolean;
     availablePlaceholders: PlaceholderType[];
   };
+}
+
+export interface CustomLetterTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  isDefault?: boolean;
+  template: Omit<LetterTemplate, 'enabled' | 'templateId'>;
 }
 
 export interface PlaceholderType {
@@ -133,6 +141,7 @@ export interface Settings {
   pdfLayouts?: { [variant: string]: import('./layout').PDFLayoutConfig[] };
   activePDFLayouts?: { [variant: string]: string };
   letterTemplate: LetterTemplate;
+  customLetterTemplates: CustomLetterTemplate[];
   sellerInfo: SellerInfo;
   templateColors: TemplateColors;
   defaults: {

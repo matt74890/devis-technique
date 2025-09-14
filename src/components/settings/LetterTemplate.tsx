@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, User, Users, Hash, Copy } from 'lucide-react';
+import { FileText, User, Users, Hash, Copy, Settings } from 'lucide-react';
 import { useSettings } from '@/components/SettingsProvider';
 import { useState, useRef } from 'react';
-import type { PlaceholderType } from '@/types';
+import type { PlaceholderType, CustomLetterTemplate } from '@/types';
+import CustomTemplateManager from './CustomTemplateManager';
 
 interface LetterTemplateType {
   id: string;
@@ -22,7 +23,7 @@ interface LetterTemplateType {
   contactEmail: string;
   companyAddress: string;
   subject: string;
-  civility: 'Monsieur' | 'Madame';
+  civility: string; // Changé pour permettre les placeholders
   opening: string;
   body: string;
   closing: string;
@@ -89,7 +90,7 @@ const LetterTemplate = () => {
       contactEmail: settings.letterTemplate?.contactEmail || '',
       companyAddress: settings.letterTemplate?.companyAddress || '',
       subject: settings.letterTemplate?.subject || 'Proposition commerciale - Sécurité technique',
-      civility: settings.letterTemplate?.civility || 'Monsieur',
+      civility: '{{CLIENT_CIVILITE}}',
       opening: settings.letterTemplate?.opening || 'Suite à votre demande, {{CLIENT_CIVILITE}} {{CLIENT_NOM_COMPLET}}, nous avons le plaisir de vous adresser notre proposition commerciale...',
       body: settings.letterTemplate?.body || 'Notre entreprise, spécialisée dans les solutions de sécurité technique, vous propose une offre adaptée à vos besoins spécifiques de {{CLIENT_ENTREPRISE}}.\n\nVous trouverez ci-joint notre devis détaillé comprenant...',
       closing: settings.letterTemplate?.closing || 'Nous restons à votre disposition pour tout complément d\'information et espérons que notre proposition retiendra votre attention.\n\nDans l\'attente de votre retour, nous vous prions d\'agréer, {{CLIENT_CIVILITE}} {{CLIENT_NOM}}, l\'expression de nos salutations distinguées.',
@@ -134,6 +135,18 @@ const LetterTemplate = () => {
     }
   ];
 
+  // Templates prédéfinis + personnalisés
+  const allTemplates: (LetterTemplateType & { isCustom?: boolean })[] = [
+    ...predefinedTemplates,
+    ...(settings.customLetterTemplates || []).map((customTemplate): LetterTemplateType & { isCustom: boolean } => ({
+      id: customTemplate.id,
+      name: customTemplate.name,
+      isCustom: true,
+      enabled: settings.letterTemplate?.enabled || false,
+      ...customTemplate.template,
+    })),
+  ];
+
   const [selectedTemplate, setSelectedTemplate] = useState<string>(
     settings.letterTemplate?.templateId || 'default'
   );
@@ -144,9 +157,10 @@ const LetterTemplate = () => {
   const openingRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const closingRef = useRef<HTMLTextAreaElement>(null);
+  const civilityRef = useRef<HTMLInputElement>(null);
 
   const handleSelectTemplate = (templateId: string) => {
-    const template = predefinedTemplates.find(t => t.id === templateId);
+    const template = allTemplates.find(t => t.id === templateId);
     if (!template) return;
     
     setSelectedTemplate(templateId);
@@ -154,6 +168,7 @@ const LetterTemplate = () => {
       letterTemplate: {
         ...template,
         templateId: templateId,
+        enabled: settings.letterTemplate?.enabled || false,
         // Preserve company info from current settings
         companyName: settings.letterTemplate?.companyName || template.companyName,
         contactName: settings.letterTemplate?.contactName || template.contactName,
@@ -245,21 +260,25 @@ const LetterTemplate = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="selection" className="flex items-center space-x-2">
               <FileText className="h-4 w-4" />
-              <span>Sélection template</span>
+              <span>Templates</span>
             </TabsTrigger>
             <TabsTrigger value="configuration" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span>Configuration</span>
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4" />
+              <span>Templates personnalisés</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="selection" className="space-y-4">
             <div className="space-y-3">
               <Label>Choisir un template de lettre</Label>
-              {predefinedTemplates.map((template) => (
+              {allTemplates.map((template) => (
                 <div
                   key={template.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -272,12 +291,17 @@ const LetterTemplate = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        {template.id === 'default' ? (
+                        {template.isCustom ? (
+                          <Settings className="h-4 w-4 text-primary" />
+                        ) : template.id === 'default' ? (
                           <FileText className="h-4 w-4 text-primary" />
                         ) : (
                           <Users className="h-4 w-4 text-primary" />
                         )}
                         <h4 className="font-medium">{template.name}</h4>
+                        {template.isCustom && (
+                          <Badge variant="secondary" className="text-xs">Personnalisé</Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         {template.subject}
@@ -406,19 +430,15 @@ const LetterTemplate = () => {
                   </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="civility-select">Civilité</Label>
-                  <Select
-                    value={settings.letterTemplate?.civility || 'Monsieur'}
-                    onValueChange={(value) => handleUpdateLetter('civility', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Monsieur">Monsieur</SelectItem>
-                      <SelectItem value="Madame">Madame</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="civility-input">Civilité</Label>
+                  <Input
+                    ref={civilityRef}
+                    id="civility-input"
+                    value={settings.letterTemplate?.civility || ''}
+                    onChange={(e) => handleUpdateLetter('civility', e.target.value)}
+                    placeholder="{{CLIENT_CIVILITE}} ou texte personnalisé"
+                  />
+                  <PlaceholderPanel targetField="civility" targetRef={civilityRef} />
                 </div>
                 
                   <div className="space-y-2">
@@ -519,6 +539,9 @@ const LetterTemplate = () => {
                 </Select>
               </div>
             </div>
+          </TabsContent>
+          <TabsContent value="custom" className="space-y-4">
+            <CustomTemplateManager availablePlaceholders={availablePlaceholders} />
           </TabsContent>
         </Tabs>
       </CardContent>
