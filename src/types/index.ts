@@ -165,6 +165,9 @@ export interface Settings {
     agentTypes: AgentTypeRate[];
   };
   agentDescriptionTemplates: AgentDescriptionTemplate[];
+  agentDescription?: {
+    enabled: boolean;
+  };
 }
 
 export interface Currency {

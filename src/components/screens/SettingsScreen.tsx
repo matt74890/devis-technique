@@ -22,6 +22,7 @@ import CurrencySettings from '@/components/settings/CurrencySettings';
 import SellerInfo from '@/components/settings/SellerInfo';
 import TemplateColors from '@/components/settings/TemplateColors';
 import LetterTemplate from '@/components/settings/LetterTemplate';
+import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -789,7 +790,7 @@ const SettingsScreen = () => {
           <div className="space-y-6">
             <LogoUpload />
             <FontSelector />
-            {/* <AgentDescriptionSettings /> */}
+            <AgentDescriptionSettings />
             
             {/* Informations de base pour PDF */}
             <Card className="shadow-soft">

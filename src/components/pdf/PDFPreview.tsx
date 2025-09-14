@@ -22,8 +22,8 @@ export default function PDFPreview({
       try {
         const dom = await renderPDFFromLayout(quote, settings, variant);
         
-        // Insert agent description page if exists and has content
-        if (hasAgentDescriptionContent(quote.agentDescription)) {
+        // Insert agent description page if exists and has content and is enabled
+        if (settings.agentDescription?.enabled && hasAgentDescriptionContent(quote.agentDescription)) {
           const agentDescHTML = renderAgentDescriptionToPDF(quote.agentDescription!);
           if (agentDescHTML) {
             const tempDiv = document.createElement('div');
