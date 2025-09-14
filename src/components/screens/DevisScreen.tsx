@@ -15,14 +15,14 @@ import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
 import PDFPreview from '@/components/pdf/PDFPreview';
+import ProfessionalPDFExport from '@/components/pdf/ProfessionalPDFExport';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
-import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomToPdf } from "@/utils/pdfRenderer";
+import { exportProfessionalPDF } from "@/utils/professionalPDFRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -533,7 +533,7 @@ const DevisScreen = () => {
               />
               )}
               <Button 
-                onClick={() => currentQuote && handleDownloadPdf(currentQuote, settings, currentQuote.items.some(i => i.kind === 'TECH') && currentQuote.items.some(i => i.kind === 'AGENT') ? 'mixte' : currentQuote.items.some(i => i.kind === 'AGENT') ? 'agent' : 'technique')} 
+                onClick={() => currentQuote && handleDownloadPdf(currentQuote, settings)} 
                 variant="outline"
                 disabled={exporting}
               >
@@ -1107,8 +1107,7 @@ const DevisScreen = () => {
                 agentDescription: currentQuote.agentDescription
               };
               
-              // Générer le DOM de preview
-              const dom = await renderPDFFromLayout(previewQuote, settings, 'agent');
+              toast({ title: "Preview temporairement désactivé" });
               
               // Créer une nouvelle fenêtre pour afficher le preview
               const previewWindow = window.open('', '_blank', 'width=800,height=600');

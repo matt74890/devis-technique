@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Quote, Settings } from "@/types";
-import { renderPDFFromLayout } from "./renderPDFFromLayout";
-import { renderAgentDescriptionToPDF, hasAgentDescriptionContent } from "@/utils/agentDescriptionRenderer";
+import { renderProfessionalPDF } from "@/utils/professionalPDFRenderer";
 
 export default function PDFPreview({
   quote, settings, variant
@@ -20,20 +19,7 @@ export default function PDFPreview({
       container.innerHTML = "";
       
       try {
-        const dom = await renderPDFFromLayout(quote, settings, variant);
-        
-        // Insert agent description page if exists and has content and is enabled
-        if (settings.agentDescription?.enabled && hasAgentDescriptionContent(quote.agentDescription)) {
-          const agentDescHTML = renderAgentDescriptionToPDF(quote.agentDescription!);
-          if (agentDescHTML) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = agentDescHTML;
-            const agentDescPage = tempDiv.firstChild as HTMLElement;
-            if (agentDescPage) {
-              dom.appendChild(agentDescPage);
-            }
-          }
-        }
+        const dom = await renderProfessionalPDF(quote, settings);
         
         // Check if component is still mounted and this request wasn't cancelled
         if (!isCancelled && mountedRef.current && containerRef.current) {
