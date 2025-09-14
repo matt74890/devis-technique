@@ -168,7 +168,6 @@ export interface Settings {
   agentDescription?: {
     enabled: boolean;
   };
-  importantNote?: string;
 }
 
 export interface Currency {

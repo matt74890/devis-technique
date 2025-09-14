@@ -310,8 +310,7 @@ const defaultSettings: Settings = {
   ],
   agentDescription: {
     enabled: false
-  },
-  importantNote: ''
+  }
 };
 
 export { defaultSettings };
