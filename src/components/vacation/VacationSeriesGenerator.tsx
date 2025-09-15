@@ -48,6 +48,25 @@ const VacationSeriesGenerator = ({ settings, onAddVacations }: VacationSeriesGen
     return holidays.includes(dateStr);
   };
 
+  const calculateEndDate = (startDate: string, startTime: string, endTime: string): string => {
+    if (!startTime || !endTime) return startDate;
+    
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    // Si l'heure de fin est plus petite que l'heure de début, c'est le lendemain
+    if (endMinutes < startMinutes) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + 1);
+      return date.toISOString().split('T')[0];
+    }
+    
+    return startDate;
+  };
+
   const generateSeries = () => {
     if (!dateStart || !dateEnd || !timeStart || !timeEnd || !agentType || !rateCHFh) {
       toast({
@@ -92,14 +111,18 @@ const VacationSeriesGenerator = ({ settings, onAddVacations }: VacationSeriesGen
         }
         
         if (!shouldSkip) {
+          // Calculer la date de fin (peut être le lendemain si vacation passe minuit)
+          const startDateStr = currentDate.toISOString().split('T')[0];
+          const endDateStr = calculateEndDate(startDateStr, timeStart, timeEnd);
+          
           const vacation: Omit<QuoteItem, 'id'> = {
             kind: 'AGENT',
             type: agentType,
             reference: `Vacation ${agentType}`,
             mode: 'unique',
-            dateStart: currentDate.toISOString().split('T')[0],
+            dateStart: startDateStr,
             timeStart,
-            dateEnd: currentDate.toISOString().split('T')[0],
+            dateEnd: endDateStr,
             timeEnd,
             agentType,
             rateCHFh,

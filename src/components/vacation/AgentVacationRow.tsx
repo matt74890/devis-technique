@@ -25,6 +25,25 @@ const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate }: A
     return suggestion?.suggestedRate || 0;
   };
 
+  const calculateNextDayIfNeeded = (startDate: string, startTime: string, endTime: string): string => {
+    if (!startDate || !startTime || !endTime) return startDate;
+    
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    // Si l'heure de fin est plus petite que l'heure de début, c'est le lendemain
+    if (endMinutes < startMinutes) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + 1);
+      return date.toISOString().split('T')[0];
+    }
+    
+    return startDate;
+  };
+
   const validateAndUpdate = (field: keyof QuoteItem, value: any) => {
     const newErrors = { ...errors };
     
@@ -54,7 +73,19 @@ const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate }: A
     setErrors(newErrors);
     
     // Mettre à jour l'item avec la nouvelle valeur
-    const updatedItem = { ...item, [field]: value };
+    let updatedItem = { ...item, [field]: value };
+    
+    // Auto-calculer la date de fin si les heures passent minuit
+    if (field === 'timeEnd' || field === 'timeStart') {
+      const startDate = item.dateStart;
+      const startTime = field === 'timeStart' ? value : item.timeStart;
+      const endTime = field === 'timeEnd' ? value : item.timeEnd;
+      
+      if (startDate && startTime && endTime) {
+        const calculatedEndDate = calculateNextDayIfNeeded(startDate, startTime, endTime);
+        updatedItem = { ...updatedItem, dateEnd: calculatedEndDate };
+      }
+    }
     
     // Si c'est un changement qui affecte les calculs, recalculer
     if (['dateStart', 'timeStart', 'dateEnd', 'timeEnd', 'rateCHFh', 'pauseMinutes', 'pausePaid', 'travelCHF', 'agentType'].includes(field)) {
