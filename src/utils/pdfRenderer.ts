@@ -2,6 +2,7 @@ import html2pdf from "html2pdf.js";
 import type { Quote, Settings } from '@/types';
 import { PDFLayoutConfig, LayoutBlock, TableColumn, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
 import { calculateQuoteTotals } from './calculations';
+import { groupAgentVacations } from './agentVacationGrouping';
 
 /**
  * Fonction unique de rendu PDF basée sur les layouts JSON
@@ -197,7 +198,13 @@ export const renderPDFFromLayout = (
     if (!block.tableConfig) return '';
 
     const config = block.tableConfig;
-    const dataset = config.dataset === 'items.tech' ? context.items.tech : context.items.agent;
+    let dataset = config.dataset === 'items.tech' ? context.items.tech : context.items.agent;
+    
+    // Regrouper les vacations d'agent similaires
+    if (config.dataset === 'items.agent' && dataset && dataset.length > 0) {
+      const groupedVacations = groupAgentVacations(dataset);
+      dataset = groupedVacations;
+    }
     
     if (!dataset || dataset.length === 0) return '';
 
@@ -228,11 +235,29 @@ export const renderPDFFromLayout = (
         .forEach(col => {
           let value = item[col.binding] || '';
           
+          // Pour les vacations groupées, utiliser les champs spécifiques
+          if (config.dataset === 'items.agent' && item.dateRange) {
+            if (col.binding === 'dateStart') {
+              value = item.dateRange; // Afficher la plage de dates au lieu de la date de début
+            } else if (col.binding === 'dateEnd') {
+              value = ''; // Ne pas afficher la date de fin séparément
+            } else if (col.binding === 'reference' && item.markupDescription) {
+              value = `${item.agentType} (${item.markupDescription})`;
+            } else if (col.binding === 'reference' && !item.markupDescription) {
+              value = item.agentType;
+            }
+          }
+          
           // Formatage selon le type
           if (col.format === 'currency' && typeof value === 'number') {
             value = value.toFixed(2) + ' CHF';
           } else if (col.format === 'date' && value) {
-            value = new Date(value).toLocaleDateString('fr-CH');
+            // Si c'est déjà une chaîne de plage de dates, ne pas reformater
+            if (typeof value === 'string' && value.includes('du ')) {
+              // Garder tel quel
+            } else {
+              value = new Date(value).toLocaleDateString('fr-CH');
+            }
           } else if (col.format === 'hours' && typeof value === 'number') {
             value = value.toFixed(1) + 'h';
           }
@@ -282,11 +307,11 @@ export const renderPDFFromLayout = (
   `;
 };
 
-export const buildDomFromLayout = async (
+export const buildDomFromLayout = (
   layoutId: string,
   quote: Quote,
   settings: Settings
-): Promise<HTMLElement> => {
+): HTMLElement => {
   const colors = settings.templateColors || {
     primary: '#2563eb',
     secondary: '#64748b',
