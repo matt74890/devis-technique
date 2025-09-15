@@ -188,11 +188,7 @@ const DevisScreen = () => {
     try {
       const dom = await renderPDFFromLayout(quote, settings, variant);
       const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
-      const blob = await exportDomToPdf(dom, filename);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
+      await exportDomAsPDF(dom, filename);
       toast({ title: "PDF téléchargé" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });

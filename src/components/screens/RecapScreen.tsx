@@ -126,15 +126,9 @@ const RecapScreen = () => {
         await (document as any).fonts.ready;
       }
 
-      // 2) exporter en binaire
+      // 2) exporter directement
       const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
-      const blob = await exportDomToPdf(dom, filename);
-
-      // 3) download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
+      await exportDomAsPDF(dom, filename);
 
       toast.success("PDF téléchargé");
     } catch (e) {
