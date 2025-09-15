@@ -404,7 +404,7 @@ export const buildDomFromLayout = (
     }
     
     .pdf-content {
-      min-height: calc(273mm - 80mm);
+      min-height: calc(273mm - 120mm);
     }
     
     .pdf-footer {
@@ -478,6 +478,7 @@ export const buildDomFromLayout = (
     .closing-block {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
+      margin-top: 40mm;
     }
     .keep-together { 
       page-break-inside: avoid !important; 
@@ -489,6 +490,7 @@ export const buildDomFromLayout = (
       flex-wrap: wrap; 
       justify-content: center;
       margin-bottom: 20px;
+      page-break-inside: avoid !important;
     }
     
     /* Force un saut de page si besoin */
@@ -631,12 +633,8 @@ export const buildDomFromLayout = (
     container.appendChild(letterPage);
   }
 
-  // PAGE 2+: DEVIS avec structure DOM stricte
-  const quotePage = document.createElement('div');
-  quotePage.className = 'pdf-page';
-  
-  // En-tête répétable (logo + référence + trait jaune)
-  const headerHTML = `
+  // Fonction pour créer l'en-tête répétable (logo + référence + trait jaune)
+  const createHeaderHTML = () => `
     <header class="pdf-header">
       <div style="display: flex; align-items: center; gap: 15px;">
         ${settings.logoUrl ? `
@@ -654,8 +652,12 @@ export const buildDomFromLayout = (
     </header>
   `;
 
+  // PAGE DEVIS avec structure DOM stricte selon spécifications
+  const quotePage = document.createElement('section');
+  quotePage.className = 'pdf-page';
+  
   quotePage.innerHTML = `
-    ${headerHTML}
+    ${createHeaderHTML()}
     
     <div class="pdf-content">
       <!-- Informations client et projet -->
@@ -860,89 +862,105 @@ export const buildDomFromLayout = (
         ` : ''}
       </div>
       
-      <!-- Total général -->
-      <div style="text-align: center; margin: 30px 0;">
-        <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground}; display: inline-block;">
-          <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">TOTAL GÉNÉRAL</h3>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary}; margin-top: 10px;">
-            <span>TOTAL TTC:</span>
-            <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
-          </div>
+      <!-- TOTAL GÉNÉRAL -->
+      <div class="grand-total" style="text-align: center; margin: 30px 0 20px 0; padding: 20px; background: ${colors.grandTotalBackground}; border: 3px solid ${colors.grandTotalBorder}; border-radius: 8px;">
+        <div style="font-size: 18pt; font-weight: bold; color: ${colors.primary};">
+          TOTAL GÉNÉRAL TTC: ${totals.global.totalTTC.toFixed(2)} CHF
+        </div>
+        <div style="font-size: 10pt; color: ${colors.mutedTextColor}; margin-top: 5px;">
+          TVA comprise (${settings.tvaPct}%) • ${totals.global.htAfterDiscount.toFixed(2)} CHF HT
         </div>
       </div>
-
-      <!-- Signatures -->
+      
+      <!-- SIGNATURES -->
       <div class="signatures">
-        <div class="signature-block">
-          <div style="font-weight: bold; margin-bottom: 8px;">Le Vendeur</div>
-          <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
-          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
-          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+        <div style="border: 1px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 5px;">
+          <div style="font-weight: bold; margin-bottom: 10px; color: ${colors.signatureTitleColor};">Le Vendeur</div>
+          <div style="font-size: 12pt; font-weight: bold; margin-bottom: 5px;">${settings.sellerInfo?.name || ''}</div>
+          <div style="font-size: 10pt; margin-bottom: 10px; color: ${colors.signatureTextColor};">${settings.sellerInfo?.title || ''}</div>
+          ${settings.sellerInfo?.signature ? `
+            <img src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 40px; max-width: 150px; margin-top: 10px;" />
+          ` : `
+            <div style="margin-top: 15px; color: ${colors.signatureTextColor}; font-size: 9pt;">Nom et signature :</div>
+            <div style="height: 30px; border-bottom: 1px solid ${colors.signatureBoxBorder}; margin-top: 5px;"></div>
+          `}
         </div>
-        <div class="signature-block">
-          <div style="font-weight: bold; margin-bottom: 8px;">Le Client</div>
-          <div class="signature-name">${quote.client}</div>
-          <div class="signature-title">${quote.clientCivility || ''}</div>
-          ${quote.clientSignature ? 
-            `<canvas class="signature-image" style="border: 1px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; max-height: 28mm; max-width: 80mm;" data-signature="${quote.clientSignature}"></canvas>` : 
-            `<div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>`
-          }
+        
+        <div style="border: 1px solid ${colors.signatureBoxBorder}; padding: 15px; background: ${colors.signatureBoxBackground}; border-radius: 5px;">
+          <div style="font-weight: bold; margin-bottom: 10px; color: ${colors.signatureTitleColor};">Le Client</div>
+          <div style="font-size: 12pt; font-weight: bold; margin-bottom: 5px;">${quote.client}</div>
+          <div style="font-size: 10pt; margin-bottom: 10px; color: ${colors.signatureTextColor};">${quote.clientCivility || ''}</div>
+          <div style="margin-top: 15px; color: ${colors.signatureTextColor}; font-size: 9pt;">Nom et signature :</div>
+          <div style="height: 30px; border-bottom: 1px solid ${colors.signatureBoxBorder}; margin-top: 5px;"></div>
         </div>
       </div>
     </div>
+
+    <footer class="pdf-footer">
+      Page 1 sur 1 • Devis ${quote.ref} • ${new Date(quote.date).toLocaleDateString('fr-CH')}
+    </footer>
   `;
 
   container.appendChild(quotePage);
 
-  // Traitement des signatures client après insertion DOM
-  if (quote.clientSignature) {
-    setTimeout(() => {
-      const canvases = container.querySelectorAll('canvas[data-signature]');
-      canvases.forEach((canvas: any) => {
-        const signatureData = canvas.getAttribute('data-signature');
-        if (signatureData) {
-          try {
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = () => {
-              canvas.width = img.width;
-              canvas.height = img.height;
-              ctx.drawImage(img, 0, 0);
-            };
-            img.src = signatureData;
-          } catch (error) {
-            console.warn('Erreur lors du rendu de la signature client:', error);
-          }
-        }
-      });
-    }, 100);
-  }
-
   return container;
 };
 
-export async function exportDomToPdf(dom: HTMLElement, filename: string): Promise<Blob> {
-  const opt = {
-    margin: 0,
-    filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { 
-      scale: 2,
-      useCORS: true,
-      allowTaint: true
-    },
-    jsPDF: { 
-      unit: 'mm', 
-      format: 'a4', 
-      orientation: 'portrait' 
-    }
-  };
-
+/**
+ * Générer et télécharger le PDF (html2pdf)
+ */
+export const generatePDF = async (quote: Quote, settings: Settings): Promise<void> => {
   try {
-    const pdf = await html2pdf().set(opt).from(dom).outputPdf('blob');
-    return pdf;
+    // Utiliser le nouveau layout par défaut
+    const defaultLayout = getDefaultLayoutForVariant('technique');
+    const htmlString = renderPDFFromLayout(quote, settings, defaultLayout);
+    
+    // Configuration HTML2PDF optimisée pour A4
+    const options = {
+      margin: [10, 8, 10, 8], // Marges en mm
+      filename: `devis-${quote.ref}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+
+    // Générer le PDF
+    await html2pdf().set(options).from(htmlString).save();
   } catch (error) {
-    console.error('Erreur lors de l\'export PDF:', error);
-    throw new Error('Impossible de générer le PDF');
+    console.error('Erreur lors de la génération du PDF:', error);
+    throw new Error(`Erreur PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
   }
-}
+};
+
+/**
+ * Version simplifiée pour débogage - export DOM uniquement
+ */
+export const exportDomAsPDF = async (domElement: HTMLElement, filename: string): Promise<void> => {
+  try {
+    const options = {
+      margin: [10, 8, 10, 8],
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    await html2pdf().set(options).from(domElement).save();
+  } catch (error) {
+    console.error('Erreur exportDomAsPDF:', error);
+    throw new Error(`Erreur export DOM: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+  }
+};

@@ -22,7 +22,7 @@ import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerat
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomToPdf } from "@/utils/pdfRenderer";
+import { exportDomAsPDF } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();

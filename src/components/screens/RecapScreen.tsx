@@ -14,7 +14,7 @@ import PDFPreview from '@/components/pdf/PDFPreview';
 import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
 import { useState } from "react";
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomToPdf } from "@/utils/pdfRenderer";
+import { exportDomAsPDF } from "@/utils/pdfRenderer";
 import type { Quote, Settings } from "@/types";
 
 const RecapScreen = () => {
