@@ -363,21 +363,6 @@ export const buildDomFromLayout = (
     @page {
       size: A4;
       margin: 12mm 10mm 12mm 10mm; /* top right bottom left - marges sécurisées */
-      @top-center {
-        content: element(running-header);
-      }
-    }
-    
-    /* En-tête répété sur chaque page (sauf première) */
-    .running-header {
-      position: running(running-header);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 2px solid #f59e0b;
-      margin-bottom: 10px;
-      font-size: 10pt;
     }
     [data-a4-root] { 
       max-width: 190mm; /* Largeur adaptée aux nouvelles marges */
@@ -468,23 +453,6 @@ export const buildDomFromLayout = (
     .box, .recap, .signatures, .totals-section, .total-box, .signature-block { 
       page-break-inside: avoid !important; 
       page-break-before: auto;
-    }
-    
-    /* Totaux et signatures toujours ensemble */
-    .totals-and-signatures {
-      page-break-inside: avoid !important;
-      page-break-before: auto;
-    }
-    
-    .totals-section {
-      page-break-inside: avoid !important;
-      page-break-after: avoid !important; /* Empêche la séparation avec les signatures */
-    }
-    
-    /* Force les signatures après les totaux sur la même page */
-    .signatures {
-      page-break-before: avoid !important;
-      page-break-inside: avoid !important;
     }
     
     /* Zone de contenu respecte les limites */
@@ -637,17 +605,6 @@ export const buildDomFromLayout = (
   `;
 
   quotePage.innerHTML = `
-    <!-- En-tête répété (masqué sur première page, visible sur suivantes) -->
-    <div class="running-header">
-      <div style="display: flex; align-items: center; gap: 15px;">
-        ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" style="max-height: 30px; object-fit: contain;" />` : ''}
-        <span style="font-weight: bold; color: ${colors.primary};">Devis N° ${quote.ref}</span>
-      </div>
-      <div style="font-size: 9pt; color: ${colors.mutedTextColor};">
-        ${new Date(quote.date).toLocaleDateString('fr-CH')} - ${quote.client}
-      </div>
-    </div>
-
     <div class="content-zone">
     <!-- En-tête du devis -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid ${colors.borderSecondary};">
@@ -788,130 +745,127 @@ export const buildDomFromLayout = (
       </div>
     ` : ''}
 
-    <!-- Totaux et signatures - toujours ensemble -->
-    <div class="totals-and-signatures">
-      <!-- Totaux séparés par catégorie -->
-      <div class="totals-section">
-        ${totals.unique.subtotalHT > 0 ? `
-          <div class="totals-container">
-            <div class="total-box">
-              <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE UNIQUE</h4>
-              <div style="text-align: left; font-size: 10pt;">
-                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>Sous-total HT:</span>
-                  <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
-                </div>
-                ${totals.unique.discountHT > 0 ? `
-                  <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                    <span>Remise:</span>
-                    <span>-${totals.unique.discountHT.toFixed(2)} CHF</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                    <span>Net HT:</span>
-                    <span>${totals.unique.htAfterDiscount.toFixed(2)} CHF</span>
-                  </div>
-                ` : ''}
-                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>TVA (${settings.tvaPct}%):</span>
-                  <span>${totals.unique.tva.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
-                  <span>Total TTC:</span>
-                  <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
-                </div>
+    <!-- Totaux séparés par catégorie -->
+    <div class="totals-section">
+      ${totals.unique.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE UNIQUE</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
               </div>
-            </div>
-          </div>
-        ` : ''}
-        
-        ${totals.mensuel.subtotalHT > 0 ? `
-          <div class="totals-container">
-            <div class="total-box">
-              <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE MENSUEL</h4>
-              <div style="text-align: left; font-size: 10pt;">
+              ${totals.unique.discountHT > 0 ? `
                 <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>Sous-total HT:</span>
-                  <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+                  <span>Remise:</span>
+                  <span>-${totals.unique.discountHT.toFixed(2)} CHF</span>
                 </div>
-                ${totals.mensuel.discountHT > 0 ? `
-                  <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                    <span>Remise:</span>
-                    <span>-${totals.mensuel.discountHT.toFixed(2)} CHF</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                    <span>Net HT:</span>
-                    <span>${totals.mensuel.htAfterDiscount.toFixed(2)} CHF</span>
-                  </div>
-                ` : ''}
                 <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>TVA (${settings.tvaPct}%):</span>
-                  <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+                  <span>Net HT:</span>
+                  <span>${totals.unique.htAfterDiscount.toFixed(2)} CHF</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
-                  <span>Total TTC:</span>
-                  <span>${totals.mensuel.totalTTC.toFixed(2)} CHF</span>
-                </div>
+              ` : ''}
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.unique.tva.toFixed(2)} CHF</span>
               </div>
-            </div>
-          </div>
-        ` : ''}
-        
-        ${totals.agents.subtotalHT > 0 ? `
-          <div class="totals-container">
-            <div class="total-box">
-              <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">AGENT</h4>
-              <div style="text-align: left; font-size: 10pt;">
-                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>Sous-total HT:</span>
-                  <span>${totals.agents.subtotalHT.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
-                  <span>TVA (${settings.tvaPct}%):</span>
-                  <span>${totals.agents.tva.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
-                  <span>Total TTC:</span>
-                  <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
-                </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
               </div>
-            </div>
-          </div>
-        ` : ''}
-        
-        <!-- Total général -->
-        <div class="totals-container" style="margin-top: 20px;">
-          <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground};">
-            <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">TOTAL GÉNÉRAL</h3>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary}; margin-top: 10px;">
-              <span>TOTAL TTC:</span>
-              <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
             </div>
           </div>
         </div>
+      ` : ''}
+      
+      ${totals.mensuel.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE MENSUEL</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              ${totals.mensuel.discountHT > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Remise:</span>
+                  <span>-${totals.mensuel.discountHT.toFixed(2)} CHF</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                  <span>Net HT:</span>
+                  <span>${totals.mensuel.htAfterDiscount.toFixed(2)} CHF</span>
+                </div>
+              ` : ''}
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.mensuel.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      ${totals.agents.subtotalHT > 0 ? `
+        <div class="totals-container">
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">AGENT</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.agents.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.agents.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      <!-- Total général -->
+      <div class="totals-container" style="margin-top: 20px;">
+        <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground};">
+          <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">TOTAL GÉNÉRAL</h3>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary}; margin-top: 10px;">
+            <span>TOTAL TTC:</span>
+            <span>${totals.global.totalTTC.toFixed(2)} CHF</span>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- Signatures -->
-      <div style="margin-top: 40px; page-break-inside: avoid;">
-        <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
-        <div class="signatures">
-          <div class="signature-block">
-            <div>Le Vendeur</div>
-            <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
-            <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
-            ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
-          </div>
-          <div class="signature-block">
-            <div>Le Client</div>
-            <div class="signature-name">${quote.client}</div>
-            <div class="signature-title">${quote.clientCivility || ''}</div>
-            ${quote.clientSignature ? 
-              `<canvas class="signature-image" style="border: 1px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; max-height: 28mm; max-width: 80mm;" data-signature="${quote.clientSignature}"></canvas>` : 
-              `<div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>`
-            }
-          </div>
+    <!-- Signatures -->
+    <div style="margin-top: 40px; page-break-inside: avoid;">
+      <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
+      <div class="signatures">
+        <div class="signature-block">
+          <div>Le Vendeur</div>
+          <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
+          <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
+          ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+        </div>
+        <div class="signature-block">
+          <div>Le Client</div>
+          <div class="signature-name">${quote.client}</div>
+          <div class="signature-title">${quote.clientCivility || ''}</div>
+          ${quote.clientSignature ? 
+            `<canvas class="signature-image" style="border: 1px solid ${colors.signatureBoxBorder}; background: ${colors.signatureBoxBackground}; max-height: 28mm; max-width: 80mm;" data-signature="${quote.clientSignature}"></canvas>` : 
+            `<div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>`
+          }
         </div>
       </div>
-    </div> <!-- Fin totals-and-signatures -->
+    </div>
     </div> <!-- Fermeture content-zone -->
   `;
 
