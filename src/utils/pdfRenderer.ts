@@ -356,16 +356,16 @@ export const buildDomFromLayout = (
   const container = document.createElement('div');
   container.setAttribute('data-a4-root', 'true');
 
-  // CSS GLOBAL A4 selon spécifications exactes
+  // CSS GLOBAL A4 selon spécifications exactes avec règles PDF strictes
   const style = document.createElement("style");
   style.textContent = `
     /* Mise en page A4 stricte avec marges imprimables sécurisées */
     @page {
       size: A4;
-      margin: 12mm 10mm 12mm 10mm; /* top right bottom left - marges sécurisées */
+      margin: 12mm 10mm 12mm 10mm;
     }
     [data-a4-root] { 
-      max-width: 190mm; /* Largeur adaptée aux nouvelles marges */
+      max-width: 190mm;
       margin: 0 auto; 
       background: ${colors.background || '#ffffff'};
       color: ${colors.textColor || '#333'};
@@ -374,14 +374,49 @@ export const buildDomFromLayout = (
     }
     .intro-page { 
       page-break-after: always !important; 
-      height: 273mm !important; /* Hauteur exacte A4 - marges */
+      height: 273mm !important;
       max-height: 273mm !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
       padding: 0 !important;
-    } /* Présentation = 1 page stricte */
+    }
 
-    /* Badges : centrage vertical/ horizontal garanti */
+    /* =================== RÈGLES PDF STRICTES =================== */
+    
+    /* Structure de page PDF avec en-têtes répétés */
+    .pdf-page {
+      width: 100%;
+      min-height: 273mm;
+      position: relative;
+      page-break-after: always;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+    }
+    
+    .pdf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0 15px 0;
+      border-bottom: 3px solid ${colors.primary || '#2563eb'};
+      margin-bottom: 20px;
+    }
+    
+    .pdf-content {
+      min-height: calc(273mm - 80mm);
+    }
+    
+    .pdf-footer {
+      position: absolute;
+      bottom: 10mm;
+      width: 100%;
+      text-align: center;
+      color: ${colors.mutedTextColor || '#6b7280'};
+      font-size: 10pt;
+    }
+
+    /* Badges */
     .badge {
       display: inline-flex !important;
       align-items: center !important;
@@ -401,90 +436,86 @@ export const buildDomFromLayout = (
     .badge--unique { background: ${colors.badgeUnique || '#10b981'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
     .badge--mensuel { background: ${colors.badgeMensuel || '#f59e0b'} !important; color: ${colors.badgeText || '#ffffff'} !important; }
 
-    /* Signatures : image/canvas bien visibles sous les noms/titres */
-    .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; page-break-inside: avoid; }
+    /* Tableaux avec en-têtes répétés (RÈGLES OBLIGATOIRES) */
+    .table-devis { 
+      width: 100% !important; 
+      border-collapse: collapse !important;
+      margin: 15px 0;
+      border: 1px solid ${colors.tableBorder || '#e2e8f0'};
+    }
+    .table-devis thead { 
+      display: table-header-group !important;
+      background: ${colors.tableHeader || '#f8fafc'} !important;
+    }
+    .table-devis tfoot { 
+      display: table-footer-group !important;
+    }
+    .table-devis tr, .table-devis td, .table-devis th {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .table-devis th {
+      padding: 8px !important;
+      border: 1px solid ${colors.tableBorder || '#e2e8f0'};
+      font-weight: bold;
+      color: ${colors.tableHeaderText || '#334155'};
+      text-align: left;
+    }
+    .table-devis td {
+      padding: 6px 8px !important;
+      border: 1px solid ${colors.tableBorder || '#e2e8f0'};
+      color: ${colors.textColor || '#334155'};
+      vertical-align: middle;
+    }
+    .table-devis tbody tr:nth-child(even) { 
+      background: ${colors.tableRowAlt || '#f8fafc'}; 
+    }
+    .table-devis tbody tr:nth-child(odd) { 
+      background: ${colors.tableRow || '#ffffff'}; 
+    }
+
+    /* Groupage "Sous-totaux + Total + Signatures" (RÈGLE STRICTE) */
+    .closing-block {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .keep-together { 
+      page-break-inside: avoid !important; 
+      break-inside: avoid !important; 
+    }
+    .subtotals-row { 
+      display: flex; 
+      gap: 8mm; 
+      flex-wrap: wrap; 
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    /* Force un saut de page si besoin */
+    .force-break { 
+      page-break-before: always !important; 
+    }
+
+    /* Signatures */
+    .signatures { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 24px; 
+      page-break-inside: avoid !important;
+      margin-top: 30px;
+    }
     .signature-block { margin-top: 8mm; }
     .signature-name { font-weight: 600; }
     .signature-title { color: #6b7280; font-size: 12px; }
     .signature-image { margin-top: 6mm; max-height: 28mm; max-width: 80mm; }
-
-    /* Tableaux multi-pages stables - RÈGLES STRICTES */
-    table { 
-      border-collapse: collapse; 
-      width: 100% !important; 
-      max-width: 190mm !important;
-      page-break-inside: auto;
-      margin: 15px 0;
-      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
-      table-layout: fixed !important; /* Force le respect des largeurs */
-    }
-    thead { 
-      display: table-header-group !important;
-      background: ${colors.tableHeader || '#f8fafc'} !important;
-      page-break-inside: avoid !important;
-      page-break-after: avoid !important;
-    }
-    tfoot { 
-      display: table-footer-group !important; 
-      page-break-inside: avoid !important;
-    }
-    tr { 
-      page-break-inside: avoid !important; 
-      width: 100% !important;
-    }
-    td, th { 
-      page-break-inside: avoid !important;
-      padding: 6px 8px !important;
-      border: 1px solid ${colors.tableBorder || '#e5e7eb'};
-      vertical-align: middle;
-      word-wrap: break-word !important;
-      overflow-wrap: break-word !important;
-      max-width: 0 !important; /* Force le respect des largeurs de colonnes */
-    }
-    tbody tr { 
-      page-break-inside: avoid !important; 
-      page-break-after: auto;
-    }
-    tbody tr:nth-child(even) { background: ${colors.tableRowAlt || '#f8fafc'}; }
-    tbody tr:nth-child(odd) { background: ${colors.tableRow || '#ffffff'}; }
-    .no-break { page-break-inside: avoid; }
-
-    /* Cadres de résumé/signatures non coupés - RÈGLES STRICTES */
-    .box, .recap, .signatures, .totals-section, .total-box, .signature-block { 
-      page-break-inside: avoid !important; 
-      page-break-before: auto;
-    }
     
-    /* Zone de contenu respecte les limites */
-    .content-zone {
-      max-width: 190mm !important;
-      width: 100% !important;
-      margin: 0 auto !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
-    }
-    
-    /* Styles spécifiques pour les cellules de tableau */
-    .cell { 
-      padding: 8px 10px; 
-      border: 1px solid ${colors.tableBorder || '#e5e7eb'}; 
-      vertical-align: middle; 
-      color: ${colors.textColor || '#333'};
-    }
-    .th { 
-      background: ${colors.tableHeader || '#f8fafc'} !important; 
-      font-weight: 700; 
-      color: ${colors.tableHeaderText || '#333'} !important; 
-    }
-    
-    /* Conteneurs de totaux centrés */
+    /* Conteneurs de totaux */
     .totals-container { 
       display: flex; 
       justify-content: center; 
       gap: 20px; 
       flex-wrap: wrap; 
-      margin: 30px 0; 
-      page-break-inside: avoid;
+      margin: 20px 0;
     }
     .total-box { 
       background: ${colors.cardBackground || '#f8fafc'}; 
@@ -493,7 +524,15 @@ export const buildDomFromLayout = (
       border: 2px solid ${colors.primary || '#2563eb'}; 
       min-width: 250px; 
       text-align: center; 
-      page-break-inside: avoid;
+    }
+    
+    /* Zone de contenu */
+    .content-zone {
+      max-width: 190mm !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
   `;
   container.prepend(style);
@@ -592,163 +631,155 @@ export const buildDomFromLayout = (
     container.appendChild(letterPage);
   }
 
-  // PAGE 2+: DEVIS
+  // PAGE 2+: DEVIS avec structure DOM stricte
   const quotePage = document.createElement('div');
-  quotePage.style.cssText = `
-    width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
-    font-family: Arial, sans-serif;
-    background: ${colors.background};
-    color: ${colors.textColor};
-    box-sizing: border-box;
+  quotePage.className = 'pdf-page';
+  
+  // En-tête répétable (logo + référence + trait jaune)
+  const headerHTML = `
+    <header class="pdf-header">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        ${settings.logoUrl ? `
+          <img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px; max-width: 120px; object-fit: contain;" />
+        ` : `
+          <div style="color: ${colors.letterHeaderColor}; font-size: 14pt; font-weight: bold;">${settings.sellerInfo?.name || 'GPA'}</div>
+        `}
+        <div style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">
+          Devis N° ${quote.ref}
+        </div>
+      </div>
+      <div style="font-size: 10pt; color: ${colors.mutedTextColor};">
+        ${new Date(quote.date).toLocaleDateString('fr-CH')}
+      </div>
+    </header>
   `;
 
   quotePage.innerHTML = `
-    <div class="content-zone">
-    <!-- En-tête du devis -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid ${colors.borderSecondary};">
-      <!-- Logo et vendeur (gauche) -->
-      <div style="flex: 0 0 auto; max-width: 50%;">
-        ${settings.logoUrl ? `
-          <div style="margin-bottom: 15px;">
-            <img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px; max-width: 100%; object-fit: contain;" />
+    ${headerHTML}
+    
+    <div class="pdf-content">
+      <!-- Informations client et projet -->
+      <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <div style="flex: 1; max-width: 45%;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 10px; font-size: 12pt;">Vendeur</h3>
+          <div style="font-size: 10pt; color: ${colors.textColor};">
+            <div style="font-weight: bold;">${settings.sellerInfo?.name || ''}</div>
+            <div>${settings.sellerInfo?.title || ''}</div>
+            <div>${settings.sellerInfo?.email || ''}</div>
+            <div>${settings.sellerInfo?.phone || ''}</div>
           </div>
-        ` : ''}
-        <div>
-          <p style="font-weight: bold; font-size: 12pt; margin: 2px 0; color: ${colors.letterHeaderColor};">${settings.sellerInfo?.name || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.title || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.email || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor}; font-size: 10pt;">${settings.sellerInfo?.phone || ''}</p>
-          <p style="font-size: 10pt; color: ${colors.letterDateColor}; margin-top: 8px;">Le ${new Date().toLocaleDateString('fr-CH')}</p>
+        </div>
+        
+        <div style="flex: 1; max-width: 45%; text-align: right;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 10px; font-size: 12pt;">Client</h3>
+          <div style="font-size: 10pt; color: ${colors.textColor};">
+            <div style="font-weight: bold;">${quote.addresses?.contact?.company || quote.client}</div>
+            <div>${quote.addresses?.contact?.name || ''}</div>
+            <div>${quote.addresses?.contact?.street || ''}</div>
+            <div>${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</div>
+            ${quote.addresses?.contact?.email ? `<div>${quote.addresses.contact.email}</div>` : ''}
+          </div>
         </div>
       </div>
-      
-      <!-- Adresse client (droite) -->
-      <div style="flex: 1; max-width: 45%; text-align: right;">
-        <div>
-          <p style="font-weight: bold; font-size: 14pt; margin: 4px 0; color: ${colors.titleColor};">${quote.addresses?.contact?.company || quote.client}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.name || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.street || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</p>
-          <p style="margin: 2px 0; color: ${colors.textColor};">${quote.addresses?.contact?.country || ''}</p>
-          ${quote.addresses?.contact?.email ? `<p style="font-size: 10pt; color: ${colors.mutedTextColor}; margin: 2px 0;">${quote.addresses.contact.email}</p>` : ''}
-          ${quote.addresses?.contact?.phone ? `<p style="font-size: 10pt; margin: 2px 0; color: ${colors.textColor};">${quote.addresses.contact.phone}</p>` : ''}
+
+      ${(quote.site || quote.contact || quote.canton) ? `
+        <div style="background: ${colors.cardBackground}; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid ${colors.primary};">
+          <h4 style="color: ${colors.primary}; margin: 0 0 8px 0; font-size: 11pt;">Détails du projet</h4>
+          ${quote.site ? `<div style="margin: 4px 0; font-size: 10pt;"><strong>Site:</strong> ${quote.site}</div>` : ''}
+          ${quote.contact ? `<div style="margin: 4px 0; font-size: 10pt;"><strong>Contact:</strong> ${quote.contact}</div>` : ''}
+          ${quote.canton ? `<div style="margin: 4px 0; font-size: 10pt;"><strong>Canton:</strong> ${quote.canton}</div>` : ''}
         </div>
-      </div>
+      ` : ''}
+
+      ${quote.items.some(item => item.kind === 'TECH') ? `
+        <!-- Prestations TECH avec structure tableau stricte -->
+        <div style="margin: 30px 0;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 15px; font-size: 14pt; text-align: center;">
+            Prestations techniques
+          </h3>
+          
+          <table class="table-devis">
+            <thead>
+              <tr>
+                <th style="width: 15%;">Type</th>
+                <th style="width: 35%;">Référence</th>
+                <th style="width: 12%; text-align: center;">Mode</th>
+                <th style="width: 8%; text-align: center;">Qté</th>
+                <th style="width: 15%; text-align: right;">PU TTC</th>
+                <th style="width: 15%; text-align: right;">Total TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
+                <tr>
+                  <td>${item.type}</td>
+                  <td>${item.reference}</td>
+                  <td style="text-align: center;">
+                    <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}">
+                      ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
+                    </span>
+                  </td>
+                  <td style="text-align: center;">${item.qty || 1}</td>
+                  <td style="text-align: right;">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                  <td style="text-align: right;">${(item.totalTTC || 0).toFixed(2)} CHF</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+
+      ${quote.items.some(item => item.kind === 'AGENT') ? `
+        <!-- Services AGENT avec structure tableau stricte -->
+        <div style="margin: 30px 0;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 15px; font-size: 14pt; text-align: center;">
+            Services Agent
+          </h3>
+          
+          <table class="table-devis">
+            <thead>
+              <tr>
+                <th style="width: 20%;">Description</th>
+                <th style="width: 10%;">Type</th>
+                <th style="width: 10%;">Date début</th>
+                <th style="width: 8%;">Heure début</th>
+                <th style="width: 10%;">Date fin</th>
+                <th style="width: 8%;">Heure fin</th>
+                <th style="width: 10%; text-align: right;">H. normales</th>
+                <th style="width: 10%; text-align: right;">H. majorées</th>
+                <th style="width: 8%; text-align: right;">Tarif/h</th>
+                <th style="width: 12%; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
+                <tr>
+                  <td>
+                    <div style="font-weight: bold; margin-bottom: 4px;">${item.reference}</div>
+                    <span class="badge badge--agent">Agent</span>
+                  </td>
+                  <td>${item.agentType || item.type}</td>
+                  <td>${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
+                  <td>${item.timeStart || '-'}</td>
+                  <td>${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
+                  <td>${item.timeEnd || '-'}</td>
+                  <td style="text-align: right;">${(item.hoursNormal || 0).toFixed(2)} h</td>
+                  <td style="text-align: right;">${((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(2)} h</td>
+                  <td style="text-align: right;">${(item.rateCHFh || item.unitPriceValue || 0).toFixed(2)} CHF</td>
+                  <td style="text-align: right;">${(item.lineTTC || item.totalTTC || 0).toFixed(2)} CHF</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
     </div>
 
-    <!-- Titre du devis -->
-    <div style="text-align: center; padding: 20px 0; border-top: 3px solid ${colors.primary}; border-bottom: 1px solid ${colors.borderSecondary}; margin-bottom: 20px;">
-      <h1 style="font-size: 24pt; font-weight: bold; color: ${colors.titleColor}; margin: 0 0 8px 0;">
-        ${(() => {
-          const hasTech = quote.items.some(item => item.kind === 'TECH');
-          const hasAgent = quote.items.some(item => item.kind === 'AGENT');
-          if (hasTech && hasAgent) return 'DEVIS TECHNIQUE & AGENT';
-          if (hasAgent) return 'DEVIS AGENT';
-          return 'DEVIS TECHNIQUE';
-        })()}
-      </h1>
-      <p style="font-size: 14pt; margin: 4px 0; color: ${colors.subtitleColor};">Devis N° ${quote.ref}</p>
-      <p style="color: ${colors.letterDateColor || colors.mutedTextColor}; margin: 4px 0;">Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}</p>
-    </div>
-
-    ${(quote.site || quote.contact || quote.canton) ? `
-      <!-- Informations complémentaires -->
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <h3 style="font-weight: bold; margin-bottom: 8px; color: ${colors.primary}; font-size: 12pt;">Détails du projet</h3>
-        <div style="font-size: 10pt;">
-          ${quote.site ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Site:</span> ${quote.site}</p>` : ''}
-          ${quote.contact ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Contact:</span> ${quote.contact}</p>` : ''}
-          ${quote.canton ? `<p style="margin: 4px 0;"><span style="font-weight: bold;">Canton:</span> ${quote.canton}</p>` : ''}
-        </div>
-      </div>
-    ` : ''}
-
-    ${quote.items.some(item => item.kind === 'TECH') ? `
-      <!-- Prestations TECH -->
-      <div style="margin: 20px 0;">
-        <h3 style="font-weight: bold; font-size: 14pt; color: ${colors.primary}; margin-bottom: 10px;">Prestations techniques</h3>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
-          <thead>
-            <tr style="background: ${colors.tableHeader || '#f8fafc'}; color: ${colors.tableHeaderText || '#334155'};">
-              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Type</th>
-              <th style="padding: 8px; text-align: left; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Référence</th>
-              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Mode</th>
-              <th style="padding: 8px; text-align: center; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Qté</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">PU TTC</th>
-              <th style="padding: 8px; text-align: right; font-weight: bold; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">Total TTC</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${quote.items.filter(item => item.kind === 'TECH').map((item, index) => `
-              <tr style="background: ${index % 2 === 0 ? (colors.tableRow || '#ffffff') : (colors.tableRowAlt || '#f8fafc')}; page-break-inside: avoid;">
-                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.type}</td>
-                <td style="padding: 6px; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.reference}</td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'};">
-                  <span class="badge badge--${item.mode === 'mensuel' ? 'mensuel' : 'unique'}">
-                    ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-                  </span>
-                </td>
-                <td style="padding: 6px; text-align: center; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${item.qty || 1}</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.puTTC || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td style="padding: 6px; text-align: right; border: 1px solid ${colors.tableBorder || '#e2e8f0'}; color: ${colors.textColor || '#334155'};">${(item.totalTTC || 0).toFixed(2)} CHF</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    ` : ''}
-
-    ${quote.items.some(item => item.kind === 'AGENT') ? `
-      <!-- Services AGENT -->
-      <div style="margin: 20px 0;">
-        <h2 style="text-align:center; margin: 8mm 0 4mm 0;">Devis Agent</h2>
-        <div style="text-align:center; color:#6b7280; margin-bottom:8mm;">
-          Devis N° ${quote.ref} — Date: ${new Date(quote.date).toLocaleDateString('fr-CH')}
-        </div>
-        <table class="table-agent">
-          <thead>
-            <tr>
-              <th class="cell th">Description</th>
-              <th class="cell th">Type</th>
-              <th class="cell th">Date début</th>
-              <th class="cell th">Heure début</th>
-              <th class="cell th">Date fin</th>
-              <th class="cell th">Heure fin</th>
-              <th class="cell th">Heures normales</th>
-              <th class="cell th">Heures majorées</th>
-              <th class="cell th">Tarif/h</th>
-              <th class="cell th">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${quote.items.filter(item => item.kind === 'AGENT').map((item, index) => `
-              <tr style="background: ${index % 2 === 0 ? (colors.tableRowAlt || '#f8fafc') : (colors.tableRow || '#ffffff')}; page-break-inside: avoid;">
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">
-                  <div style="font-weight: bold;">${item.reference}</div>
-                  <span class="badge badge--agent">Agent</span>
-                </td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.agentType || item.type}</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : '-'}</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeStart || '-'}</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : '-'}</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${item.timeEnd || '-'}</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.hoursNormal || 0).toFixed(2)} h</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(2)} h</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.rateCHFh || item.unitPriceValue || 0).toFixed(2)} CHF</td>
-                <td class="cell" style="color: ${colors.textColor || '#334155'};">${(item.lineTTC || item.totalTTC || 0).toFixed(2)} CHF</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    ` : ''}
-
-    <!-- Totaux séparés par catégorie -->
-    <div class="totals-section">
-      ${totals.unique.subtotalHT > 0 ? `
-        <div class="totals-container">
+    <!-- BLOC DE CLÔTURE GROUPÉ (Sous-totaux + Total + Signatures) -->
+    <div class="closing-block keep-together">
+      <!-- Sous-totaux alignés horizontalement -->
+      <div class="subtotals-row">
+        ${totals.unique.subtotalHT > 0 ? `
           <div class="total-box">
             <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE UNIQUE</h4>
             <div style="text-align: left; font-size: 10pt;">
@@ -776,11 +807,9 @@ export const buildDomFromLayout = (
               </div>
             </div>
           </div>
-        </div>
-      ` : ''}
-      
-      ${totals.mensuel.subtotalHT > 0 ? `
-        <div class="totals-container">
+        ` : ''}
+        
+        ${totals.mensuel.subtotalHT > 0 ? `
           <div class="total-box">
             <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">TECHNIQUE MENSUEL</h4>
             <div style="text-align: left; font-size: 10pt;">
@@ -808,11 +837,9 @@ export const buildDomFromLayout = (
               </div>
             </div>
           </div>
-        </div>
-      ` : ''}
-      
-      ${totals.agents.subtotalHT > 0 ? `
-        <div class="totals-container">
+        ` : ''}
+        
+        ${totals.agents.subtotalHT > 0 ? `
           <div class="total-box">
             <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">AGENT</h4>
             <div style="text-align: left; font-size: 10pt;">
@@ -830,12 +857,12 @@ export const buildDomFromLayout = (
               </div>
             </div>
           </div>
-        </div>
-      ` : ''}
+        ` : ''}
+      </div>
       
       <!-- Total général -->
-      <div class="totals-container" style="margin-top: 20px;">
-        <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground};">
+      <div style="text-align: center; margin: 30px 0;">
+        <div class="total-box" style="border: 3px solid ${colors.primary}; background: ${colors.grandTotalBackground}; display: inline-block;">
           <h3 style="color: ${colors.primary}; margin: 0; font-size: 14pt;">TOTAL GÉNÉRAL</h3>
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16pt; color: ${colors.primary}; margin-top: 10px;">
             <span>TOTAL TTC:</span>
@@ -843,20 +870,17 @@ export const buildDomFromLayout = (
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Signatures -->
-    <div style="margin-top: 40px; page-break-inside: avoid;">
-      <h3 style="color: ${colors.primary}; margin-bottom: 20px; text-align: center;">Signatures</h3>
+      <!-- Signatures -->
       <div class="signatures">
         <div class="signature-block">
-          <div>Le Vendeur</div>
+          <div style="font-weight: bold; margin-bottom: 8px;">Le Vendeur</div>
           <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
           <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
           ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
         </div>
         <div class="signature-block">
-          <div>Le Client</div>
+          <div style="font-weight: bold; margin-bottom: 8px;">Le Client</div>
           <div class="signature-name">${quote.client}</div>
           <div class="signature-title">${quote.clientCivility || ''}</div>
           ${quote.clientSignature ? 
@@ -866,7 +890,6 @@ export const buildDomFromLayout = (
         </div>
       </div>
     </div>
-    </div> <!-- Fermeture content-zone -->
   `;
 
   container.appendChild(quotePage);
