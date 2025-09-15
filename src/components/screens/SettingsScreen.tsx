@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Percent, Zap, Settings2, FileText, Coins, MapPin, Package, Activity } from 'lucide-react';
+import { Percent, Zap, Settings2, FileText, Coins, MapPin, Package, Activity, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import SellerInfo from '@/components/settings/SellerInfo';
 import TemplateColors from '@/components/settings/TemplateColors';
 import LetterTemplate from '@/components/settings/LetterTemplate';
 import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
+import ImportExportSettings from '@/components/settings/ImportExportSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -91,7 +92,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -99,10 +100,6 @@ const SettingsScreen = () => {
           <TabsTrigger value="catalog" className="flex items-center space-x-2">
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Catalogue</span>
-          </TabsTrigger>
-          <TabsTrigger value="pdf" className="flex items-center space-x-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">PDF</span>
           </TabsTrigger>
           <TabsTrigger value="agent" className="flex items-center space-x-2">
             <Activity className="h-4 w-4" />
@@ -115,6 +112,10 @@ const SettingsScreen = () => {
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="flex items-center space-x-2">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Sauvegarde</span>
           </TabsTrigger>
         </TabsList>
 
@@ -842,6 +843,10 @@ const SettingsScreen = () => {
 
         <TabsContent value="currency">
           <CurrencySettings />
+        </TabsContent>
+
+        <TabsContent value="backup">
+          <ImportExportSettings />
         </TabsContent>
 
       </Tabs>
