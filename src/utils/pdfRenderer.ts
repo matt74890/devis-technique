@@ -29,6 +29,7 @@ export const renderPDFFromLayout = (
     items: {
       tech: quote.items.filter(item => item.kind === 'TECH'),
       agent: quote.items.filter(item => item.kind === 'AGENT'),
+      service: quote.items.filter(item => item.kind === 'SERVICE'),
       all: quote.items
     },
     
@@ -48,6 +49,7 @@ export const renderPDFFromLayout = (
     // Conditions d'évaluation
     hasTech: quote.items.some(i => i.kind === 'TECH'),
     hasAgents: quote.items.some(i => i.kind === 'AGENT'),
+    hasServices: quote.items.some(i => i.kind === 'SERVICE'),
     isFirstPage: true,
     isLastPage: true,
     
@@ -66,6 +68,7 @@ export const renderPDFFromLayout = (
       switch (condition) {
         case 'hasTech': return dataContext.hasTech;
         case 'hasAgents': return dataContext.hasAgents;
+        case 'hasServices': return dataContext.hasServices;
         case 'isFirstPage': return dataContext.isFirstPage;
         case 'isLastPage': return dataContext.isLastPage;
         default: return true;
@@ -145,6 +148,7 @@ export const renderPDFFromLayout = (
         
       case 'table_tech':
       case 'table_agent':
+      case 'table_service':
         content = renderTable(block, dataContext);
         break;
         
@@ -198,7 +202,14 @@ export const renderPDFFromLayout = (
     if (!block.tableConfig) return '';
 
     const config = block.tableConfig;
-    let dataset = config.dataset === 'items.tech' ? context.items.tech : context.items.agent;
+    let dataset;
+    if (config.dataset === 'items.tech') {
+      dataset = context.items.tech;
+    } else if (config.dataset === 'items.agent') {
+      dataset = context.items.agent;
+    } else if (config.dataset === 'items.service') {
+      dataset = context.items.service;
+    }
     
     // Regrouper les vacations d'agent similaires
     if (config.dataset === 'items.agent' && dataset && dataset.length > 0) {
@@ -245,6 +256,26 @@ export const renderPDFFromLayout = (
               value = `${item.agentType} (${item.markupDescription})`;
             } else if (col.binding === 'reference' && !item.markupDescription) {
               value = item.agentType;
+            }
+          }
+          
+          // Formatage spécial pour les services
+          if (config.dataset === 'items.service') {
+            if (col.binding === 'serviceType') {
+              const serviceTypes = {
+                'patrouille_ouverture': 'Patrouille Ouverture',
+                'patrouille_fermeture': 'Patrouille Fermeture', 
+                'patrouille_exterieur': 'Patrouille Extérieur',
+                'pre_vol': 'Pré-vol',
+                'formation': 'Formation',
+                'garde_clef': 'Garde de clef',
+                'transport': 'Transport',
+                'maintenance': 'Maintenance technique',
+                'autre': 'Autre service'
+              };
+              value = serviceTypes[value] || value || 'Autre service';
+            } else if (col.binding === 'durationMinutes') {
+              value = value ? `${value} min` : '30 min';
             }
           }
           
@@ -775,6 +806,55 @@ export const buildDomFromLayout = (
           </table>
         </div>
       ` : ''}
+
+      ${quote.items.some(item => item.kind === 'SERVICE') ? `
+        <!-- Services COMPLÉMENTAIRES avec structure tableau stricte -->
+        <div style="margin: 30px 0;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 15px; font-size: 14pt; text-align: center;">
+            Services Complémentaires
+          </h3>
+          
+          <table class="table-devis">
+            <thead>
+              <tr>
+                <th style="width: 20%;">Type de service</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 10%; text-align: center;">Patrouilles/j</th>
+                <th style="width: 10%; text-align: center;">Nb jours</th>
+                <th style="width: 10%; text-align: center;">Durée</th>
+                <th style="width: 15%; text-align: right;">Prix unitaire</th>
+                <th style="width: 15%; text-align: right;">Total TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quote.items.filter(item => item.kind === 'SERVICE').map((item, index) => {
+                const serviceTypes = {
+                  'patrouille_ouverture': 'Patrouille Ouverture',
+                  'patrouille_fermeture': 'Patrouille Fermeture', 
+                  'patrouille_exterieur': 'Patrouille Extérieur',
+                  'pre_vol': 'Pré-vol',
+                  'formation': 'Formation',
+                  'garde_clef': 'Garde de clef',
+                  'transport': 'Transport',
+                  'maintenance': 'Maintenance technique',
+                  'autre': 'Autre service'
+                };
+                const serviceTypeLabel = serviceTypes[item.serviceType] || item.serviceType || 'Autre service';
+                return `
+                <tr>
+                  <td>${serviceTypeLabel}</td>
+                  <td>${item.serviceDescription || ''}</td>
+                  <td style="text-align: center;">${item.patrolsPerDay || 1}</td>
+                  <td style="text-align: center;">${item.daysCount || 1}</td>
+                  <td style="text-align: center;">${item.durationMinutes || 30} min</td>
+                  <td style="text-align: right;">${(item.serviceUnitPrice || 0).toFixed(2)} CHF</td>
+                  <td style="text-align: right;">${(item.lineTTC || 0).toFixed(2)} CHF</td>
+                </tr>
+              `;}).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
     </div>
 
     <!-- BLOC DE CLÔTURE GROUPÉ (Sous-totaux + Total + Signatures) -->
@@ -856,6 +936,26 @@ export const buildDomFromLayout = (
               <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
                 <span>Total TTC:</span>
                 <span>${totals.agents.totalTTC.toFixed(2)} CHF</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+        
+        ${totals.services.subtotalHT > 0 ? `
+          <div class="total-box">
+            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0; font-size: 12pt;">SERVICES</h4>
+            <div style="text-align: left; font-size: 10pt;">
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>Sous-total HT:</span>
+                <span>${totals.services.subtotalHT.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 3px 0;">
+                <span>TVA (${settings.tvaPct}%):</span>
+                <span>${totals.services.tva.toFixed(2)} CHF</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid ${colors.borderSecondary}; padding-top: 5px; margin-top: 5px; color: ${colors.primary};">
+                <span>Total TTC:</span>
+                <span>${totals.services.totalTTC.toFixed(2)} CHF</span>
               </div>
             </div>
           </div>

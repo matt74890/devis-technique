@@ -3,7 +3,7 @@ export type LayoutVariant = 'technique' | 'agent' | 'mixte';
 
 export interface LayoutBlock {
   id: string;
-  type: 'header' | 'footer' | 'intent' | 'letter' | 'description' | 'table_tech' | 'table_agent' | 'totals' | 'signatures' | 'text' | 'image' | 'separator';
+  type: 'header' | 'footer' | 'intent' | 'letter' | 'description' | 'table_tech' | 'table_agent' | 'table_service' | 'totals' | 'signatures' | 'text' | 'image' | 'separator';
   x: number; // Position X en mm
   y: number; // Position Y en mm
   width: number; // Largeur en mm
@@ -37,7 +37,7 @@ export interface LayoutBlock {
   
   // Configuration spécifique pour les tableaux
   tableConfig?: {
-    dataset: 'items.tech' | 'items.agent';
+    dataset: 'items.tech' | 'items.agent' | 'items.service';
     columns: TableColumn[];
     repeatHeader: boolean;
     showTotals: boolean;
@@ -109,6 +109,7 @@ export const getDefaultLayoutForVariant = (variant: LayoutVariant): PDFLayoutCon
     visibilityRules: {
       hasTech: 'items.tech.length > 0',
       hasAgents: 'items.agent.length > 0',
+      hasServices: 'items.service.length > 0',
       isFirstPage: 'page.index === 0',
       isLastPage: 'page.index === page.total - 1'
     },
