@@ -473,15 +473,25 @@ export const buildDomFromLayout = (
       border-collapse: collapse !important;
       margin: 15px 0;
       border: 1px solid ${colors.tableBorder || '#e2e8f0'};
+      page-break-inside: auto !important;
     }
     .table-devis thead { 
       display: table-header-group !important;
       background: ${colors.tableHeader || '#f8fafc'} !important;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
     }
     .table-devis tfoot { 
       display: table-footer-group !important;
     }
-    .table-devis tr, .table-devis td, .table-devis th {
+    .table-devis tbody {
+      page-break-inside: auto !important;
+    }
+    .table-devis tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .table-devis td, .table-devis th {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
@@ -491,12 +501,26 @@ export const buildDomFromLayout = (
       font-weight: bold;
       color: ${colors.tableHeaderText || '#334155'};
       text-align: left;
+      background: ${colors.tableHeader || '#f8fafc'} !important;
     }
     .table-devis td {
       padding: 6px 8px !important;
       border: 1px solid ${colors.tableBorder || '#e2e8f0'};
       color: ${colors.textColor || '#334155'};
       vertical-align: middle;
+    }
+    
+    /* Répétition des en-têtes de tableaux sur nouvelles pages */
+    @media print {
+      .table-devis thead {
+        display: table-header-group !important;
+      }
+      .table-devis tbody {
+        display: table-row-group !important;
+      }
+      .table-devis tfoot {
+        display: table-footer-group !important;
+      }
     }
     .table-devis tbody tr:nth-child(even) { 
       background: ${colors.tableRowAlt || '#f8fafc'}; 
@@ -642,21 +666,29 @@ export const buildDomFromLayout = (
           </div>
         </div>
 
-        <!-- Signatures en bas de page -->
-        <div class="signatures">
-          <div class="signature-block">
-            <div>Le Vendeur</div>
-            <div class="signature-name">${settings.sellerInfo?.name || ''}</div>
-            <div class="signature-title">${settings.sellerInfo?.title || ''}</div>
-            ${settings.sellerInfo?.signature ? `<img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" />` : ''}
+        <!-- Signatures en bas de page dans un cadre -->
+        <div class="signatures" style="margin-top: 30px; border: 2px solid ${colors.borderPrimary}; border-radius: 8px; padding: 20px; background: ${colors.signatureBoxBackground};">
+          <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div class="signature-block" style="flex: 1; text-align: center; border-right: 1px solid ${colors.borderSecondary}; padding-right: 20px;">
+              <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 10px; font-size: 12pt;">Le Vendeur</div>
+              <div class="signature-name" style="font-size: 11pt; margin-bottom: 5px;">${settings.sellerInfo?.name || ''}</div>
+              <div class="signature-title" style="font-size: 10pt; color: ${colors.signatureTextColor}; margin-bottom: 15px;">${settings.sellerInfo?.title || ''}</div>
+              ${settings.sellerInfo?.signature ? `
+                <img class="signature-image" src="${settings.sellerInfo.signature}" alt="Signature vendeur" style="max-height: 40px; max-width: 150px;" />
+              ` : `
+                <div style="border-bottom: 1px solid ${colors.signatureBoxBorder}; height: 30px; margin-top: 10px;"></div>
+                <div style="font-size: 9pt; color: ${colors.signatureTextColor}; margin-top: 5px;">Nom et signature</div>
+              `}
+            </div>
+            <div class="signature-block" style="flex: 1; text-align: center; padding-left: 20px;">
+              <div style="font-weight: bold; color: ${colors.signatureTitleColor}; margin-bottom: 10px; font-size: 12pt;">Le Client</div>
+              <div class="signature-name" style="font-size: 11pt; margin-bottom: 5px;">${quote.client}</div>
+              <div class="signature-title" style="font-size: 10pt; color: ${colors.signatureTextColor}; margin-bottom: 15px;">${quote.clientCivility || ''}</div>
+              <div class="signature-image" style="border-bottom: 1px solid ${colors.signatureBoxBorder}; height: 30px; margin-top: 10px;"></div>
+              <div style="font-size: 9pt; color: ${colors.signatureTextColor}; margin-top: 5px;">Nom et signature</div>
+            </div>
           </div>
-          <div class="signature-block">
-            <div>Le Client</div>
-            <div class="signature-name">${quote.client}</div>
-            <div class="signature-title">${quote.clientCivility || ''}</div>
-            <div class="signature-image" style="border: 1px dashed #ccc; min-height: 28mm; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">Signature client</div>
         </div>
-      </div>
     </div>
     </div> <!-- Fermeture content-zone -->
   `;
@@ -691,7 +723,7 @@ export const buildDomFromLayout = (
     ${createHeaderHTML()}
     
     <div class="pdf-content">
-      <!-- Informations client et projet -->
+      <!-- Informations client et projet sur chaque page -->
       <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
         <div style="flex: 1; max-width: 45%;">
           <h3 style="color: ${colors.primary}; margin-bottom: 10px; font-size: 12pt;">Vendeur</h3>
@@ -858,6 +890,25 @@ export const buildDomFromLayout = (
     </div>
 
     <!-- BLOC DE CLÔTURE GROUPÉ (Sous-totaux + Total + Signatures) -->
+    <!-- Nouvelle page pour les totaux avec en-tête répété -->
+    <div style="page-break-before: always;">
+      ${createHeaderHTML()}
+      
+      <!-- Récapitulatif client en haut à droite -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
+        <div style="border: 2px solid ${colors.primary}; padding: 15px; border-radius: 8px; background: ${colors.cardBackground}; max-width: 45%;">
+          <h3 style="color: ${colors.primary}; margin-bottom: 10px; font-size: 12pt; text-align: center;">Récapitulatif Client</h3>
+          <div style="font-size: 10pt; color: ${colors.textColor};">
+            <div style="font-weight: bold;">${quote.addresses?.contact?.company || quote.client}</div>
+            <div>${quote.addresses?.contact?.name || ''}</div>
+            <div>${quote.addresses?.contact?.street || ''}</div>
+            <div>${quote.addresses?.contact?.postalCode || ''} ${quote.addresses?.contact?.city || ''}</div>
+            ${quote.addresses?.contact?.email ? `<div>${quote.addresses.contact.email}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <div class="closing-block keep-together">
       <!-- Sous-totaux alignés horizontalement -->
       <div class="subtotals-row">
