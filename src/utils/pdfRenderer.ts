@@ -510,18 +510,38 @@ export const buildDomFromLayout = (
       vertical-align: middle;
     }
     
-    /* Répétition des en-têtes de tableaux sur nouvelles pages */
-    @media print {
-      .table-devis thead {
-        display: table-header-group !important;
+      /* Répétition des en-têtes - CSS amélioré */
+      .table-devis {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
       }
-      .table-devis tbody {
-        display: table-row-group !important;
+      .table-devis thead th {
+        position: sticky !important;
+        top: 0 !important;
+        background: ${colors.tableHeader || '#f8fafc'} !important;
+        z-index: 10 !important;
       }
-      .table-devis tfoot {
-        display: table-footer-group !important;
+      @media print {
+        .table-devis {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .table-devis thead {
+          display: table-header-group !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        .table-devis tbody {
+          display: table-row-group !important;
+        }
+        .table-devis tfoot {
+          display: table-footer-group !important;
+        }
+        .table-devis tr {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
       }
-    }
     .table-devis tbody tr:nth-child(even) { 
       background: ${colors.tableRowAlt || '#f8fafc'}; 
     }
@@ -531,9 +551,11 @@ export const buildDomFromLayout = (
 
     /* Groupage "Sous-totaux + Total + Signatures" (RÈGLE STRICTE) */
     .closing-block {
+      page-break-before: always !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important;
-      margin-top: 40mm;
+      margin-top: 20mm;
+      min-height: 200mm;
     }
     .keep-together { 
       page-break-inside: avoid !important; 
@@ -891,7 +913,7 @@ export const buildDomFromLayout = (
 
     <!-- BLOC DE CLÔTURE GROUPÉ (Sous-totaux + Total + Signatures) -->
     <!-- Nouvelle page pour les totaux avec en-tête répété -->
-    <div style="page-break-before: always;">
+    <div class="closing-block keep-together" style="page-break-before: always;">
       ${createHeaderHTML()}
       
       <!-- Récapitulatif client en haut à droite -->
@@ -907,9 +929,7 @@ export const buildDomFromLayout = (
           </div>
         </div>
       </div>
-    </div>
-    
-    <div class="closing-block keep-together">
+      
       <!-- Sous-totaux alignés horizontalement -->
       <div class="subtotals-row">
         ${totals.unique.subtotalHT > 0 ? `
