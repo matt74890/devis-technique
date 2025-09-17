@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Mail, Plus, Copy, Trash2, Users, FileDown, Eye, UserCheck, Shield } from 'lucide-react';
+import { Zap, Mail, Plus, Copy, Trash2, Users, FileDown, Eye, UserCheck, Shield, Settings2 as Settings } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { calculateQuoteItem, calculateQuoteTotals } from '@/utils/calculations';
+import { calculateQuoteItem, calculateQuoteTotals, calculateServiceItem } from '@/utils/calculations';
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
@@ -18,6 +18,7 @@ import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
+import ServiceRow from '@/components/vacation/ServiceRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
@@ -38,7 +39,7 @@ const DevisScreen = () => {
   } = useStore();
 
   const [newItemMode, setNewItemMode] = useState<'unique' | 'mensuel'>('unique');
-  const [newItemKind, setNewItemKind] = useState<'TECH' | 'AGENT'>('TECH');
+  const [newItemKind, setNewItemKind] = useState<'TECH' | 'AGENT' | 'SERVICE'>('TECH');
   const [emailRaw, setEmailRaw] = useState('');
   const [isProcessingEmail, setIsProcessingEmail] = useState(false);
   const [showVacationGenerator, setShowVacationGenerator] = useState(false);
@@ -139,6 +140,32 @@ const DevisScreen = () => {
       toast({
         title: "Vacation ajoutée",
         description: "Nouvelle vacation ajoutée au devis",
+      });
+      return;
+    }
+
+    if (newItemKind === 'SERVICE') {
+      const newService: Omit<QuoteItem, 'id'> = {
+        kind: 'SERVICE',
+        type: 'Service complémentaire',
+        reference: 'Service sur mesure',
+        mode: 'unique',
+        serviceType: 'autre',
+        serviceDescription: 'Service personnalisé',
+        patrolsPerDay: 1,
+        daysCount: 1,
+        workDays: ['lundi'],
+        durationMinutes: 30,
+        serviceUnitPrice: 50,
+        unitPriceMode: settings.priceInputModeDefault
+      };
+      
+      const calculatedService = calculateServiceItem(newService as QuoteItem, settings.tvaPct);
+      addQuoteItem(calculatedService);
+      
+      toast({
+        title: "Service ajouté",
+        description: "Nouveau service complémentaire ajouté au devis",
       });
       return;
     }
@@ -1208,7 +1235,7 @@ const DevisScreen = () => {
           {/* Section Nature de prestation */}
           <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
             <Label className="font-semibold text-primary mb-3 block">Nature de prestation :</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant={newItemKind === 'TECH' ? 'default' : 'outline'}
                 onClick={() => setNewItemKind('TECH')}
@@ -1226,6 +1253,15 @@ const DevisScreen = () => {
               >
                 <UserCheck className="h-4 w-4 mr-2" />
                 Agent
+              </Button>
+              <Button
+                variant={newItemKind === 'SERVICE' ? 'default' : 'outline'}
+                onClick={() => setNewItemKind('SERVICE')}
+                size="sm"
+                className="transition-all bg-green-100 hover:bg-green-600 text-green-800 hover:text-white border-green-300"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Service
               </Button>
             </div>
           </div>
@@ -1274,6 +1310,18 @@ const DevisScreen = () => {
                   onAddVacations={addVacationSeries}
                 />
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Configurateur de services complémentaires */}
+          {newItemKind === 'SERVICE' && (
+            <div className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 className="font-semibold text-green-800 mb-3">Services complémentaires</h4>
+                <div className="text-sm text-green-700 mb-3">
+                  Configurez des services sur mesure comme des patrouilles, formations, maintenance, etc.
+                </div>
               </div>
             </div>
           )}
@@ -1466,6 +1514,15 @@ const DevisScreen = () => {
                         </div>
                       </td>
                     </tr>
+                  ) : item.kind === 'SERVICE' ? (
+                    <ServiceRow
+                      key={item.id}
+                      item={item}
+                      settings={settings}
+                      onUpdate={(id, updates) => updateQuoteItem(id, updates)}
+                      onDuplicate={() => duplicateQuoteItem(item.id)}
+                      onDelete={() => deleteQuoteItem(item.id)}
+                    />
                   ) : (
                     <AgentVacationRow
                       key={item.id}
@@ -1504,6 +1561,12 @@ const DevisScreen = () => {
               <Button onClick={addNewItem} className="bg-amber-600 hover:bg-amber-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter vacation d'agent
+              </Button>
+            )}
+            {newItemKind === 'SERVICE' && (
+              <Button onClick={addNewItem} className="bg-green-600 hover:bg-green-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter service complémentaire
               </Button>
             )}
           </div>

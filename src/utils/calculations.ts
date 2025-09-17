@@ -1,6 +1,42 @@
 import { QuoteItem, Quote, QuoteTotals, Settings } from '@/types';
 import { calculateAgentVacation } from './agentCalculations';
 
+export const calculateServiceItem = (
+  item: QuoteItem,
+  tvaPct: number
+): QuoteItem => {
+  if (item.kind !== 'SERVICE') {
+    return item;
+  }
+
+  const tvaMultiplier = 1 + (tvaPct / 100);
+
+  // Calcul basé sur le nombre de prestations
+  const patrolsPerDay = item.patrolsPerDay || 1;
+  const daysCount = item.daysCount || 1;
+  const serviceUnitPrice = item.serviceUnitPrice || 0;
+
+  // Nombre total de prestations
+  const totalPrestations = patrolsPerDay * daysCount;
+
+  // Calcul des montants
+  const lineHT = totalPrestations * serviceUnitPrice;
+  const lineTVA = lineHT * (tvaPct / 100);
+  const lineTTC = lineHT + lineTVA;
+
+  return {
+    ...item,
+    qty: totalPrestations,
+    lineHT,
+    lineTVA,
+    lineTTC,
+    puHT: serviceUnitPrice,
+    puTTC: serviceUnitPrice * tvaMultiplier,
+    totalHT_net: lineHT,
+    totalTTC: lineTTC
+  };
+};
+
 export const calculateQuoteItem = (
   item: QuoteItem, 
   tvaPct: number, 
@@ -11,6 +47,12 @@ export const calculateQuoteItem = (
   if (item.kind === 'AGENT' && settings) {
     return calculateAgentVacation(item, settings);
   }
+  
+  // Handle SERVICE items differently
+  if (item.kind === 'SERVICE') {
+    return calculateServiceItem(item, tvaPct);
+  }
+  
   const tvaMultiplier = 1 + (tvaPct / 100);
   
   // Valeurs par défaut pour les calculs
@@ -76,15 +118,21 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
   const agentsSubtotalHT = agentItems.reduce((sum, item) => sum + (item.lineHT || 0), 0);
   const agentsTva = agentItems.reduce((sum, item) => sum + (item.lineTVA || 0), 0);
   const agentsTotalTTC = agentItems.reduce((sum, item) => sum + (item.lineTTC || 0), 0);
-  
+
+  // Calculs pour SERVICE
+  const serviceItems = quote.items.filter(item => item.kind === 'SERVICE');
+  const servicesSubtotalHT = serviceItems.reduce((sum, item) => sum + (item.lineHT || 0), 0);
+  const servicesTva = serviceItems.reduce((sum, item) => sum + (item.lineTVA || 0), 0);
+  const servicesTotalTTC = serviceItems.reduce((sum, item) => sum + (item.lineTTC || 0), 0);
+
   // Calculs globaux (TECH seulement pour les remises)
   const techGlobalSubtotalHT = uniqueSubtotalHT + mensuelSubtotalHT;
   const globalDiscountHT = quote.discountMode === 'global' 
     ? techGlobalSubtotalHT * ((quote.discountPct || 0) / 100)
     : 0;
-  
-  // Total global incluant agents
-  const globalSubtotalHT = techGlobalSubtotalHT + agentsSubtotalHT;
+
+  // Total global incluant agents et services
+  const globalSubtotalHT = techGlobalSubtotalHT + agentsSubtotalHT + servicesSubtotalHT;
   
   // Si remise globale, répartition proportionnelle (sur TECH seulement)
   let uniqueGlobalDiscountHT = 0;
@@ -107,12 +155,12 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
   const mensuelTva = mensuelHtAfterDiscount * (tvaPct / 100);
   const mensuelTotalTTC = mensuelHtAfterDiscount + mensuelTva;
   
-  // Totaux globaux finaux (TECH après remises + AGENTS)
+  // Totaux globaux finaux (TECH après remises + AGENTS + SERVICES)
   const techTotalAfterDiscount = uniqueHtAfterDiscount + mensuelHtAfterDiscount;
-  const globalHtAfterDiscount = techTotalAfterDiscount + agentsSubtotalHT;
-  const globalTva = (uniqueTva + mensuelTva) + agentsTva;
+  const globalHtAfterDiscount = techTotalAfterDiscount + agentsSubtotalHT + servicesSubtotalHT;
+  const globalTva = (uniqueTva + mensuelTva) + agentsTva + servicesTva;
   const globalTotalTTC = globalHtAfterDiscount + globalTva;
-  
+
   return {
     unique: {
       subtotalHT: uniqueSubtotalHT,
@@ -132,6 +180,11 @@ export const calculateQuoteTotals = (quote: Quote, tvaPct: number): QuoteTotals 
       subtotalHT: agentsSubtotalHT,
       tva: agentsTva,
       totalTTC: agentsTotalTTC
+    },
+    services: {
+      subtotalHT: servicesSubtotalHT,
+      tva: servicesTva,
+      totalTTC: servicesTotalTTC
     },
     global: {
       subtotalHT: globalSubtotalHT,

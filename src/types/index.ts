@@ -314,7 +314,7 @@ export interface AgentDescriptionTemplate {
 
 export interface QuoteItem {
   id: string;
-  kind: 'TECH' | 'AGENT';
+  kind: 'TECH' | 'AGENT' | 'SERVICE';
   type: string;
   reference: string;
   mode: 'unique' | 'mensuel';
@@ -349,6 +349,14 @@ export interface QuoteItem {
   lineTVA?: number;
   lineTTC?: number;
   seriesTag?: string | null;
+  // Service fields
+  serviceType?: 'patrouille_ouverture' | 'patrouille_fermeture' | 'patrouille_exterieur' | 'pre_vol' | 'formation' | 'garde_clef' | 'transport' | 'maintenance' | 'autre';
+  serviceDescription?: string; // Description libre
+  patrolsPerDay?: number; // Nombre de patrouilles par jour
+  daysCount?: number; // Nombre de jours
+  workDays?: string[]; // Jours de semaine ['lundi', 'mardi', etc.]
+  durationMinutes?: number; // Durée de chaque prestation en minutes
+  serviceUnitPrice?: number; // Prix unitaire par prestation
 }
 
 export interface AgentTypeRate {
@@ -372,6 +380,11 @@ export interface QuoteTotals {
     totalTTC: number;
   };
   agents: {
+    subtotalHT: number;
+    tva: number;
+    totalTTC: number;
+  };
+  services: {
     subtotalHT: number;
     tva: number;
     totalTTC: number;
