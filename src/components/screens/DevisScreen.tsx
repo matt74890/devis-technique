@@ -553,6 +553,36 @@ const DevisScreen = () => {
         </Card>
       )}
 
+      {/* Informations générales */}
+      <Card className="shadow-soft">
+        <CardHeader>
+          <CardTitle>Informations générales</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="ref">Référence du devis *</Label>
+              <Input
+                id="ref"
+                value={currentQuote.ref}
+                onChange={(e) => updateQuote({ ref: e.target.value })}
+                placeholder="ex: DEV-2024-001"
+                className="font-medium"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date du devis</Label>
+              <Input
+                id="date"
+                type="date"
+                value={currentQuote.date}
+                onChange={(e) => updateQuote({ date: e.target.value })}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Informations client */}
       <Card className="shadow-soft">
         <CardHeader>
