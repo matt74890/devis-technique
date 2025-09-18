@@ -9,7 +9,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFLayoutConfig, LayoutBlock } from '@/types/layout';
 
 // Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`;
 
 interface PDFAnalyzerProps {
   file: File | null;
@@ -62,7 +62,13 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       const arrayBuffer = await file.arrayBuffer();
       console.log('📊 ArrayBuffer créé, taille:', arrayBuffer.byteLength);
       
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      console.log('🔧 Configuration du worker PDF.js...');
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true
+      }).promise;
       console.log('✅ PDF chargé, pages:', pdf.numPages);
       
       setProgress(25);
