@@ -70,6 +70,17 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
     try {
       const renderData = buildRenderData(quote, template, settings);
       
+      // Debug: Log des données avant envoi
+      console.log('🔍 Données PDF à envoyer:', {
+        meta: renderData.meta,
+        seller: renderData.seller,
+        client: renderData.client,
+        tech: { itemsCount: renderData.tech.items.length, totals: renderData.tech.totals },
+        agent: { itemsCount: renderData.agent.items.length, totals: renderData.agent.totals },
+        totals: renderData.totals,
+        addresses: renderData.addresses
+      });
+      
       // Call Supabase Edge Function
       const response = await fetch('https://kwtdirfmdakbwwjxdynu.supabase.co/functions/v1/render-pdf', {
         method: 'POST',
@@ -81,6 +92,7 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
       });
       
       if (response.ok) {
+        console.log('✅ PDF généré avec succès');
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -90,6 +102,10 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Erreur PDF:', { status: response.status, error: errorText });
+        throw new Error(`Erreur serveur: ${response.status}`);
       }
       
       onDownload?.();

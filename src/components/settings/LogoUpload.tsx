@@ -38,33 +38,39 @@ const LogoUpload = () => {
         throw new Error('Vous devez être connecté pour uploader un logo');
       }
 
+      console.log('🔄 Upload logo démarré pour user:', user.id);
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/logo.${fileExt}`;
 
       // Supprimer l'ancien logo s'il existe
-      if (settings.logoUrl) {
+      if (settings.logoUrl && settings.logoUrl.includes('supabase')) {
         const oldPath = settings.logoUrl.split('/').slice(-2).join('/');
+        console.log('🗑️ Suppression ancien logo:', oldPath);
         await supabase.storage.from('logos').remove([oldPath]);
       }
 
       // Upload le nouveau logo
+      console.log('📤 Upload vers:', filePath);
       const { error: uploadError } = await supabase.storage
         .from('logos')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
+        console.error('❌ Erreur upload:', uploadError);
         throw uploadError;
       }
 
       // Obtenir l'URL publique
       const { data } = supabase.storage.from('logos').getPublicUrl(filePath);
+      console.log('✅ URL publique générée:', data.publicUrl);
       
       // Mettre à jour les paramètres
       updateSettings({ logoUrl: data.publicUrl });
       
       toast.success('Logo uploadé avec succès!');
     } catch (error: any) {
-      console.error('Erreur upload:', error);
+      console.error('❌ Erreur upload complète:', error);
       toast.error(error.message);
     } finally {
       setUploading(false);
@@ -75,18 +81,24 @@ const LogoUpload = () => {
     try {
       if (!settings.logoUrl) return;
       
-      const filePath = settings.logoUrl.split('/').slice(-2).join('/');
-      
-      const { error } = await supabase.storage
-        .from('logos')
-        .remove([filePath]);
+      if (settings.logoUrl.includes('supabase')) {
+        const filePath = settings.logoUrl.split('/').slice(-2).join('/');
+        console.log('🗑️ Suppression logo:', filePath);
+        
+        const { error } = await supabase.storage
+          .from('logos')
+          .remove([filePath]);
 
-      if (error) throw error;
+        if (error) {
+          console.error('❌ Erreur suppression storage:', error);
+          throw error;
+        }
+      }
 
       updateSettings({ logoUrl: '' });
       toast.success('Logo supprimé');
     } catch (error: any) {
-      console.error('Erreur suppression:', error);
+      console.error('❌ Erreur suppression complète:', error);
       toast.error('Erreur lors de la suppression du logo');
     }
   };

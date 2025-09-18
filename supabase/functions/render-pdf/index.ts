@@ -22,26 +22,36 @@ serve(async (req) => {
       });
     }
 
-    // Load Handlebars template (in a real scenario, this would be loaded from storage)
+    // Debug: Log des données reçues
+    console.log('📥 Données reçues dans render-pdf:', {
+      meta: renderData.meta,
+      seller: renderData.seller,
+      client: renderData.client,
+      techItemsCount: renderData.tech?.items?.length || 0,
+      agentItemsCount: renderData.agent?.items?.length || 0,
+      totals: renderData.totals
+    });
+
+    // Improved Handlebars-like template replacement
     const templateHtml = `<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{meta.quoteType}} - {{meta.quoteRef}}</title>
+    <title>${renderData.meta?.quoteType || 'Devis'} - ${renderData.meta?.quoteRef || ''}</title>
     <style>
         :root {
-            --page-margin: {{theme.page.marginMm}}mm;
-            --font-family: {{theme.page.fontFamily}};
-            --font-size: {{theme.page.fontSize}}pt;
-            --c-text: {{theme.color.text}};
-            --c-muted: {{theme.color.muted}};
-            --c-accent: {{theme.color.accent}};
-            --c-border: {{theme.color.border}};
-            --c-table-header: {{theme.color.tableHeaderBg}};
-            --c-zebra: {{theme.color.zebraBg}};
-            --badge-h: {{theme.badge.heightPx}}px;
-            --badge-radius: {{theme.badge.radiusPx}}px;
+            --page-margin: ${renderData.theme?.page?.marginMm || 12}mm;
+            --font-family: "${renderData.theme?.page?.fontFamily || 'Arial, sans-serif'}";
+            --font-size: ${renderData.theme?.page?.fontSize || 12}pt;
+            --c-text: ${renderData.theme?.color?.text || '#1a1a1a'};
+            --c-muted: ${renderData.theme?.color?.muted || '#6b7280'};
+            --c-accent: ${renderData.theme?.color?.accent || '#ffdd00'};
+            --c-border: ${renderData.theme?.color?.border || '#e5e7eb'};
+            --c-table-header: ${renderData.theme?.color?.tableHeaderBg || '#f9fafb'};
+            --c-zebra: ${renderData.theme?.color?.zebraBg || '#f9fafb'};
+            --badge-h: ${renderData.theme?.badge?.heightPx || 20}px;
+            --badge-radius: ${renderData.theme?.badge?.radiusPx || 10}px;
         }
 
         @page { size: A4; margin: var(--page-margin); }
@@ -116,20 +126,27 @@ serve(async (req) => {
 </head>
 <body>
     <div class="page-header">
-        <div style="font-size: 24px; font-weight: bold;">{{seller.company}}</div>
-        <div>
-            <div>{{meta.quoteType}}</div>
-            <div><strong>{{meta.quoteRef}}</strong></div>
-            <div>{{meta.date}}</div>
+        ${renderData.seller?.logoUrl ? `<img src="${renderData.seller.logoUrl}" alt="Logo" style="max-height: 60px;">` : ''}
+        <div style="font-size: 24px; font-weight: bold;">${renderData.seller?.company || 'GPA'}</div>
+        <div style="text-align: right;">
+            <div>${renderData.meta?.quoteType || 'Devis'}</div>
+            <div><strong>Réf: ${renderData.meta?.quoteRef || '—'}</strong></div>
+            <div>${renderData.meta?.date || ''}</div>
         </div>
     </div>
 
     <div style="margin: 24px 0;">
-        <div><strong>{{client.civility}} {{client.fullName}}</strong></div>
-        {{#if client.company}}<div>{{client.company}}</div>{{/if}}
+        <div><strong>${renderData.client?.civility || ''} ${renderData.client?.fullName || ''}</strong></div>
+        ${renderData.client?.company ? `<div>${renderData.client.company}</div>` : ''}
+        ${renderData.addresses?.contact?.street ? `<div>${renderData.addresses.contact.street}</div>` : ''}
+        ${renderData.addresses?.contact?.postalCode && renderData.addresses?.contact?.city ? `<div>${renderData.addresses.contact.postalCode} ${renderData.addresses.contact.city}</div>` : ''}
     </div>
 
-    {{#if tech.items.length}}
+    <div style="margin: 24px 0;">
+        ${renderData.content?.introHtml || ''}
+    </div>
+
+    ${renderData.tech?.items?.length ? `
     <h3>Devis technique <span class="badge">TECH</span></h3>
     <table>
         <thead>
@@ -138,21 +155,21 @@ serve(async (req) => {
             </tr>
         </thead>
         <tbody>
-            {{#each tech.items}}
+            ${renderData.tech.items.map((item: any) => `
             <tr>
-                <td>{{reference}}</td>
-                <td>{{type}} {{#if badge}}<span class="badge">{{badge}}</span>{{/if}}</td>
-                <td style="text-align: center;">{{qty}}</td>
-                <td style="text-align: right;">{{puHT}} CHF</td>
-                <td style="text-align: right;">{{totalHT_net}} CHF</td>
-                <td style="text-align: right;">{{totalTTC}} CHF</td>
+                <td>${item.reference || ''}</td>
+                <td>${item.type || ''} ${item.mode === 'mensuel' ? '<span class="badge">MENSUEL</span>' : item.mode === 'unique' ? '<span class="badge">UNIQUE</span>' : ''}</td>
+                <td style="text-align: center;">${item.qty || 0}</td>
+                <td style="text-align: right;">${(item.puHT || 0).toFixed(2)} CHF</td>
+                <td style="text-align: right;">${(item.totalHT_net || 0).toFixed(2)} CHF</td>
+                <td style="text-align: right;">${(item.totalTTC || 0).toFixed(2)} CHF</td>
             </tr>
-            {{/each}}
+            `).join('')}
         </tbody>
     </table>
-    {{/if}}
+    ` : ''}
 
-    {{#if agent.items.length}}
+    ${renderData.agent?.items?.length ? `
     <h3>Devis agent <span class="badge">AGENT</span></h3>
     <table>
         <thead>
@@ -161,53 +178,50 @@ serve(async (req) => {
             </tr>
         </thead>
         <tbody>
-            {{#each agent.items}}
+            ${renderData.agent.items.map((item: any) => `
             <tr>
-                <td>{{reference}}</td>
-                <td>{{agentType}}</td>
-                <td style="text-align: center;">{{start}}</td>
-                <td style="text-align: center;">{{end}}</td>
-                <td style="text-align: center;">{{hoursNormal}}</td>
-                <td style="text-align: center;">{{hoursExtra}}</td>
-                <td style="text-align: right;">{{totalHT_net}} CHF</td>
+                <td>${item.reference || ''}</td>
+                <td>${item.agentType || ''}</td>
+                <td style="text-align: center;">${item.start || ''}</td>
+                <td style="text-align: center;">${item.end || ''}</td>
+                <td style="text-align: center;">${item.hoursNormal || 0}</td>
+                <td style="text-align: center;">${item.hoursExtra || 0}</td>
+                <td style="text-align: right;">${(item.totalHT_net || 0).toFixed(2)} CHF</td>
             </tr>
-            {{/each}}
+            `).join('')}
         </tbody>
     </table>
-    {{/if}}
+    ` : ''}
 
     <table class="totals-table">
-        <tr><th>Total HT</th><td style="text-align: right;">{{totals.ht}} CHF</td></tr>
-        <tr><th>TVA (8.1%)</th><td style="text-align: right;">{{totals.vat}} CHF</td></tr>
-        <tr class="total-final"><th>Total TTC</th><td style="text-align: right;">{{totals.ttc}} CHF</td></tr>
+        <tr><th>Total HT</th><td style="text-align: right;">${(renderData.totals?.ht || 0).toFixed(2)} CHF</td></tr>
+        <tr><th>TVA (8.1%)</th><td style="text-align: right;">${(renderData.totals?.vat || 0).toFixed(2)} CHF</td></tr>
+        <tr class="total-final"><th>Total TTC</th><td style="text-align: right;">${(renderData.totals?.ttc || 0).toFixed(2)} CHF</td></tr>
     </table>
 
-    {{#if totals.remark}}
+    ${renderData.totals?.remark ? `
     <div style="margin-top: 16px; padding: 8px; background: #f8f9fa; border-left: 3px solid var(--c-accent);">
-        {{totals.remark}}
+        ${renderData.totals.remark}
     </div>
-    {{/if}}
+    ` : ''}
+
+    ${renderData.seller?.signatureUrl ? `
+    <div style="margin-top: 40px; text-align: right;">
+        <div>Signature:</div>
+        <img src="${renderData.seller.signatureUrl}" alt="Signature" style="max-height: 80px; margin-top: 10px;">
+        <div style="margin-top: 5px;">${renderData.seller?.name || ''}</div>
+        <div>${renderData.seller?.title || ''}</div>
+    </div>
+    ` : ''}
 </body>
 </html>`;
 
-    // Compile Handlebars template (simplified version for demo)
-    let compiledHtml = templateHtml;
-    
-    // Simple variable replacement (in production, use proper Handlebars)
-    const replacePlaceholders = (html: string, data: any): string => {
-      return html.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-        const value = path.split('.').reduce((obj: any, key: string) => obj?.[key], data);
-        return value !== undefined ? String(value) : match;
-      });
-    };
+    console.log('✅ HTML généré, longueur:', templateHtml.length);
 
-    compiledHtml = replacePlaceholders(compiledHtml, renderData);
+    // Return HTML for download as PDF
+    const filename = `devis_${renderData.meta?.quoteRef || 'sans-ref'}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    // For demo purposes, return HTML instead of PDF
-    // In production, use Puppeteer/Playwright to generate actual PDF
-    const filename = `devis_${renderData.meta.quoteRef}_${new Date().toISOString().slice(0, 10)}.pdf`;
-
-    return new Response(compiledHtml, {
+    return new Response(templateHtml, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html',
