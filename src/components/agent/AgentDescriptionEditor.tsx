@@ -119,7 +119,12 @@ export default function AgentDescriptionEditor({
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Description des prestations (Agent)</span>
           <div className="flex gap-2">
-            {/* Bouton de preview retiré suite au reset PDF */}
+            {hasContent() && onPreview && (
+              <Button variant="outline" size="sm" onClick={onPreview}>
+                <Eye className="h-4 w-4 mr-1" />
+                Aperçu PDF
+              </Button>
+            )}
           </div>
         </CardTitle>
       </CardHeader>

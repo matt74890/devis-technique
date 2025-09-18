@@ -137,6 +137,9 @@ export interface Settings {
   models: PriceModel[];
   catalog: Product[];
   pdfConfig: PDFConfig;
+  pdfLayout?: PDFLayout;
+  pdfLayouts?: { [variant: string]: import('./layout').PDFLayoutConfig[] };
+  activePDFLayouts?: { [variant: string]: string };
   letterTemplate: LetterTemplate;
   customLetterTemplates: CustomLetterTemplate[];
   sellerInfo: SellerInfo;
@@ -164,9 +167,6 @@ export interface Settings {
   agentDescriptionTemplates: AgentDescriptionTemplate[];
   agentDescription?: {
     enabled: boolean;
-  };
-  pdf?: {
-    template: import('./pdf').PdfTemplateConfig;
   };
 }
 

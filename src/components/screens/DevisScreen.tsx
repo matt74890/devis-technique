@@ -14,6 +14,7 @@ import { calculateQuoteItem, calculateQuoteTotals, calculateServiceItem } from '
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
+import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +23,8 @@ import ServiceRow from '@/components/vacation/ServiceRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
-import ServiceFormModal from '@/components/vacation/ServiceFormModal';
+import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
+import { exportDomAsPDF } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -43,6 +45,7 @@ const DevisScreen = () => {
   const [emailRaw, setEmailRaw] = useState('');
   const [isProcessingEmail, setIsProcessingEmail] = useState(false);
   const [showVacationGenerator, setShowVacationGenerator] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Auto-save when client changes
   useEffect(() => {
@@ -207,6 +210,21 @@ const DevisScreen = () => {
       description: `${vacations.length} vacations ajoutées avec succès.`,
     });
   };
+
+  async function handleDownloadPdf(quote: any, settings: any, variant: "technique"|"agent"|"mixte") {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const dom = await renderPDFFromLayout(quote, settings, variant);
+      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      await exportDomAsPDF(dom, filename);
+      toast({ title: "PDF téléchargé" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const handleItemUpdate = (itemId: string, field: string, value: any) => {
     const item = currentQuote.items.find(i => i.id === itemId);
@@ -1079,6 +1097,48 @@ const DevisScreen = () => {
         <AgentDescriptionEditor
           description={currentQuote.agentDescription || {}}
           onUpdate={(description) => updateQuote({ agentDescription: description })}
+          onPreview={async () => {
+            try {
+              // Créer un quote temporaire avec seulement la description d'agent
+              const previewQuote = {
+                ...currentQuote,
+                items: [], // Pas d'items pour le preview de la description seule
+                agentDescription: currentQuote.agentDescription
+              };
+              
+              // Générer le DOM de preview
+              const dom = await renderPDFFromLayout(previewQuote, settings, 'agent');
+              
+              // Créer une nouvelle fenêtre pour afficher le preview
+              const previewWindow = window.open('', '_blank', 'width=800,height=600');
+              if (previewWindow) {
+                previewWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Aperçu Description Agent</title>
+                      <style>
+                        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                        .preview-container { max-width: 800px; margin: 0 auto; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="preview-container">
+                        ${dom.outerHTML}
+                      </div>
+                    </body>
+                  </html>
+                `);
+                previewWindow.document.close();
+              }
+            } catch (error) {
+              toast({
+                title: "Erreur",
+                description: "Impossible de générer l'aperçu PDF",
+                variant: "destructive"
+              });
+            }
+          }}
         />
       )}
 
@@ -1234,34 +1294,9 @@ const DevisScreen = () => {
           {newItemKind === 'SERVICE' && (
             <div className="space-y-4">
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-semibold text-green-800">Services complémentaires</h4>
-                  <ServiceFormModal
-                    settings={settings}
-                    onSave={(serviceData) => {
-                      const newItem = {
-                        id: crypto.randomUUID(),
-                        kind: 'SERVICE' as const,
-                        type: serviceData.serviceType || 'autre',
-                        reference: `SRV-${Date.now()}`,
-                        mode: 'unique' as const,
-                        unitPriceMode: 'HT' as const,
-                        ...serviceData
-                      };
-                      addQuoteItem(newItem);
-                    }}
-                    trigger={
-                      <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-100">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nouveau service
-                      </Button>
-                    }
-                  />
-                </div>
-                <div className="text-sm text-green-700">
-                  Configurez des services sur mesure : patrouilles, formations, maintenance, transport, etc.
-                  <br />
-                  Le calcul se fait automatiquement selon le nombre de prestations et la durée.
+                <h4 className="font-semibold text-green-800 mb-3">Services complémentaires</h4>
+                <div className="text-sm text-green-700 mb-3">
+                  Configurez des services sur mesure comme des patrouilles, formations, maintenance, etc.
                 </div>
               </div>
             </div>
@@ -1453,7 +1488,6 @@ const DevisScreen = () => {
                       key={item.id}
                       item={item}
                       settings={settings}
-                      currentQuote={currentQuote}
                       onUpdate={(id, updates) => updateQuoteItem(id, updates)}
                       onDuplicate={() => duplicateQuoteItem(item.id)}
                       onDelete={() => {}}
