@@ -20,6 +20,7 @@ import SellerInfo from '@/components/settings/SellerInfo';
 import LetterTemplate from '@/components/settings/LetterTemplate';
 import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
+import { PDFSettings } from '@/components/settings/PDFSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();

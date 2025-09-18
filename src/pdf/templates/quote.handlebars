@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{meta.quoteType}} - {{meta.quoteRef}}</title>
+    <style>
+        :root {
+            --page-margin: {{theme.page.marginMm}}mm;
+            --font-family: {{theme.page.fontFamily}};
+            --font-size: {{theme.page.fontSize}}pt;
+            --c-text: {{theme.color.text}};
+            --c-muted: {{theme.color.muted}};
+            --c-accent: {{theme.color.accent}};
+            --c-border: {{theme.color.border}};
+            --c-table-header: {{theme.color.tableHeaderBg}};
+            --c-zebra: {{theme.color.zebraBg}};
+            --radius-sm: {{theme.radius.sm}}px;
+            --radius-md: {{theme.radius.md}}px;
+            --gap-xs: {{theme.gap.xs}}px;
+            --gap-sm: {{theme.gap.sm}}px;
+            --gap-md: {{theme.gap.md}}px;
+            --gap-lg: {{theme.gap.lg}}px;
+            --badge-h: {{theme.badge.heightPx}}px;
+            --badge-radius: {{theme.badge.radiusPx}}px;
+        }
+
+        @page {
+            size: A4;
+            margin: var(--page-margin);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            font-size: var(--font-size);
+            line-height: 1.4;
+            color: var(--c-text);
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--gap-lg);
+            padding-bottom: var(--gap-sm);
+            border-bottom: 3px solid var(--c-accent);
+        }
+
+        .logo {
+            max-height: 60px;
+            max-width: 200px;
+        }
+
+        .quote-ref {
+            text-align: right;
+            color: var(--c-muted);
+        }
+
+        .intro-page {
+            page-break-after: always;
+            min-height: 100vh;
+        }
+
+        .seller-info {
+            text-align: right;
+            margin-bottom: var(--gap-lg);
+        }
+
+        .client-info {
+            margin: var(--gap-lg) 0;
+        }
+
+        .intro-content {
+            margin: var(--gap-lg) 0;
+            line-height: 1.6;
+        }
+
+        .signature {
+            max-height: 80px;
+            margin-top: var(--gap-md);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: var(--gap-lg) 0 var(--gap-md) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--gap-sm);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: var(--badge-h);
+            line-height: var(--badge-h);
+            padding: 0 var(--gap-sm);
+            background: var(--c-accent);
+            color: var(--c-text);
+            border-radius: var(--badge-radius);
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .table-wrapper {
+            margin-bottom: var(--gap-lg);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: var(--layout-tech-table-border, 1px solid var(--c-border));
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        th, td {
+            padding: var(--gap-sm);
+            border: var(--layout-tech-table-border, 1px solid var(--c-border));
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        th {
+            background: var(--c-table-header);
+            font-weight: bold;
+            text-align: left;
+        }
+
+        {{#if layout.tech.table.zebra}}
+        tbody tr:nth-child(even) td {
+            background: var(--c-zebra);
+        }
+        {{/if}}
+
+        {{#if layout.agent.table.zebra}}
+        .agent-table tbody tr:nth-child(even) td {
+            background: var(--c-zebra);
+        }
+        {{/if}}
+
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        .totals-section {
+            margin-top: var(--gap-lg);
+        }
+
+        .keep {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .totals-table {
+            margin-left: auto;
+            width: 300px;
+        }
+
+        .totals-table th {
+            background: transparent;
+            border: none;
+            padding: var(--gap-xs) var(--gap-sm);
+        }
+
+        .totals-table td {
+            border: none;
+            padding: var(--gap-xs) var(--gap-sm);
+            text-align: right;
+        }
+
+        .total-final {
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid var(--c-accent);
+        }
+
+        .remark {
+            margin-top: var(--gap-md);
+            padding: var(--gap-sm);
+            background: #f8f9fa;
+            border-left: 3px solid var(--c-accent);
+            font-style: italic;
+        }
+
+        .missions-page {
+            page-break-before: always;
+        }
+
+        .missions-content {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+{{#includes layout.sectionsOrder "intro"}}
+<!-- PAGE INTRO -->
+<div class="intro-page">
+    <div class="page-header">
+        {{#if seller.logoUrl}}
+        <img src="{{seller.logoUrl}}" alt="Logo" class="logo">
+        {{else}}
+        <div style="font-size: 24px; font-weight: bold;">{{seller.company}}</div>
+        {{/if}}
+        <div class="quote-ref">
+            <div>{{meta.quoteType}}</div>
+            <div><strong>{{meta.quoteRef}}</strong></div>
+            <div>{{formatDate meta.date}}</div>
+        </div>
+    </div>
+
+    <div class="seller-info">
+        {{#if seller.name}}
+        <div><strong>{{seller.name}}</strong></div>
+        {{/if}}
+        {{#if seller.title}}
+        <div>{{seller.title}}</div>
+        {{/if}}
+    </div>
+
+    <div class="client-info">
+        <div><strong>{{client.civility}} {{client.fullName}}</strong></div>
+        {{#if client.company}}
+        <div>{{client.company}}</div>
+        {{/if}}
+        {{#if addresses.contact.street}}
+        <div>{{addresses.contact.street}}</div>
+        {{/if}}
+        {{#if addresses.contact.zipCity}}
+        <div>{{addresses.contact.zipCity}}</div>
+        {{/if}}
+    </div>
+
+    <div class="intro-content">
+        {{{content.introHtml}}}
+    </div>
+
+    {{#if (and layout.intro.showSellerSignatureOnIntro seller.signatureUrl)}}
+    <div style="margin-top: auto;">
+        <img src="{{seller.signatureUrl}}" alt="Signature" class="signature">
+    </div>
+    {{/if}}
+</div>
+{{/includes}}
+
+{{#includes layout.sectionsOrder "missions"}}
+{{#if (and content.missionsTemplate.showIfAgent (hasAny agentDescription))}}
+<!-- PAGE MISSIONS -->
+<div class="missions-page">
+    <div class="page-header">
+        {{#if seller.logoUrl}}
+        <img src="{{seller.logoUrl}}" alt="Logo" class="logo">
+        {{else}}
+        <div style="font-size: 24px; font-weight: bold;">{{seller.company}}</div>
+        {{/if}}
+        <div class="quote-ref">
+            <div>{{meta.quoteType}}</div>
+            <div><strong>{{meta.quoteRef}}</strong></div>
+        </div>
+    </div>
+
+    <div class="section-title">
+        Description des prestations
+    </div>
+
+    <div class="missions-content">
+        {{#if agentDescription.description}}
+        <div><strong>Description :</strong> {{agentDescription.description}}</div>
+        {{/if}}
+        {{#if agentDescription.lieu}}
+        <div><strong>Lieu :</strong> {{agentDescription.lieu}}</div>
+        {{/if}}
+        {{#if agentDescription.contact}}
+        <div><strong>Contact :</strong> {{agentDescription.contact}}</div>
+        {{/if}}
+        {{#if agentDescription.equipement}}
+        <div><strong>Équipement :</strong> {{agentDescription.equipement}}</div>
+        {{/if}}
+        {{#if agentDescription.consignes}}
+        <div><strong>Consignes :</strong> {{agentDescription.consignes}}</div>
+        {{/if}}
+    </div>
+</div>
+{{/if}}
+{{/includes}}
+
+{{#includes layout.sectionsOrder "tech"}}
+{{#if tech.items.length}}
+<!-- SECTION TECH -->
+<div class="page-header">
+    {{#if seller.logoUrl}}
+    <img src="{{seller.logoUrl}}" alt="Logo" class="logo">
+    {{else}}
+    <div style="font-size: 24px; font-weight: bold;">{{seller.company}}</div>
+    {{/if}}
+    <div class="quote-ref">
+        <div>{{meta.quoteType}}</div>
+        <div><strong>{{meta.quoteRef}}</strong></div>
+    </div>
+</div>
+
+{{#if layout.tech.title.show}}
+<div class="section-title">
+    {{layout.tech.title.text}}
+    {{#if layout.tech.title.badge}}
+    <span class="badge">{{layout.tech.title.badge}}</span>
+    {{/if}}
+</div>
+{{/if}}
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                {{#each layout.tech.table.columns}}
+                <th class="text-{{lookup ../layout.tech.table.colAlign this}}">
+                    {{lookup ../layout.tech.table.labels this}}
+                </th>
+                {{/each}}
+            </tr>
+        </thead>
+        <tbody>
+            {{#each tech.items}}
+            <tr>
+                {{#each ../layout.tech.table.columns}}
+                <td class="text-{{lookup ../../layout.tech.table.colAlign this}}">
+                    {{#eq this "reference"}}{{../reference}}{{/eq}}
+                    {{#eq this "type"}}{{../type}} {{#if ../badge}}<span class="badge">{{../badge}}</span>{{/if}}{{/eq}}
+                    {{#eq this "qty"}}{{../qty}}{{/eq}}
+                    {{#eq this "puHT"}}{{money ../puHT ../../pricing}}{{/eq}}
+                    {{#eq this "vat"}}{{fixed ../vat 1}}%{{/eq}}
+                    {{#eq this "totalHT_net"}}{{money ../totalHT_net ../../pricing}}{{/eq}}
+                    {{#eq this "totalTTC"}}{{money ../totalTTC ../../pricing}}{{/eq}}
+                </td>
+                {{/each}}
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+{{/if}}
+{{/includes}}
+
+{{#includes layout.sectionsOrder "agent"}}
+{{#if agent.items.length}}
+<!-- SECTION AGENT -->
+<div class="page-header">
+    {{#if seller.logoUrl}}
+    <img src="{{seller.logoUrl}}" alt="Logo" class="logo">
+    {{else}}
+    <div style="font-size: 24px; font-weight: bold;">{{seller.company}}</div>
+    {{/if}}
+    <div class="quote-ref">
+        <div>{{meta.quoteType}}</div>
+        <div><strong>{{meta.quoteRef}}</strong></div>
+    </div>
+</div>
+
+{{#if layout.agent.title.show}}
+<div class="section-title">
+    {{layout.agent.title.text}}
+    {{#if layout.agent.title.badge}}
+    <span class="badge">{{layout.agent.title.badge}}</span>
+    {{/if}}
+</div>
+{{/if}}
+
+<div class="table-wrapper">
+    <table class="agent-table">
+        <thead>
+            <tr>
+                {{#each layout.agent.table.columns}}
+                <th class="text-{{lookup ../layout.agent.table.colAlign this}}">
+                    {{lookup ../layout.agent.table.labels this}}
+                </th>
+                {{/each}}
+            </tr>
+        </thead>
+        <tbody>
+            {{#each agent.items}}
+            <tr>
+                {{#each ../layout.agent.table.columns}}
+                <td class="text-{{lookup ../../layout.agent.table.colAlign this}}">
+                    {{#eq this "reference"}}{{../reference}}{{/eq}}
+                    {{#eq this "agentType"}}{{../agentType}}{{/eq}}
+                    {{#eq this "start"}}{{formatDate ../start}}{{/eq}}
+                    {{#eq this "end"}}{{formatDate ../end}}{{/eq}}
+                    {{#eq this "hoursNormal"}}{{fixed ../hoursNormal 2}}{{/eq}}
+                    {{#eq this "hoursExtra"}}{{fixed ../hoursExtra 2}}{{/eq}}
+                    {{#eq this "rateCHFh"}}{{money ../rateCHFh ../../pricing}}{{/eq}}
+                    {{#eq this "totalHT_net"}}{{money ../totalHT_net ../../pricing}}{{/eq}}
+                </td>
+                {{/each}}
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+{{/if}}
+{{/includes}}
+
+{{#includes layout.sectionsOrder "closing"}}
+<!-- SECTION CLOSING -->
+<div class="keep">
+    <div class="totals-section">
+        {{#if (and tech.items.length agent.items.length)}}
+        <!-- Sous-totaux si mixte -->
+        <table class="totals-table">
+            <tr>
+                <th>Sous-total technique HT</th>
+                <td>{{money tech.totals.ht pricing}}</td>
+            </tr>
+            <tr>
+                <th>Sous-total agent HT</th>
+                <td>{{money agent.totals.ht pricing}}</td>
+            </tr>
+        </table>
+        <br>
+        {{/if}}
+
+        <table class="totals-table">
+            <tr>
+                <th>Total HT</th>
+                <td>{{money totals.ht pricing}}</td>
+            </tr>
+            <tr>
+                <th>TVA ({{pricing.vatRate}}%)</th>
+                <td>{{money totals.vat pricing}}</td>
+            </tr>
+            <tr class="total-final">
+                <th>Total TTC</th>
+                <td>{{money totals.ttc pricing}}</td>
+            </tr>
+        </table>
+
+        {{#if totals.remark}}
+        <div class="remark">
+            {{totals.remark}}
+        </div>
+        {{/if}}
+    </div>
+</div>
+{{/includes}}
+
+</body>
+</html>

@@ -165,6 +165,9 @@ export interface Settings {
   agentDescription?: {
     enabled: boolean;
   };
+  pdf?: {
+    template: import('./pdf').PdfTemplateConfig;
+  };
 }
 
 export interface Currency {
