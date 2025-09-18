@@ -63,7 +63,7 @@ const ProductSelector = ({ onProductSelect, mode }: ProductSelectorProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="bg-secondary-light text-secondary hover:bg-secondary hover:text-secondary-foreground">
+        <Button variant="default">
           <ShoppingCart className="h-4 w-4 mr-2" />
           Choisir du catalogue
         </Button>
