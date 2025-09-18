@@ -11,34 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useStore } from '@/store/useStore';
-
-// Temporary types for the layout system
-type LayoutVariant = 'technique' | 'agent' | 'mixte';
-
-interface LayoutBlock {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  style: any;
-  visible: boolean;
-  locked: boolean;
-  zIndex: number;
-  content?: string;
-  dataBinding: any;
-  conditions: any[];
-}
-
-interface PDFLayout {
-  id: string;
-  name: string;
-  variant: LayoutVariant;
-  pageConfig: any;
-  blocks: LayoutBlock[];
-  metadata: any;
-}
+import { PDFCanvas } from '@/components/pdf/PDFCanvas';
+import { PDFLayoutConfig, LayoutBlock, LayoutVariant, getDefaultLayoutForVariant } from '@/types/layout';
 
 const PDFLayoutScreen: React.FC = () => {
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>('technique');
@@ -49,29 +23,9 @@ const PDFLayoutScreen: React.FC = () => {
   const [showTableDesigner, setShowTableDesigner] = useState(false);
   const [newLayoutName, setNewLayoutName] = useState('');
 
-  // Temporary mock data until store integration is complete
-  const layouts: PDFLayout[] = [
-    {
-      id: 'default',
-      name: 'Mise en page par défaut',
-      variant: selectedVariant,
-      pageConfig: {
-        size: 'A4',
-        orientation: 'portrait',
-        margins: { top: 12, right: 12, bottom: 12, left: 12 },
-        unit: 'mm'
-      },
-      blocks: [],
-      metadata: {
-        description: `Mise en page ${selectedVariant}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    }
-  ];
-
-  const currentLayout = layouts[0];
-  const layoutsForVariant = layouts;
+  // Utiliser le layout par défaut pour la variante sélectionnée
+  const currentLayout = getDefaultLayoutForVariant(selectedVariant);
+  const layoutsForVariant = [currentLayout];
 
   const handleCreateNewLayout = () => {
     if (!newLayoutName.trim()) {
@@ -94,7 +48,7 @@ const PDFLayoutScreen: React.FC = () => {
     toast.success('Mise en page supprimée');
   };
 
-  const handleUpdateLayout = (updates: Partial<PDFLayout>) => {
+  const handleUpdateLayout = (updates: Partial<PDFLayoutConfig>) => {
     // TODO: Implement with store integration
     console.log('Update layout:', updates);
   };
@@ -127,24 +81,26 @@ const PDFLayoutScreen: React.FC = () => {
       y: 50,
       width: 100,
       height: 30,
+      visible: true,
+      locked: false,
+      zIndex: currentLayout.blocks.length,
       style: {
         fontSize: 12,
-        fontFamily: 'Arial',
+        fontFamily: 'Arial, sans-serif',
         color: '#000000',
         backgroundColor: 'transparent',
         borderWidth: 0,
         borderColor: '#000000',
         borderRadius: 0,
-        textAlign: 'left',
+        padding: 0,
         fontWeight: 'normal',
-        fontStyle: 'normal'
+        fontStyle: 'normal',
+        textAlign: 'left',
+        lineHeight: 1.4
       },
-      visible: true,
-      locked: false,
-      zIndex: currentLayout.blocks.length,
       content: blockType === 'text' ? 'Nouveau texte' : undefined,
-      dataBinding: {},
-      conditions: []
+      bindings: {},
+      visibleIf: undefined
     };
 
     const updatedBlocks = [...currentLayout.blocks, newBlock];
@@ -174,7 +130,7 @@ const PDFLayoutScreen: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const layoutData = JSON.parse(e.target?.result as string);
+        const layoutData = JSON.parse(e.target?.result as string) as PDFLayoutConfig;
         // TODO: Implement with store integration
         toast.success('Mise en page importée');
       } catch (error) {
@@ -327,7 +283,7 @@ const PDFLayoutScreen: React.FC = () => {
               <CardContent className="p-4">
                 <h3 className="font-medium mb-4">Blocs disponibles</h3>
                 <div className="space-y-2">
-                  {['header', 'footer', 'client', 'table', 'totals', 'text'].map((blockType) => (
+                  {(['header', 'footer', 'intent', 'table_tech', 'totals', 'signatures', 'text', 'image'] as const).map((blockType) => (
                     <Button
                       key={blockType}
                       variant="outline"
@@ -348,21 +304,21 @@ const PDFLayoutScreen: React.FC = () => {
           {/* Center Panel - Canvas */}
           <ResizablePanel defaultSize={60} minSize={40}>
             <Card className="h-full">
-              <CardContent className="p-4 h-full flex items-center justify-center">
-                <div className="text-center">
-                  <h3 className="text-lg font-medium mb-2">Canvas PDF A4</h3>
-                  <p className="text-muted-foreground">
-                    Zoom: {zoom}% | Grille: {showGrid ? `${gridSize}mm` : 'Masquée'}
-                  </p>
-                  <div className="mt-4 w-96 h-[559px] bg-white border-2 border-dashed border-muted mx-auto">
-                    <div className="w-full h-full p-4 text-sm text-muted-foreground">
-                      Format A4 (210×297mm)
-                      <br />
-                      Marges: 12mm
-                      <br />
-                      Zone utile: 186×273mm
-                    </div>
-                  </div>
+              <CardContent className="p-4 h-full overflow-auto">
+                <div className="flex justify-center">
+                  <PDFCanvas
+                    layout={currentLayout}
+                    zoom={zoom}
+                    showGrid={showGrid}
+                    gridSize={gridSize}
+                    selectedBlockId={selectedBlock?.id || null}
+                    onSelectBlock={(blockId) => {
+                      const block = currentLayout.blocks.find(b => b.id === blockId);
+                      if (block) handleBlockSelect(block);
+                      else setSelectedBlock(null);
+                    }}
+                    onUpdateBlock={handleBlockUpdate}
+                  />
                 </div>
               </CardContent>
             </Card>
