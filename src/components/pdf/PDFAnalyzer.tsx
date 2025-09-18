@@ -8,8 +8,17 @@ import { toast } from 'sonner';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFLayoutConfig, LayoutBlock } from '@/types/layout';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`;
+// Configure PDF.js worker with fallback
+if (typeof window !== 'undefined') {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.js',
+      import.meta.url
+    ).toString();
+  } catch {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+}
 
 interface PDFAnalyzerProps {
   file: File | null;
@@ -62,15 +71,26 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       const arrayBuffer = await file.arrayBuffer();
       console.log('📊 ArrayBuffer créé, taille:', arrayBuffer.byteLength);
       
-      console.log('🔧 Configuration du worker PDF.js...');
-      const pdf = await pdfjsLib.getDocument({
-        data: arrayBuffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true
-      }).promise;
-      console.log('✅ PDF chargé, pages:', pdf.numPages);
+      console.log('🔧 Tentative de chargement du PDF...');
       
+      // Essai avec différentes configurations
+      let pdf;
+      try {
+        // Configuration simple d'abord
+        pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      } catch (workerError) {
+        console.log('🔄 Retry avec configuration alternative...');
+        // Configuration alternative si le worker pose problème
+        pdf = await pdfjsLib.getDocument({
+          data: arrayBuffer,
+          useWorkerFetch: false,
+          isEvalSupported: false,
+          useSystemFonts: true,
+          disableFontFace: true
+        }).promise;
+      }
+      
+      console.log('✅ PDF chargé avec succès, pages:', pdf.numPages);
       setProgress(25);
       setCurrentStep(`Analyse de ${pdf.numPages} page(s)...`);
 
