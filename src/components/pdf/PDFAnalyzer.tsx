@@ -49,6 +49,7 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
   const analyzePDF = async () => {
     if (!file) return;
 
+    console.log('🔍 Début analyse PDF:', file.name);
     setIsAnalyzing(true);
     setProgress(0);
     
@@ -56,9 +57,13 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       // Step 1: Load PDF
       setCurrentStep('Chargement du PDF...');
       setProgress(10);
+      console.log('📄 Chargement du PDF...');
 
       const arrayBuffer = await file.arrayBuffer();
+      console.log('📊 ArrayBuffer créé, taille:', arrayBuffer.byteLength);
+      
       const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      console.log('✅ PDF chargé, pages:', pdf.numPages);
       
       setProgress(25);
       setCurrentStep(`Analyse de ${pdf.numPages} page(s)...`);
@@ -158,9 +163,11 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       }, 500);
 
     } catch (error) {
-      console.error('Erreur analyse PDF:', error);
-      toast.error('Erreur lors de l\'analyse du PDF');
+      console.error('❌ Erreur analyse PDF:', error);
+      toast.error(`Erreur lors de l'analyse du PDF: ${error.message || error}`);
       setIsAnalyzing(false);
+      setCurrentStep('');
+      setProgress(0);
     }
   };
 
