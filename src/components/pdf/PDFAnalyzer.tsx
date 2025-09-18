@@ -8,17 +8,8 @@ import { toast } from 'sonner';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFLayoutConfig, LayoutBlock } from '@/types/layout';
 
-// Configure PDF.js worker with fallback
-if (typeof window !== 'undefined') {
-  try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.js',
-      import.meta.url
-    ).toString();
-  } catch {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  }
-}
+// Disable PDF.js worker to avoid module script errors
+pdfjsLib.GlobalWorkerOptions.workerSrc = null;
 
 interface PDFAnalyzerProps {
   file: File | null;
@@ -71,26 +62,20 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       const arrayBuffer = await file.arrayBuffer();
       console.log('📊 ArrayBuffer créé, taille:', arrayBuffer.byteLength);
       
-      console.log('🔧 Tentative de chargement du PDF...');
+      console.log('🔧 Chargement PDF sans worker...');
       
-      // Essai avec différentes configurations
-      let pdf;
-      try {
-        // Configuration simple d'abord
-        pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      } catch (workerError) {
-        console.log('🔄 Retry avec configuration alternative...');
-        // Configuration alternative si le worker pose problème
-        pdf = await pdfjsLib.getDocument({
-          data: arrayBuffer,
-          useWorkerFetch: false,
-          isEvalSupported: false,
-          useSystemFonts: true,
-          disableFontFace: true
-        }).promise;
-      }
+      // Configuration sans worker pour éviter les erreurs de module
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true,
+        disableFontFace: true,
+        disableAutoFetch: true,
+        disableStream: true
+      }).promise;
       
-      console.log('✅ PDF chargé avec succès, pages:', pdf.numPages);
+      console.log('✅ PDF chargé sans worker, pages:', pdf.numPages);
       setProgress(25);
       setCurrentStep(`Analyse de ${pdf.numPages} page(s)...`);
 
