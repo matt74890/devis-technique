@@ -11,9 +11,10 @@ interface ServiceRowProps {
   onUpdate: (id: string, updates: Partial<QuoteItem>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  hideDelete?: boolean;
 }
 
-export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDelete }: ServiceRowProps) {
+export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDelete, hideDelete }: ServiceRowProps) {
   const serviceTypes = [
     { value: 'patrouille_ouverture', label: 'Patrouille Ouverture' },
     { value: 'patrouille_fermeture', label: 'Patrouille Fermeture' },
@@ -109,9 +110,11 @@ export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDe
           <Button variant="outline" size="sm" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="outline" size="sm" onClick={onDelete}>
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          {!hideDelete && (
+            <Button variant="outline" size="sm" onClick={onDelete}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </td>
     </tr>

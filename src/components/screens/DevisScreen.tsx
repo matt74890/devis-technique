@@ -1504,13 +1504,6 @@ const DevisScreen = () => {
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteQuoteItem(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1521,7 +1514,8 @@ const DevisScreen = () => {
                       settings={settings}
                       onUpdate={(id, updates) => updateQuoteItem(id, updates)}
                       onDuplicate={() => duplicateQuoteItem(item.id)}
-                      onDelete={() => deleteQuoteItem(item.id)}
+                      onDelete={() => {}}
+                      hideDelete={true}
                     />
                   ) : (
                     <AgentVacationRow
@@ -1530,7 +1524,8 @@ const DevisScreen = () => {
                       settings={settings}
                       onUpdate={(id, updates) => updateQuoteItem(id, updates)}
                       onDuplicate={() => duplicateQuoteItem(item.id)}
-                      onDelete={() => deleteQuoteItem(item.id)}
+                      onDelete={() => {}}
+                      hideDelete={true}
                     />
                   )
                 ))}

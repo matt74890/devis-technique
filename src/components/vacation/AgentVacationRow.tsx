@@ -14,9 +14,10 @@ interface AgentVacationRowProps {
   onUpdate: (id: string, updates: Partial<QuoteItem>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  hideDelete?: boolean;
 }
 
-const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate }: AgentVacationRowProps) => {
+const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate, hideDelete }: AgentVacationRowProps) => {
   const { toast } = useToast();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -285,13 +286,15 @@ const AgentVacationRow = ({ item, settings, onUpdate, onDelete, onDuplicate }: A
           >
             <Copy className="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {!hideDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(item.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </TableCell>
     </TableRow>
