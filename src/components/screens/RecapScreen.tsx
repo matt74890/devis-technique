@@ -2,32 +2,22 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { FileDown, Calculator, Euro } from 'lucide-react';
+import { Copy, Download, FileText } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
-import { replacePlaceholders } from '@/utils/placeholderUtils';
-import PDFPreview from '@/components/pdf/PDFPreview';
-import { SignatureCanvas } from '@/components/signature/SignatureCanvas';
-import { useState } from "react";
-import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomAsPDF } from "@/utils/pdfRenderer";
-import type { Quote, Settings } from "@/types";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 
 const RecapScreen = () => {
-  const { currentQuote, settings, updateQuote } = useStore();
-  const [exporting, setExporting] = useState(false);
+  const { currentQuote, settings } = useStore();
+  const [jsonOpen, setJsonOpen] = useState(false);
 
   if (!currentQuote) return null;
 
-  const handleSignatureChange = (signature: string) => {
-    updateQuote({ clientSignature: signature });
-  };
-
-  // Ensure all items have calculated values
+  // Calculate all items
   const calculatedItems = currentQuote.items.map(item => {
     if (item.kind === 'AGENT') {
       return calculateAgentVacation(item, settings);
@@ -36,1560 +26,217 @@ const RecapScreen = () => {
     }
   });
 
-  // Group identical agent items
-  const agentItems = calculatedItems.filter(item => item.kind === 'AGENT');
-  
-  interface GroupedAgentItem {
-    title: string;
-    agentType: string;
-    canton: string;
-    dateRange: string;
-    timeRange: string;
-    totalHours: number;
-    normalHours: number;
-    nightHours: number;
-    sundayHours: number;
-    holidayHours: number;
-    totalHT: number;
-    totalTTC: number;
-    count: number;
-    items: any[];
-  }
-  
-  const groupedAgentItems: Record<string, GroupedAgentItem> = agentItems.reduce((groups, item) => {
-    // Create a key based on identical parameters
-    const key = `${item.dateStart}-${item.timeStart}-${item.dateEnd}-${item.timeEnd}-${item.agentType}-${item.canton}-${item.rateCHFh}`;
-    
-    if (!groups[key]) {
-      groups[key] = {
-        title: `Agent ${item.agentType || 'Sécurité'}`,
-        agentType: item.agentType || 'Agent',
-        canton: item.canton || '',
-        dateRange: `${item.dateStart ? new Date(item.dateStart).toLocaleDateString('fr-CH') : ''} - ${item.dateEnd ? new Date(item.dateEnd).toLocaleDateString('fr-CH') : ''}`,
-        timeRange: `${item.timeStart || ''} - ${item.timeEnd || ''}`,
-        totalHours: 0,
-        normalHours: 0,
-        nightHours: 0,
-        sundayHours: 0,
-        holidayHours: 0,
-        totalHT: 0,
-        totalTTC: 0,
-        count: 0,
-        items: []
-      };
-    }
-    
-    groups[key].totalHours += (item.hoursTotal || 0);
-    groups[key].normalHours += (item.hoursNormal || 0);
-    groups[key].nightHours += (item.hoursNight || 0);
-    groups[key].sundayHours += (item.hoursSunday || 0);
-    groups[key].holidayHours += (item.hoursHoliday || 0);
-    groups[key].totalHT += (item.lineHT || 0);
-    groups[key].totalTTC += (item.lineTTC || 0);
-    groups[key].count += 1;
-    groups[key].items.push(item);
-    
-    return groups;
-  }, {} as Record<string, GroupedAgentItem>);
-
-  const groupedAgentItemsArray: GroupedAgentItem[] = Object.values(groupedAgentItems);
-
   const quoteWithCalculatedItems = { ...currentQuote, items: calculatedItems };
   const totals = calculateQuoteTotals(quoteWithCalculatedItems, settings.tvaPct);
-  
-  // Fonction unifié pour télécharger le PDF en utilisant le même DOM que la preview
-  async function handleDownloadPdf(quote: Quote, settings: Settings, variant: "technique"|"agent"|"mixte") {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      // Validation des données requises
-      if (!quote.ref) {
-        toast.error('Veuillez renseigner une référence pour le devis');
-        return;
-      }
-      
-      if (!quote.client) {
-        toast.error('Veuillez sélectionner ou renseigner un client');
-        return;
-      }
-      
-      if (quote.items.length === 0) {
-        toast.error('Veuillez ajouter au moins une ligne au devis');
-        return;
-      }
 
-      // 1) même DOM que la preview
-      const dom = await renderPDFFromLayout(quote, settings, variant);
-
-      // (optionnel) attendre les fonts/images
-      if ((document as any).fonts?.ready) {
-        await (document as any).fonts.ready;
-      }
-
-      // 2) exporter directement
-      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
-      await exportDomAsPDF(dom, filename);
-
-      toast.success("PDF téléchargé");
-    } catch (e) {
-      toast.error(`Échec PDF: ${(e as Error).message}`);
-    } finally {
-      setExporting(false);
-    }
-  }
-
-  // Déterminer la variante du devis
-  const getQuoteVariant = (): "technique" | "agent" | "mixte" => {
-    const hasTech = currentQuote.items.some(i => i.kind === 'TECH');
-    const hasAgent = currentQuote.items.some(i => i.kind === 'AGENT');
+  const getQuoteType = () => {
+    const hasTech = calculatedItems.some(i => i.kind === 'TECH');
+    const hasAgent = calculatedItems.some(i => i.kind === 'AGENT');
+    const hasService = calculatedItems.some(i => i.kind === 'SERVICE');
     
-    if (hasTech && hasAgent) return 'mixte';
-    if (hasAgent) return 'agent';
-    return 'technique';
+    if (hasTech && hasAgent) return 'Mixte';
+    if (hasAgent) return 'Agent';
+    if (hasService) return 'Service';
+    return 'Technique';
   };
 
-  const generatePDF = () => {
-    console.log('Début génération PDF');
-    
-    // Validation des données requises
-    if (!currentQuote.ref) {
-      console.log('Erreur: Référence manquante');
-      toast.error('Veuillez renseigner une référence pour le devis');
-      return;
-    }
-    
-    if (!currentQuote.client) {
-      console.log('Erreur: Client manquant');  
-      toast.error('Veuillez sélectionner ou renseigner un client');
-      return;
-    }
-    
-    if (currentQuote.items.length === 0) {
-      console.log('Erreur: Aucune ligne dans le devis');
-      toast.error('Veuillez ajouter au moins une ligne au devis');
-      return;
-    }
-    
-    console.log('Validation passée, génération du PDF');
-    
-    // Créer le contenu HTML pour la génération PDF
-    const colors = settings.templateColors || { 
-      // Couleurs principales
-      primary: '#000000',
-      secondary: '#666666', 
-      accent: '#333333',
-      
-      // Couleurs de texte
-      titleColor: '#000000',
-      subtitleColor: '#666666',
-      textColor: '#000000',
-      mutedTextColor: '#999999',
-      
-      // Couleurs de fond
-      background: '#ffffff',
-      cardBackground: '#ffffff',
-      headerBackground: '#ffffff',
-      
-      // Couleurs de tableau
-      tableHeader: '#f5f5f5',
-      tableHeaderText: '#000000',
-      tableRow: '#ffffff',
-      tableRowAlt: '#f9f9f9',
-      tableBorder: '#cccccc',
-      
-      // Couleurs des badges
-      badgeUnique: '#666666',
-      badgeMensuel: '#666666',
-      badgeText: '#ffffff',
-      
-      // Couleurs des totaux
-      totalCardBorder: '#cccccc',
-      totalUniqueBackground: '#ffffff',
-      totalMensuelBackground: '#ffffff',
-      grandTotalBackground: '#f5f5f5',
-      grandTotalBorder: '#000000',
-      
-      // Couleurs des bordures et séparateurs
-      borderPrimary: '#000000',
-      borderSecondary: '#cccccc',
-      separatorColor: '#e0e0e0',
-      
-      // Couleurs spécifiques à la lettre
-      letterHeaderColor: '#000000',
-      letterDateColor: '#000000',
-      letterSubjectColor: '#000000',
-      letterSignatureColor: '#000000',
-      
-      // Couleurs des signatures
-      signatureBoxBorder: '#000000',
-      signatureBoxBackground: '#ffffff',
-      signatureTitleColor: '#000000',
-      signatureTextColor: '#666666'
-    };
-    
-    // Fonction pour récupérer les valeurs de mise en page avec des valeurs par défaut
-    const getLayoutValue = (section: string, property: string, defaultValue: string) => {
-      return settings.pdfLayout?.[section]?.[property] || defaultValue;
-    };
-    
-    // Fonction pour récupérer la police sélectionnée
-    const getFontFamily = () => {
-      const fontMap: { [key: string]: string } = {
-        'inter': 'Inter, sans-serif',
-        'dm-sans': 'DM Sans, sans-serif',
-        'nunito-sans': 'Nunito Sans, sans-serif',
-        'source-sans-pro': 'Source Sans Pro, sans-serif',
-        'work-sans': 'Work Sans, sans-serif',
-        'lato': 'Lato, sans-serif',
-        'rubik': 'Rubik, sans-serif',
-        'open-sans': 'Open Sans, sans-serif'
-      };
-      
-      return fontMap[settings.selectedFont || 'dm-sans'] || 'DM Sans, sans-serif';
-    };
-    
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${settings.letterTemplate?.enabled ? 'Lettre et Devis' : 'Devis'} ${currentQuote.ref}</title>
-          <meta charset="utf-8">
-          <style>
-            body { 
-              font-family: ${getFontFamily()}; 
-              margin: 0; 
-              padding: 4px; 
-              color: ${colors.textColor};
-              background: ${colors.background};
-              font-size: 9px;
-              line-height: 1.2;
-              font-weight: 300;
-            }
-            @media print { 
-              body { margin: 0; }
-              .no-print { display: none !important; }
-              .page-break { page-break-before: always; }
-              @page { 
-                margin: 8mm; 
-                size: A4;
-                @bottom-center {
-                  content: counter(page);
-                  font-size: 10px;
-                  color: ${colors.mutedTextColor};
-                }
-              }
-            }
-            .container { max-width: 800px; margin: 0 auto; }
-            .letter-container { 
-              margin-bottom: 6px; 
-              padding-bottom: 6px; 
-              border-bottom: 1px solid ${colors.borderPrimary}; 
-              background: ${colors.headerBackground};
-              padding: 6px;
-              border-radius: 3px;
-            }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${getLayoutValue('header', 'marginBottom', '4')}px; }
-            .logo { height: ${getLayoutValue('logo', 'height', '28')}px; margin-bottom: ${getLayoutValue('logo', 'marginBottom', '2')}px; margin-top: ${getLayoutValue('logo', 'marginTop', '0')}px; }
-            .seller-info { flex: 1; }
-            .client-info { text-align: right; max-width: 280px; }
-            .title-section { 
-              text-align: center; 
-              padding: ${getLayoutValue('title', 'padding', '2')}px 0; 
-              border-top: 1px solid ${colors.borderPrimary}; 
-              border-bottom: 1px solid ${colors.borderSecondary}; 
-              margin: ${getLayoutValue('title', 'margin', '2')}px 0;
-              background: ${colors.headerBackground};
-              border-radius: 2px;
-            }
-            .title { color: ${colors.titleColor}; font-size: ${getLayoutValue('title', 'fontSize', '14')}px; font-weight: 600; margin: 0; font-family: ${getFontFamily()}; letter-spacing: 0.2px; }
-            .subtitle { color: ${colors.subtitleColor}; font-size: ${getLayoutValue('header', 'fontSize', '9')}px; margin: 1px 0 0 0; font-family: ${getFontFamily()}; font-weight: 400; }
-            .project-details { 
-              background: ${colors.cardBackground}; 
-              padding: 3px; 
-              border-radius: 2px; 
-              margin: 3px 0; 
-              border: 1px solid ${colors.borderSecondary};
-            }
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin: ${getLayoutValue('table', 'margin', '2')}px 0; 
-              border: 1px solid ${colors.tableBorder}; 
-            }
-            th { 
-              background: ${colors.tableHeader}; 
-              color: ${colors.tableHeaderText}; 
-              padding: ${getLayoutValue('table', 'headerPadding', '2')}px 1px; 
-              text-align: left; 
-              font-weight: 500;
-              border: 1px solid ${colors.tableBorder};
-              font-size: ${getLayoutValue('table', 'headerFontSize', '8')}px;
-              font-family: ${getFontFamily()};
-              letter-spacing: 0.1px;
-            }
-            td { 
-              padding: ${getLayoutValue('table', 'cellPadding', '1')}px 1px; 
-              border: 1px solid ${colors.tableBorder}; 
-              color: ${colors.textColor};
-              font-size: ${getLayoutValue('table', 'cellFontSize', '8')}px;
-              font-family: ${getFontFamily()};
-              font-weight: 300;
-            }
-            tr:nth-child(even) { background: ${colors.tableRowAlt}; }
-            tr:nth-child(odd) { background: ${colors.tableRow}; }
-            .mode-badge { 
-              padding: 3px 8px; 
-              border-radius: 12px; 
-              font-size: 11px; 
-              color: ${colors.badgeText}; 
-              font-weight: bold;
-            }
-            .mode-unique { background: ${colors.badgeUnique}; }
-            .mode-mensuel { background: ${colors.badgeMensuel}; }
-            .totals-section { display: grid; grid-template-columns: 1fr 1fr; gap: ${getLayoutValue('totals', 'gap', '2')}px; margin: ${getLayoutValue('totals', 'margin', '2')}px 0; }
-            .total-card { 
-              border: 1px solid ${colors.totalCardBorder}; 
-              padding: ${getLayoutValue('totals', 'padding', '2')}px; 
-              border-radius: 2px; 
-              background: ${colors.cardBackground};
-              font-size: ${getLayoutValue('totals', 'fontSize', '8')}px;
-              font-family: ${getFontFamily()};
-              font-weight: 400;
-            }
-            .total-unique { 
-              border-color: ${colors.totalCardBorder}; 
-              background: ${colors.totalUniqueBackground};
-            }
-            .total-mensuel { 
-              border-color: ${colors.accent}; 
-              background: ${colors.totalMensuelBackground};
-            }
-            .grand-total { 
-              text-align: center; 
-              padding: ${getLayoutValue('grandTotal', 'padding', '3')}px; 
-              border: ${getLayoutValue('grandTotal', 'borderWidth', '1')}px solid ${colors.grandTotalBorder}; 
-              border-radius: 2px; 
-              background: ${colors.grandTotalBackground};
-              margin: ${getLayoutValue('grandTotal', 'margin', '3')}px 0;
-              font-size: ${getLayoutValue('grandTotal', 'fontSize', '9')}px;
-              font-family: ${getFontFamily()};
-              font-weight: 600;
-              letter-spacing: 0.2px;
-            }
-            .footer { 
-              text-align: center; 
-              font-size: 10px; 
-              color: ${colors.mutedTextColor}; 
-              border-top: 1px solid ${colors.borderPrimary}; 
-              padding-top: 10px; 
-              margin-top: 15px; 
-            }
-            .comment-section { 
-              margin: 10px 0; 
-            }
-            .comment-box { 
-              border: 1px solid ${colors.borderSecondary}; 
-              background: ${colors.cardBackground}; 
-              padding: 8px; 
-              border-radius: 4px; 
-              color: ${colors.textColor};
-            }
-            .letter-header { margin-bottom: 30px; }
-            .letter-date { 
-              text-align: right; 
-              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              font-weight: 500; 
-              color: ${colors.letterDateColor};
-              font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
-              font-family: ${getFontFamily()};
-            }
-            .letter-recipient { 
-              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              color: ${colors.textColor};
-              font-size: ${getLayoutValue('letter', 'dateFontSize', '12')}px;
-              font-family: ${getFontFamily()};
-              line-height: 1.4;
-              font-weight: 300;
-            }
-            .letter-subject { 
-              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              font-weight: 600; 
-              color: ${colors.letterSubjectColor};
-              font-size: ${getLayoutValue('letter', 'subjectFontSize', '12')}px; 
-              font-family: ${getFontFamily()};
-              letter-spacing: 0.2px;
-            }
-            .letter-content { 
-              margin: ${getLayoutValue('letter', 'contentMargin', '10')}px 0; 
-              line-height: ${getLayoutValue('letter', 'lineHeight', '1.5')}; 
-              text-align: justify; 
-              color: ${colors.textColor};
-              font-size: ${getLayoutValue('letter', 'contentFontSize', '11')}px;
-              font-family: ${getFontFamily()};
-              font-weight: 300;
-            }
-            .letter-signature { 
-              margin-top: 15px; 
-              color: ${colors.letterSignatureColor};
-              font-size: 11px;
-            }
-            .separator { 
-              height: 1px; 
-              background: ${colors.separatorColor}; 
-              margin: 20px 0; 
-            }
-            .signatures-section {
-              margin: ${getLayoutValue('signatures', 'margin', '8')}px 0 3px 0;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: ${getLayoutValue('signatures', 'gap', '10')}px;
-            }
-            .signature-box {
-              border: 1px solid ${colors.signatureBoxBorder};
-              background: ${colors.signatureBoxBackground};
-              padding: ${getLayoutValue('signatures', 'padding', '6')}px;
-              border-radius: 3px;
-              min-height: ${getLayoutValue('signatures', 'minHeight', '45')}px;
-            }
-            .signature-title {
-              font-weight: 600;
-              color: ${colors.signatureTitleColor};
-              margin-bottom: 3px;
-              font-size: ${getLayoutValue('signatures', 'titleFontSize', '13')}px;
-              font-family: ${getFontFamily()};
-              letter-spacing: 0.3px;
-              text-transform: uppercase;
-            }
-            .signature-content {
-              color: ${colors.signatureTextColor};
-              font-size: ${getLayoutValue('signatures', 'contentFontSize', '10')}px;
-              line-height: 1.2;
-              margin-bottom: 3px;
-              font-family: ${getFontFamily()};
-              font-weight: 300;
-            }
-            .signature-line {
-              border-top: 1px solid ${colors.signatureBoxBorder};
-              margin-top: ${getLayoutValue('signatures', 'lineMarginTop', '15')}px;
-              padding-top: 3px;
-              font-size: ${getLayoutValue('signatures', 'lineFontSize', '9')}px;
-              color: ${colors.signatureTextColor};
-              font-family: ${getFontFamily()};
-              font-weight: 400;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-    `;
-
-    // Ajouter la lettre de présentation si activée
-    if (settings.letterTemplate?.enabled) {
-      const letterDate = new Date().toLocaleDateString('fr-FR');
-      const clientAddress = currentQuote.addresses.contact;
-      
-      htmlContent += `
-        <div class="letter-container">
-          <div class="letter-header">
-            ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
-            <div style="margin-top: 20px;">
-              <div style="font-weight: bold; font-size: 18px; color: ${colors.letterHeaderColor};">${settings.letterTemplate.companyName}</div>
-              <div style="margin-top: 10px; color: ${colors.subtitleColor};">${settings.letterTemplate.companyAddress}</div>
-              <div style="margin-top: 10px; color: ${colors.textColor};">
-                <div>${settings.letterTemplate.contactName} - ${settings.letterTemplate.contactTitle}</div>
-                <div>Tél: ${settings.letterTemplate.contactPhone}</div>
-                <div>Email: ${settings.letterTemplate.contactEmail}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="letter-date">Le ${letterDate}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}</div>
-          
-          <div class="letter-recipient">
-            <div style="font-weight: bold; color: ${colors.titleColor};">À l'attention de :</div>
-            <div style="margin-top: 10px;">
-              ${clientAddress.company ? `<div style="font-weight: bold; color: ${colors.titleColor};">${clientAddress.company}</div>` : ''}
-              <div>${clientAddress.name}</div>
-              <div>${clientAddress.street}</div>
-              <div>${clientAddress.postalCode} ${clientAddress.city}</div>
-            </div>
-          </div>
-          
-          <div class="letter-subject" style="margin-top: ${getLayoutValue('letter', 'subjectMarginTop', '30')}px;">
-            <strong>Objet:</strong> ${replacePlaceholders(settings.letterTemplate.subject, currentQuote)}
-          </div>
-          
-          <div class="letter-content">
-            <div class="letter-greeting" style="margin-bottom: 20px; color: ${colors.titleColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              ${currentQuote.clientCivility === 'Madame' ? 'Chère' : 'Cher'} ${currentQuote.clientCivility} ${clientAddress.lastName || currentQuote.client || 'Client'},
-            </div>
-            
-            <div style="text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              <p style="${settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.opening, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.opening ? 'font-weight: bold;' : '') + '">')}</p>
-              <p style="${settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.body, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.body ? 'font-weight: bold;' : '') + '">')}</p>
-              <p style="${settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : ''}">${replacePlaceholders(settings.letterTemplate.closing, currentQuote).replace(/\n/g, '</p><p style="' + (settings.letterTemplate.boldOptions?.closing ? 'font-weight: bold;' : '') + '">')}</p>
-            </div>
-            
-            <div class="letter-closing" style="margin-top: 20px; color: ${colors.textColor}; text-align: ${settings.letterTemplate.textAlignment || 'left'};">
-              <p>Dans l'attente de votre retour, nous vous prions d'agréer, ${currentQuote.clientCivility} ${clientAddress.lastName || currentQuote.client || 'Client'}, l'expression de nos salutations distinguées.</p>
-              
-              <div style="margin-top: 40px;">
-                <p><strong>Cordialement,</strong></p>
-                
-                <div style="margin-top: 10px;">
-                  ${settings.sellerInfo?.name ? `<div style="font-weight: bold;">${settings.sellerInfo.name}</div>` : ''}
-                  ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
-                  
-                  ${settings.sellerInfo?.signature ? `
-                    <div style="margin: 10px 0;">
-                      <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 60px; object-fit: contain;" />
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="page-break"></div>
-      `;
-    }
-
-    // Fonction pour générer l'en-tête complet
-    const generateHeader = (isFirstPage = false) => `
-      ${!isFirstPage ? '<div class="page-break"></div>' : ''}
-      <div class="header">
-        <div class="seller-info">
-          ${settings.logoUrl ? `<img src="${settings.logoUrl}" alt="Logo" class="logo">` : ''}
-          ${settings.sellerInfo?.name ? `
-            <div style="margin-top: 10px;">
-              <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">${settings.sellerInfo.name}</div>
-              ${settings.sellerInfo.title ? `<div style="color: ${colors.subtitleColor}; margin-top: 2px; font-size: 12px;">${settings.sellerInfo.title}</div>` : ''}
-              ${settings.sellerInfo.email ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${settings.sellerInfo.email}</div>` : ''}
-              ${settings.sellerInfo.phone ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${settings.sellerInfo.phone}</div>` : ''}
-            </div>
-          ` : ''}
-        </div>
-        <div class="client-info">
-          <div>
-            <div style="font-weight: bold; font-size: 14px; color: ${colors.titleColor};">${currentQuote.addresses.contact.company}</div>
-            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 12px;">${currentQuote.addresses.contact.name}</div>
-            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.street}</div>
-            <div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</div>
-            ${currentQuote.addresses.contact.email ? `<div style="color: ${colors.secondary}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.email}</div>` : ''}
-            ${currentQuote.addresses.contact.phone ? `<div style="color: ${colors.textColor}; margin-top: 2px; font-size: 11px;">${currentQuote.addresses.contact.phone}</div>` : ''}
-            
-            ${currentQuote.addresses.useSeparateAddresses ? `
-              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${colors.borderSecondary};">
-                <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">Adresse de facturation :</div>
-                <div style="color: ${colors.textColor}; margin-top: 3px; font-size: 13px;">
-                  <div>${currentQuote.addresses.billing.company}</div>
-                  <div>${currentQuote.addresses.billing.name}</div>
-                  <div>${currentQuote.addresses.billing.street}</div>
-                  <div>${currentQuote.addresses.billing.postalCode} ${currentQuote.addresses.billing.city}</div>
-                </div>
-              </div>
-              
-              <div style="margin-top: 10px;">
-                <div style="font-weight: bold; color: ${colors.primary}; font-size: 14px;">Adresse d'installation :</div>
-                <div style="color: ${colors.textColor}; margin-top: 3px; font-size: 13px;">
-                  <div>${currentQuote.addresses.installation.company}</div>
-                  <div>${currentQuote.addresses.installation.name}</div>
-                  <div>${currentQuote.addresses.installation.street}</div>
-                  <div>${currentQuote.addresses.installation.postalCode} ${currentQuote.addresses.installation.city}</div>
-                </div>
-              </div>
-            ` : `
-              <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${colors.borderSecondary};">
-                <div style="color: ${colors.mutedTextColor}; font-size: 13px; font-style: italic;">
-                  Facturation et installation à la même adresse
-                </div>
-              </div>
-            `}
-          </div>
-        </div>
-      </div>
-      
-      <div class="title-section">
-        <h1 class="title">${settings.pdfTitle}</h1>
-        <p class="subtitle">Devis N° ${currentQuote.ref}</p>
-        <p style="color: ${colors.mutedTextColor};">Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
-      </div>
-      
-      ${currentQuote.site || currentQuote.contact || currentQuote.canton ? `
-        <div class="project-details">
-          <h3 style="color: ${colors.primary}; margin: 0 0 10px 0;">Détails du projet</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px; color: ${colors.textColor};">
-            ${currentQuote.site ? `<div><strong>Site:</strong> ${currentQuote.site}</div>` : ''}
-            ${currentQuote.contact ? `<div><strong>Contact:</strong> ${currentQuote.contact}</div>` : ''}
-            ${currentQuote.canton ? `<div><strong>Canton:</strong> ${currentQuote.canton}</div>` : ''}
-          </div>
-        </div>
-      ` : ''}
-    `;
-
-    // En-tête avec logo et adresses pour le devis - seulement pour la première page
-    htmlContent += generateHeader(true);
-
-    // Pagination automatique intelligente
-    const ITEMS_PER_PAGE = 15; // Nombre d'items max par page pour rester lisible
-    const totalItems = currentQuote.items.length;
-    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
-    // Si une seule page suffit
-    if (totalPages === 1) {
-      // Tableau des prestations
-      htmlContent += `
-        <div>
-          <h3 style="color: ${colors.primary};">Détail des prestations</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Référence</th>
-                <th style="text-align: center;">Mode</th>
-                <th style="text-align: center;">Qté</th>
-                <th style="text-align: right;">PU TTC</th>
-                <th style="text-align: right;">Total TTC</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      currentQuote.items.forEach(item => {
-        htmlContent += `
-          <tr>
-            <td>${item.type}</td>
-            <td>${item.reference}</td>
-            <td style="text-align: center;">
-              <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
-                ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-              </span>
-            </td>
-            <td style="text-align: center;">${item.qty}</td>
-            <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
-            <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
-              ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
-            </td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      // Ajouter les totaux pour une seule page
-      htmlContent += `<div class="totals-section">`;
-      
-      if (totals.unique.totalTTC > 0) {
-        htmlContent += `
-          <div class="total-card total-unique">
-            <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-              <span>Sous-total HT:</span>
-              <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-              <span>TVA (${settings.tvaPct}%):</span>
-              <span>${totals.unique.tva.toFixed(2)} CHF</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
-              <span>Total TTC:</span>
-              <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
-            </div>
-          </div>
-        `;
-      }
-
-      if (totals.mensuel.totalTTC > 0) {
-        htmlContent += `
-          <div class="total-card total-mensuel">
-            <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-              <span>Sous-total HT:</span>
-              <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-              <span>TVA (${settings.tvaPct}%):</span>
-              <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
-              <span>Total TTC:</span>
-              <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
-            </div>
-          </div>
-        `;
-      }
-
-      htmlContent += `</div>`;
-
-      // Total général
-      htmlContent += `
-        <div class="grand-total">
-          <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-            <div>
-              <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
-              <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
-            </div>
-            <div>
-              <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
-              <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-            </div>
-          </div>
-          <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
-            <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
-              ${totals.global.totalTTC.toFixed(2)} CHF
-            </p>
-            ${totals.mensuel.totalTTC > 0 ? `
-              <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
-                + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
-              </p>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    } else {
-      // Pages multiples - générer chaque page
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        const startIndex = pageIndex * ITEMS_PER_PAGE;
-        const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
-        const pageItems = currentQuote.items.slice(startIndex, endIndex);
-        const isFirstPage = pageIndex === 0;
-        const isLastPage = pageIndex === totalPages - 1;
-
-        // Ajouter l'en-tête pour cette page (sauf la première qui l'a déjà)
-        if (!isFirstPage) {
-          htmlContent += generateHeader(false);
-        }
-
-        // Tableau pour cette page
-        htmlContent += `
-          <div>
-            <h3 style="color: ${colors.primary};">Détail des prestations ${totalPages > 1 ? `(Page ${pageIndex + 1}/${totalPages})` : ''}</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Référence</th>
-                  <th style="text-align: center;">Mode</th>
-                  <th style="text-align: center;">Qté</th>
-                  <th style="text-align: right;">PU TTC</th>
-                  <th style="text-align: right;">Total TTC</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
-
-        pageItems.forEach(item => {
-          htmlContent += `
-            <tr>
-              <td>${item.type}</td>
-              <td>${item.reference}</td>
-              <td style="text-align: center;">
-                <span class="mode-badge ${item.mode === 'mensuel' ? 'mode-mensuel' : 'mode-unique'}">
-                  ${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-                </span>
-              </td>
-              <td style="text-align: center;">${item.qty}</td>
-              <td style="text-align: right;">${item.puTTC?.toFixed(2)} CHF</td>
-              <td style="text-align: right; font-weight: bold; color: ${colors.primary};">
-                ${item.totalTTC?.toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}
-              </td>
-            </tr>
-          `;
-        });
-
-        htmlContent += `
-              </tbody>
-            </table>
-          </div>
-        `;
-
-        // Ajouter les totaux uniquement sur la dernière page
-        if (isLastPage) {
-          // Totaux
-          htmlContent += `<div class="totals-section">`;
-          
-          if (totals.unique.totalTTC > 0) {
-            htmlContent += `
-              <div class="total-card total-unique">
-                <h4 style="color: ${colors.primary}; margin: 0 0 10px 0;">Achat unique</h4>
-                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-                  <span>Sous-total HT:</span>
-                  <span>${totals.unique.subtotalHT.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-                  <span>TVA (${settings.tvaPct}%):</span>
-                  <span>${totals.unique.tva.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.borderSecondary}; padding-top: 8px; color: ${colors.primary};">
-                  <span>Total TTC:</span>
-                  <span>${totals.unique.totalTTC.toFixed(2)} CHF</span>
-                </div>
-              </div>
-            `;
-          }
-
-          if (totals.mensuel.totalTTC > 0) {
-            htmlContent += `
-              <div class="total-card total-mensuel">
-                <h4 style="color: ${colors.accent}; margin: 0 0 10px 0;">Abonnement mensuel</h4>
-                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-                  <span>Sous-total HT:</span>
-                  <span>${totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin: 5px 0; color: ${colors.textColor};">
-                  <span>TVA (${settings.tvaPct}%):</span>
-                  <span>${totals.mensuel.tva.toFixed(2)} CHF</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 1px solid ${colors.accent}; padding-top: 8px; color: ${colors.accent};">
-                  <span>Total TTC:</span>
-                  <span>${totals.mensuel.totalTTC.toFixed(2)} CHF/mois</span>
-                </div>
-              </div>
-            `;
-          }
-
-          htmlContent += `</div>`;
-
-          // Total général
-          htmlContent += `
-            <div class="grand-total">
-              <h4 style="color: ${colors.titleColor}; font-size: 18px; margin: 0 0 8px 0;">TOTAL GÉNÉRAL</h4>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                <div>
-                  <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">Total HT</p>
-                  <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.htAfterDiscount.toFixed(2)} CHF</p>
-                </div>
-                <div>
-                  <p style="margin: 0; color: ${colors.subtitleColor}; font-size: 8px;">TVA totale</p>
-                  <p style="margin: 2px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.primary};">${totals.global.tva.toFixed(2)} CHF</p>
-                </div>
-              </div>
-              <div style="border-top: 1px solid ${colors.borderPrimary}; padding-top: 8px;">
-                <p style="margin: 0; font-size: 22px; font-weight: bold; color: ${colors.primary};">
-                  ${totals.global.totalTTC.toFixed(2)} CHF
-                </p>
-                ${totals.mensuel.totalTTC > 0 ? `
-                  <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold; color: ${colors.accent};">
-                    + ${totals.mensuel.totalTTC.toFixed(2)} CHF/mois
-                  </p>
-                ` : ''}
-              </div>
-            </div>
-          `;
-        }
-      }
-    }
-
-    // Commentaire
-    if (currentQuote.comment) {
-      htmlContent += `
-        <div class="comment-section">
-          <h4 style="color: ${colors.primary};">Commentaires</h4>
-          <div class="comment-box">
-            <p style="margin: 0; white-space: pre-wrap;">${currentQuote.comment}</p>
-          </div>
-        </div>
-      `;
-    }
-
-    // Pied de page - supprimé, seul le numéro de page sera affiché automatiquement
-    htmlContent += ``;
-
-    // Section signatures - optimisée
-    htmlContent += `
-      <div class="signatures-section">
-        <div class="signature-box">
-          <div class="signature-title">SIGNATURE DU VENDEUR</div>
-          <div class="signature-content">
-            ${settings.sellerInfo?.name ? `<div><strong>${settings.sellerInfo.name}</strong></div>` : ''}
-            ${settings.sellerInfo?.title ? `<div>${settings.sellerInfo.title}</div>` : ''}
-          </div>
-          <div class="signature-line">
-            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-          </div>
-          ${settings.sellerInfo?.signature ? `
-            <div style="margin: 10px 0;">
-              <img src="${settings.sellerInfo.signature}" alt="Signature" style="max-height: 50px; object-fit: contain;" />
-            </div>
-          ` : ''}
-        </div>
-        
-        <div class="signature-box">
-          <div class="signature-title">SIGNATURE CLIENT</div>
-          <div class="signature-content">
-            <div><strong>${currentQuote.addresses.contact.lastName || currentQuote.addresses.contact.name || currentQuote.client}</strong></div>
-            ${currentQuote.addresses.contact.company ? `<div>${currentQuote.addresses.contact.company}</div>` : ''}
-          </div>
-          ${currentQuote.clientSignature ? `
-            <div style="margin: 5px 0; text-align: center;">
-              <img src="${currentQuote.clientSignature}" 
-                   style="max-width: 150px; max-height: 50px; border: 1px solid #ccc;" 
-                   alt="Signature client" />
-            </div>
-          ` : ''}
-          <div class="signature-line">
-            ${new Date().toLocaleDateString('fr-CH')}${settings.sellerInfo?.location ? ` à ${settings.sellerInfo.location}` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-
-    htmlContent += `
-          </div>
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `;
-    
-    try {
-      // Ouvrir une nouvelle fenêtre avec le contenu HTML formaté
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        toast.success(`${settings.letterTemplate?.enabled ? 'Lettre de présentation et devis' : 'Devis'} généré avec succès ! Utilisez Ctrl+P ou Cmd+P pour sauvegarder en PDF.`);
-      } else {
-        toast.error("Impossible d'ouvrir la fenêtre de génération PDF. Vérifiez que les popups ne sont pas bloquées.");
-      }
-    } catch (error) {
-      console.error('Erreur lors de la génération PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
-    }
+  const copyJSON = () => {
+    navigator.clipboard.writeText(JSON.stringify(currentQuote, null, 2));
+    toast.success('JSON copié dans le presse-papier');
   };
 
-  const downloadWord = () => {
-    try {
-      console.log('Début génération Word');
-      
-      // Validation des données requises
-      if (!currentQuote.ref) {
-        toast.error('Veuillez renseigner une référence pour le devis');
-        return;
-      }
-      
-      if (!currentQuote.client) {
-        toast.error('Veuillez sélectionner ou renseigner un client');
-        return;
-      }
-      
-      if (currentQuote.items.length === 0) {
-        toast.error('Veuillez ajouter au moins une ligne au devis');
-        return;
-      }
-      
-      // Créer le contenu HTML complet pour Word
-      const colors = settings.templateColors || { 
-        primary: '#000000',
-        secondary: '#666666',
-        accent: '#333333',
-        titleColor: '#000000',
-        subtitleColor: '#666666',
-        textColor: '#000000',
-        tableHeader: '#f5f5f5',
-        tableHeaderText: '#000000',
-        tableBorder: '#cccccc'
-      };
-      
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta charset="utf-8">
-          <meta name="ProgId" content="Word.Document">
-          <meta name="Generator" content="Microsoft Word">
-          <title>Devis ${currentQuote.ref}</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              font-size: 11pt;
-              line-height: 1.3;
-              margin: 0;
-              color: ${colors.textColor};
-            }
-            table { 
-              border-collapse: collapse; 
-              width: 100%; 
-              margin: 10pt 0;
-            }
-            th, td { 
-              border: 1pt solid ${colors.tableBorder}; 
-              padding: 4pt; 
-              font-size: 9pt;
-            }
-            th { 
-              background-color: ${colors.tableHeader}; 
-              font-weight: bold;
-              color: ${colors.tableHeaderText};
-            }
-            .text-center { text-align: center; }
-            .text-right { text-align: right; }
-            .font-bold { font-weight: bold; }
-            h1 { font-size: 16pt; margin: 15pt 0 10pt 0; color: ${colors.titleColor}; }
-            h3 { font-size: 12pt; margin: 10pt 0 6pt 0; color: ${colors.titleColor}; }
-            p { margin: 4pt 0; }
-          </style>
-        </head>
-        <body>
-          <div style="text-align: center; margin-bottom: 20pt;">
-            <h1>${settings.pdfTitle}</h1>
-            <p style="font-size: 12pt; color: ${colors.subtitleColor};">Devis N° ${currentQuote.ref}</p>
-            <p>Date: ${new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
-          </div>
-          
-          <div style="margin: 15pt 0;">
-            <p><strong>Client:</strong> ${currentQuote.client}</p>
-            <p><strong>Adresse:</strong></p>
-            <p>${currentQuote.addresses.contact.company}<br>
-            ${currentQuote.addresses.contact.name}<br>
-            ${currentQuote.addresses.contact.street}<br>
-            ${currentQuote.addresses.contact.postalCode} ${currentQuote.addresses.contact.city}</p>
-          </div>
-
-          ${calculatedItems.some(item => item.kind === 'TECH') ? `
-          <h3>Prestations techniques</h3>
-          <table>
-            <tr>
-              <th>Type</th>
-              <th>Référence</th>
-              <th>Mode</th>
-              <th class="text-center">Qté</th>
-              <th class="text-right">PU TTC</th>
-              <th class="text-right">Total TTC</th>
-            </tr>
-            ${calculatedItems.filter(item => item.kind === 'TECH').map(item => `
-            <tr>
-              <td>${item.type}</td>
-              <td>${item.reference}</td>
-              <td class="text-center">${item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}</td>
-              <td class="text-center">${item.qty || 1}</td>
-              <td class="text-right">${(item.puTTC || 0).toFixed(2)} CHF</td>
-              <td class="text-right">${(item.totalTTC || 0).toFixed(2)} CHF${item.mode === 'mensuel' ? '/mois' : ''}</td>
-            </tr>
-            `).join('')}
-          </table>
-          ` : ''}
-
-          ${groupedAgentItemsArray.length > 0 ? `
-          <h3 style="color: ${colors.primary};">Prestations d'agents de sécurité</h3>
-          <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 8pt;">
-            <tr style="background: ${colors.tableHeader};">
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Type</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Date début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Heure début</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Date fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: left;">Heure fin</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">H. Normal</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: center;">H. Majorée</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">Total HT</th>
-              <th style="border: 1px solid ${colors.tableBorder}; padding: 6px; text-align: right;">Total TTC</th>
-            </tr>
-            ${groupedAgentItemsArray.map(group => {
-              const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
-              const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
-              const timeStart = group.items[0]?.timeStart || '-';
-              const timeEnd = group.items[0]?.timeEnd || '-';
-              const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
-              
-              return `
-              <tr>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${group.agentType} ${group.canton ? `(${group.canton})` : ''}${group.count > 1 ? ` x${group.count}` : ''}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${dateStart}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${timeStart}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${dateEnd}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px;">${timeEnd}</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center;">${group.normalHours.toFixed(1)}h</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: center;">${majoredHours.toFixed(1)}h</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right;">${group.totalHT.toFixed(2)} CHF</td>
-                <td style="border: 1px solid ${colors.tableBorder}; padding: 4px; text-align: right;">${group.totalTTC.toFixed(2)} CHF</td>
-              </tr>`;
-            }).join('')}
-          </table>
-          ` : ''}
-
-          <div style="margin-top: 20pt; text-align: center; border: 2pt solid ${colors.primary}; padding: 10pt;">
-            <h3>TOTAL GÉNÉRAL</h3>
-            <p style="font-size: 14pt;"><strong>Total HT: ${totals.global.htAfterDiscount.toFixed(2)} CHF</strong></p>
-            <p style="font-size: 14pt;"><strong>TVA (${settings.tvaPct}%): ${totals.global.tva.toFixed(2)} CHF</strong></p>
-            <p style="font-size: 16pt; color: ${colors.primary};"><strong>TOTAL TTC: ${totals.global.totalTTC.toFixed(2)} CHF</strong></p>
-          </div>
-
-          ${currentQuote.comment ? `
-          <div style="margin-top: 15pt;">
-            <h3>Commentaires</h3>
-            <p>${currentQuote.comment}</p>
-          </div>
-          ` : ''}
-
-          <div style="margin-top: 20pt; text-align: center; font-size: 10pt; color: ${colors.subtitleColor};">
-            <p>${settings.pdfFooter}</p>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const blob = new Blob([htmlContent], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `devis-${currentQuote.ref}.doc`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success('Document Word téléchargé avec succès !');
-    } catch (error) {
-      console.error('Erreur lors de la génération Word:', error);
-      toast.error('Erreur lors de la génération du document Word');
-    }
+  const downloadJSON = () => {
+    const filename = `devis_${currentQuote.ref || 'sans_ref'}_${new Date().toISOString().slice(0,10)}.json`;
+    const blob = new Blob([JSON.stringify(currentQuote, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('JSON téléchargé');
   };
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec infos devis */}
-      <Card className="shadow-soft">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Calculator className="h-5 w-5 text-primary" />
-              <span>Récapitulatif du devis</span>
-            </div>
-            <div className="flex space-x-2">
-              <PDFPreview 
-                quote={currentQuote} 
-                settings={settings} 
-                variant={getQuoteVariant()} 
-              />
-              <Button 
-                onClick={() => handleDownloadPdf(currentQuote, settings, getQuoteVariant())} 
-                className="bg-primary hover:bg-primary-hover"
-                disabled={exporting}
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                {exporting ? 'Génération...' : 'Télécharger PDF'}
-              </Button>
-              <Button onClick={downloadWord} variant="outline">
-                <FileDown className="h-4 w-4 mr-2" />
-                Télécharger Word
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold mb-3">Informations générales</h4>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Référence</p>
-                  <p className="font-medium">{currentQuote.ref || 'Non définie'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Client</p>
-                  <p className="font-medium">{currentQuote.client || 'Non défini'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-medium">{new Date(currentQuote.date).toLocaleDateString('fr-CH')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">TVA</p>
-                  <p className="font-medium">{settings.tvaPct}%</p>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-3">Adresses</h4>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">Contact</p>
-                  <p className="text-sm">{currentQuote.addresses.contact.company}</p>
-                  <p className="text-sm">{currentQuote.addresses.contact.name}</p>
-                  <p className="text-sm">{currentQuote.addresses.contact.street}</p>
-                  <p className="text-sm">{currentQuote.addresses.contact.postalCode} {currentQuote.addresses.contact.city}</p>
-                  {currentQuote.addresses.contact.email && (
-                    <p className="text-sm text-primary">{currentQuote.addresses.contact.email}</p>
-                  )}
-                  {currentQuote.addresses.contact.phone && (
-                    <p className="text-sm">{currentQuote.addresses.contact.phone}</p>
-                  )}
-                </div>
-                
-                {currentQuote.addresses.useSeparateAddresses && (
-                  <>
-                    <div>
-                      <p className="text-sm text-muted-foreground font-medium">Facturation</p>
-                      <p className="text-sm">{currentQuote.addresses.billing.company}</p>
-                      <p className="text-sm">{currentQuote.addresses.billing.name}</p>
-                      <p className="text-sm">{currentQuote.addresses.billing.street}</p>
-                      <p className="text-sm">{currentQuote.addresses.billing.postalCode} {currentQuote.addresses.billing.city}</p>
-                      {currentQuote.addresses.billing.email && (
-                        <p className="text-sm text-success">{currentQuote.addresses.billing.email}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-muted-foreground font-medium">Installation</p>
-                      <p className="text-sm">{currentQuote.addresses.installation.company}</p>
-                      <p className="text-sm">{currentQuote.addresses.installation.name}</p>
-                      <p className="text-sm">{currentQuote.addresses.installation.street}</p>
-                      <p className="text-sm">{currentQuote.addresses.installation.postalCode} {currentQuote.addresses.installation.city}</p>
-                      {currentQuote.addresses.installation.email && (
-                        <p className="text-sm text-warning">{currentQuote.addresses.installation.email}</p>
-                      )}
-                    </div>
-                  </>
-                )}
-                
-                {!currentQuote.addresses.useSeparateAddresses && (
-                  <Badge variant="outline" className="text-xs">
-                    Même adresse pour facturation et installation
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lignes du devis */}
-      <Card className="shadow-soft">
-        <CardHeader>
-          <CardTitle>Détail des lignes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            {/* Prestations TECH */}
-            {calculatedItems.some(item => item.kind === 'TECH') && (
-              <div className="mb-6">
-                <h4 className="font-semibold mb-3 text-primary">Prestations techniques</h4>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Type</th>
-                      <th className="text-left p-2">Référence</th>
-                      <th className="text-left p-2">Mode</th>
-                      <th className="text-left p-2">Qté</th>
-                      <th className="text-left p-2">PU TTC</th>
-                      <th className="text-left p-2">Remise</th>
-                      <th className="text-left p-2">Total TTC</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {calculatedItems.filter(item => item.kind === 'TECH').map((item) => (
-                      <tr key={item.id} className="border-b">
-                        <td className="p-2">
-                          <Badge variant="outline">{item.type}</Badge>
-                        </td>
-                        <td className="p-2">{item.reference}</td>
-                        <td className="p-2">
-                          <Badge variant={item.mode === 'mensuel' ? 'default' : 'secondary'}>
-                            {item.mode === 'mensuel' ? 'Mensuel' : 'Unique'}
-                          </Badge>
-                        </td>
-                        <td className="p-2">{item.qty || 1}</td>
-                        <td className="p-2">{(item.puTTC || 0).toFixed(2)} CHF</td>
-                        <td className="p-2">
-                          {currentQuote.discountMode === 'per_line' 
-                            ? `${item.lineDiscountPct || 0}%` 
-                            : 'Globale'
-                          }
-                        </td>
-                        <td className="p-2 font-medium">{(item.totalTTC || 0).toFixed(2)} CHF</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Prestations AGENT en tableau */}
-            {groupedAgentItemsArray.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-3 text-primary">Prestations d'agents de sécurité</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-border">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="border border-border p-2 text-left text-xs font-medium">Type</th>
-                        <th className="border border-border p-2 text-left text-xs font-medium">Date début</th>
-                        <th className="border border-border p-2 text-left text-xs font-medium">Heure début</th>
-                        <th className="border border-border p-2 text-left text-xs font-medium">Date fin</th>
-                        <th className="border border-border p-2 text-left text-xs font-medium">Heure fin</th>
-                        <th className="border border-border p-2 text-center text-xs font-medium">H. Normal</th>
-                        <th className="border border-border p-2 text-center text-xs font-medium">H. Majorée</th>
-                        <th className="border border-border p-2 text-right text-xs font-medium">Total HT</th>
-                        <th className="border border-border p-2 text-right text-xs font-medium">Total TTC</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupedAgentItemsArray.map((group, index) => {
-                        const dateStart = group.items[0]?.dateStart ? new Date(group.items[0].dateStart).toLocaleDateString('fr-CH') : '-';
-                        const dateEnd = group.items[0]?.dateEnd ? new Date(group.items[0].dateEnd).toLocaleDateString('fr-CH') : '-';
-                        const timeStart = group.items[0]?.timeStart || '-';
-                        const timeEnd = group.items[0]?.timeEnd || '-';
-                        const majoredHours = (group.nightHours + group.sundayHours + group.holidayHours);
-                        
-                        return (
-                          <tr key={index} className="hover:bg-muted/50">
-                            <td className="border border-border p-2 text-xs">
-                              {group.agentType} {group.canton && `(${group.canton})`}
-                              {group.count > 1 && (
-                                <div className="text-muted-foreground text-xs italic">
-                                  x{group.count} périodes
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-border p-2 text-xs">{dateStart}</td>
-                            <td className="border border-border p-2 text-xs">{timeStart}</td>
-                            <td className="border border-border p-2 text-xs">{dateEnd}</td>
-                            <td className="border border-border p-2 text-xs">{timeEnd}</td>
-                            <td className="border border-border p-2 text-center text-xs">{group.normalHours.toFixed(1)}h</td>
-                            <td className="border border-border p-2 text-center text-xs">
-                              {majoredHours.toFixed(1)}h
-                              {(group.nightHours > 0 || group.sundayHours > 0 || group.holidayHours > 0) && (
-                                <div className="text-muted-foreground text-xs">
-                                  {group.nightHours > 0 && `${group.nightHours.toFixed(1)}h nuit `}
-                                  {group.sundayHours > 0 && `${group.sundayHours.toFixed(1)}h dim `}
-                                  {group.holidayHours > 0 && `${group.holidayHours.toFixed(1)}h férié`}
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-border p-2 text-right text-xs font-medium">{group.totalHT.toFixed(2)} CHF</td>
-                            <td className="border border-border p-2 text-right text-xs font-medium">{group.totalTTC.toFixed(2)} CHF</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {/* Règles appliquées */}
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs">
-                  <h5 className="font-semibold mb-2">Règles appliquées :</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <p><span className="font-medium">Heures de nuit:</span> {settings.agentSettings?.nightStartTime || '23:00'} → {settings.agentSettings?.nightEndTime || '06:00'} (+{settings.agentSettings?.nightMarkupPct || 10}%)</p>
-                    <p><span className="font-medium">Dimanche:</span> {settings.agentSettings?.sundayStartTime || '06:00'} → {settings.agentSettings?.sundayEndTime || '23:00'} (+{settings.agentSettings?.sundayMarkupPct || 10}%)</p>
-                    <p><span className="font-medium">Jours fériés:</span> +{settings.agentSettings?.holidayMarkupPct || 10}%</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Totaux séparés */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Achat unique */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Euro className="h-5 w-5 text-primary" />
-              <span>Achat unique (one-shot)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span>Sous-total HT</span>
-              <span className="font-medium">{totals.unique.subtotalHT.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Remise</span>
-              <span className="font-medium text-success">-{totals.unique.discountHT.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>HT après remise</span>
-              <span className="font-medium">{totals.unique.htAfterDiscount.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>TVA ({settings.tvaPct}%)</span>
-              <span className="font-medium">{totals.unique.tva.toFixed(2)} CHF</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total TTC (Unique)</span>
-              <span className="text-primary">{totals.unique.totalTTC.toFixed(2)} CHF</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mensuel */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Euro className="h-5 w-5 text-success" />
-              <span>Mensuel (abonnements)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span>Sous-total HT</span>
-              <span className="font-medium">{totals.mensuel.subtotalHT.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Remise</span>
-              <span className="font-medium text-success">-{totals.mensuel.discountHT.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>HT après remise</span>
-              <span className="font-medium">{totals.mensuel.htAfterDiscount.toFixed(2)} CHF</span>
-            </div>
-            <div className="flex justify-between">
-              <span>TVA ({settings.tvaPct}%)</span>
-              <span className="font-medium">{totals.mensuel.tva.toFixed(2)} CHF</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total TTC (Mensuel)</span>
-              <span className="text-success">{totals.mensuel.totalTTC.toFixed(2)} CHF / mois</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Header with actions */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold">Récapitulatif du devis</h2>
+          <p className="text-muted-foreground">Source de vérité unique - Toutes les données normalisées</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={copyJSON} variant="outline">
+            <Copy className="w-4 h-4 mr-2" />
+            Copier JSON
+          </Button>
+          <Button onClick={downloadJSON}>
+            <Download className="w-4 h-4 mr-2" />
+            Télécharger JSON
+          </Button>
+        </div>
       </div>
 
-      {/* Total général */}
-      <Card className="shadow-medium bg-gradient-card border-2 border-primary/20">
+      {/* En-tête du devis */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-center text-xl">Total général</CardTitle>
+          <CardTitle>Informations générales</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Sous-total HT global</p>
-              <p className="text-lg font-semibold">{totals.global.subtotalHT.toFixed(2)} CHF</p>
-            </div>
-            {currentQuote.discountMode === 'global' && (
-              <div>
-                <p className="text-sm text-muted-foreground">Remise globale ({currentQuote.discountPct}%)</p>
-                <p className="text-lg font-semibold text-success">-{totals.global.globalDiscountHT.toFixed(2)} CHF</p>
-              </div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Référence</label>
+            <p className="font-semibold">{currentQuote.ref || 'Non définie'}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Date</label>
+            <p>{format(new Date(currentQuote.date), 'dd/MM/yyyy', { locale: fr })}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Type</label>
+            <Badge variant="outline">{getQuoteType()}</Badge>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Client</label>
+            <p>{currentQuote.addresses.contact.name || currentQuote.client || 'Non défini'}</p>
+            {currentQuote.addresses.contact.company && (
+              <p className="text-sm text-muted-foreground">{currentQuote.addresses.contact.company}</p>
             )}
-            <div>
-              <p className="text-sm text-muted-foreground">HT après remise</p>
-              <p className="text-lg font-semibold">{totals.global.htAfterDiscount.toFixed(2)} CHF</p>
-            </div>
           </div>
-          
-          <Separator className="my-4" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">TVA totale ({settings.tvaPct}%)</p>
-              <p className="text-xl font-semibold">{totals.global.tva.toFixed(2)} CHF</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total TTC global</p>
-              <p className="text-2xl font-bold text-primary">{totals.global.totalTTC.toFixed(2)} CHF</p>
-            </div>
-          </div>
-          
-          {totals.mensuel.totalTTC > 0 && (
-            <div className="text-center p-4 bg-success-light rounded-lg">
-              <p className="text-sm text-success font-medium">
-                + {totals.mensuel.totalTTC.toFixed(2)} CHF / mois récurrent
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Commentaire */}
-      {currentQuote.comment && (
-        <Card className="shadow-soft">
+      {/* Technique */}
+      {calculatedItems.filter(i => i.kind === 'TECH').length > 0 && (
+        <Card>
           <CardHeader>
-            <CardTitle>Commentaire</CardTitle>
+            <CardTitle>Prestations techniques</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-              {currentQuote.comment}
-            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Réf</th>
+                    <th className="text-left p-2">Désignation</th>
+                    <th className="text-left p-2">Qté</th>
+                    <th className="text-right p-2">PU HT</th>
+                    <th className="text-right p-2">TVA</th>
+                    <th className="text-right p-2">Total HT</th>
+                    <th className="text-right p-2">Total TTC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calculatedItems.filter(i => i.kind === 'TECH').map(item => (
+                    <tr key={item.id} className="border-b">
+                      <td className="p-2">{item.reference}</td>
+                      <td className="p-2">{item.type}</td>
+                      <td className="p-2">{item.qty}</td>
+                      <td className="text-right p-2">{item.puHT?.toFixed(2)} CHF</td>
+                      <td className="text-right p-2">{settings.tvaPct}%</td>
+                      <td className="text-right p-2">{item.totalHT_net?.toFixed(2)} CHF</td>
+                      <td className="text-right p-2">{item.totalTTC?.toFixed(2)} CHF</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Signatures alignées */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Signature vendeur */}
-        <Card className="shadow-soft">
+      {/* Agent */}
+      {calculatedItems.filter(i => i.kind === 'AGENT').length > 0 && (
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>Signature du vendeur</span>
-            </CardTitle>
+            <CardTitle>Prestations agent</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {settings.sellerInfo?.signature ? (
-              <div className="space-y-4">
-                <div className="bg-background border rounded-lg p-4 h-[150px] flex items-center justify-center">
-                  <img 
-                    src={settings.sellerInfo.signature} 
-                    alt="Signature du vendeur" 
-                    className="max-h-20 mx-auto"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <strong>Nom:</strong> {settings.sellerInfo?.name || 'Non renseigné'}
-                  </div>
-                  <div className="text-sm">
-                    <strong>Fonction:</strong> {settings.sellerInfo?.title || 'Non renseigné'}
-                  </div>
-                  <div className="text-sm">
-                    <strong>Date:</strong> {new Date().toLocaleDateString('fr-CH')}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-8 h-[150px] flex flex-col items-center justify-center border rounded-lg">
-                <p>Aucune signature configurée</p>
-                <p className="text-xs mt-1">Configurez votre signature dans les paramètres</p>
-              </div>
-            )}
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Nature</th>
+                    <th className="text-left p-2">Type</th>
+                    <th className="text-left p-2">Date début</th>
+                    <th className="text-left p-2">Heure début</th>
+                    <th className="text-left p-2">Date fin</th>
+                    <th className="text-left p-2">Heure fin</th>
+                    <th className="text-right p-2">H. normales</th>
+                    <th className="text-right p-2">H. majorées</th>
+                    <th className="text-right p-2">Tarif/h</th>
+                    <th className="text-right p-2">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calculatedItems.filter(i => i.kind === 'AGENT').map(item => (
+                    <tr key={item.id} className="border-b">
+                      <td className="p-2">{item.reference}</td>
+                      <td className="p-2">{item.agentType}</td>
+                      <td className="p-2">{item.dateStart}</td>
+                      <td className="p-2">{item.timeStart}</td>
+                      <td className="p-2">{item.dateEnd}</td>
+                      <td className="p-2">{item.timeEnd}</td>
+                      <td className="text-right p-2">{item.hoursNormal?.toFixed(1)}</td>
+                      <td className="text-right p-2">{((item.hoursNight || 0) + (item.hoursSunday || 0) + (item.hoursHoliday || 0)).toFixed(1)}</td>
+                      <td className="text-right p-2">{item.rateCHFh} CHF</td>
+                      <td className="text-right p-2">{item.lineTTC?.toFixed(2)} CHF</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Signature client */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>Signature du client</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="h-[150px]">
-              <SignatureCanvas 
-                onSignatureChange={handleSignatureChange}
-                signature={currentQuote.clientSignature}
-              />
+      {/* Totaux */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Totaux</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Total HT:</span>
+              <span className="font-semibold">{totals.global.subtotalHT.toFixed(2)} CHF</span>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm">
-                <strong>Client:</strong> {currentQuote.addresses?.contact?.name || currentQuote.client || 'Non renseigné'}
-              </div>
-              <div className="text-sm">
-                <strong>Date:</strong> {new Date().toLocaleDateString('fr-CH')}
-              </div>
+            <div className="flex justify-between">
+              <span>TVA ({settings.tvaPct}%):</span>
+              <span className="font-semibold">{totals.global.tva.toFixed(2)} CHF</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="flex justify-between border-t pt-2">
+              <span className="font-bold">Total TTC:</span>
+              <span className="font-bold text-lg">{totals.global.totalTTC.toFixed(2)} CHF</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* JSON brut */}
+      <Card>
+        <CardHeader>
+          <Collapsible open={jsonOpen} onOpenChange={setJsonOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between cursor-pointer">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Données JSON brutes
+                </CardTitle>
+                <Button variant="ghost" size="sm">
+                  {jsonOpen ? 'Masquer' : 'Afficher'}
+                </Button>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <pre className="text-xs bg-muted p-4 rounded-md overflow-auto max-h-96">
+                  {JSON.stringify(currentQuote, null, 2)}
+                </pre>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardHeader>
+      </Card>
     </div>
   );
 };

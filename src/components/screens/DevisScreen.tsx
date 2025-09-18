@@ -14,7 +14,6 @@ import { calculateQuoteItem, calculateQuoteTotals, calculateServiceItem } from '
 import { QuoteItem } from '@/types';
 import ProductSelector from '@/components/catalog/ProductSelector';
 import ClientSelector from '@/components/clients/ClientSelector';
-import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,8 +22,6 @@ import ServiceRow from '@/components/vacation/ServiceRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
-import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
-import { exportDomAsPDF } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -45,7 +42,6 @@ const DevisScreen = () => {
   const [emailRaw, setEmailRaw] = useState('');
   const [isProcessingEmail, setIsProcessingEmail] = useState(false);
   const [showVacationGenerator, setShowVacationGenerator] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   // Auto-save when client changes
   useEffect(() => {
