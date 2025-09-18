@@ -17,6 +17,7 @@ import ClientSelector from '@/components/clients/ClientSelector';
 import PDFPreview from '@/components/pdf/PDFPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import AgentVacationRow from '@/components/vacation/AgentVacationRow';
 import ServiceRow from '@/components/vacation/ServiceRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
@@ -27,6 +28,7 @@ import { exportDomAsPDF } from "@/utils/pdfRenderer";
 
 const DevisScreen = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { 
     currentQuote, 
     settings, 
@@ -466,9 +468,7 @@ const DevisScreen = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('clients')
-        .insert([{
+        const clientData = {
           name: contact.name,
           first_name: contact.firstName || null,
           last_name: contact.lastName || null,
@@ -478,8 +478,22 @@ const DevisScreen = () => {
           address: contact.street || null,
           city: contact.city || null,
           postal_code: contact.postalCode || null,
-          country: contact.country || 'Suisse'
-        }]);
+          country: contact.country || 'Suisse',
+          user_id: user?.id
+        };
+        
+        if (!clientData.user_id) {
+          toast({
+            title: "Erreur",
+            description: "Vous devez être connecté pour sauvegarder un client",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await supabase
+          .from('clients')
+          .insert([clientData]);
 
       if (error) throw error;
       

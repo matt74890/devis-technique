@@ -5,9 +5,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Check, ChevronsUpDown, User, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Client {
   id: string;
+  user_id?: string;
   name: string;
   first_name?: string;
   last_name?: string;
@@ -27,13 +29,16 @@ interface ClientSelectorProps {
 }
 
 const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un client..." }: ClientSelectorProps) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (value && clients.length > 0) {
@@ -45,10 +50,13 @@ const ClientSelector = ({ value, onSelect, placeholder = "Sélectionner un clien
   }, [value, clients]);
 
   const fetchClients = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
+        .eq('user_id', user.id)
         .order('name');
       
       if (error) throw error;

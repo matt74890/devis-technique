@@ -6,10 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Search, Edit, Trash2, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface Client {
   id: string;
+  user_id?: string;
   name: string;
   company?: string;
   email?: string;
@@ -21,6 +23,7 @@ interface Client {
 }
 
 const ClientsScreen = () => {
+  const { user, loading } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -37,14 +40,19 @@ const ClientsScreen = () => {
   });
 
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
 
   const fetchClients = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
+        .eq('user_id', user.id)
         .order('name');
       
       if (error) throw error;
@@ -58,6 +66,11 @@ const ClientsScreen = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast.error('Vous devez être connecté pour créer un client');
+      return;
+    }
+    
     if (!formData.name?.trim()) {
       toast.error('Le nom est obligatoire');
       return;
@@ -68,14 +81,15 @@ const ClientsScreen = () => {
         const { error } = await supabase
           .from('clients')
           .update(formData)
-          .eq('id', editingClient.id);
+          .eq('id', editingClient.id)
+          .eq('user_id', user.id);
         
         if (error) throw error;
         toast.success('Client modifié avec succès');
       } else {
         const { error } = await supabase
           .from('clients')
-          .insert([formData as Client]);
+          .insert({ ...formData, user_id: user.id, name: formData.name! });
         
         if (error) throw error;
         toast.success('Client créé avec succès');
@@ -91,13 +105,15 @@ const ClientsScreen = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!user) return;
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) return;
     
     try {
       const { error } = await supabase
         .from('clients')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       toast.success('Client supprimé avec succès');
@@ -145,6 +161,33 @@ const ClientsScreen = () => {
   }, {} as Record<string, Client[]>);
 
   const sortedLetters = Object.keys(groupedClients).sort();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+            Authentification requise
+          </h3>
+          <p className="text-muted-foreground">
+            Vous devez vous connecter pour gérer vos clients
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
