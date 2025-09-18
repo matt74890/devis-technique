@@ -138,7 +138,7 @@
         }
 
         {{#if layout.tech.table.zebra}}
-        tbody tr:nth-child(even) td {
+        .tech-table tbody tr:nth-child(even) td {
             background: var(--c-zebra);
         }
         {{/if}}
@@ -319,9 +319,9 @@
 </div>
 {{/if}}
 
-<div class="table-wrapper">
-    <table>
-        <thead>
+        <div class="table-wrapper">
+            <table class="tech-table">
+                <thead>
             <tr>
                 {{#each layout.tech.table.columns}}
                 <th class="text-{{lookup ../layout.tech.table.colAlign this}}">

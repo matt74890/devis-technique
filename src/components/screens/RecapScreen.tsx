@@ -10,10 +10,12 @@ import { calculateAgentVacation } from '@/utils/agentCalculations';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
+import { PDFPreview } from './PDFPreview';
 
 const RecapScreen = () => {
   const { currentQuote, settings } = useStore();
   const [jsonOpen, setJsonOpen] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   if (!currentQuote) return null;
 
@@ -70,9 +72,13 @@ const RecapScreen = () => {
             <Copy className="w-4 h-4 mr-2" />
             Copier JSON
           </Button>
-          <Button onClick={downloadJSON}>
+          <Button onClick={downloadJSON} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Télécharger JSON
+          </Button>
+          <Button variant="outline" onClick={() => setShowPdfPreview(!showPdfPreview)}>
+            <FileText className="w-4 h-4 mr-2" />
+            {showPdfPreview ? 'Masquer PDF' : 'Aperçu PDF'}
           </Button>
         </div>
       </div>
@@ -237,6 +243,11 @@ const RecapScreen = () => {
           </Collapsible>
         </CardHeader>
       </Card>
+
+      {/* Aperçu PDF */}
+      {showPdfPreview && (
+        <PDFPreview onClose={() => setShowPdfPreview(false)} />
+      )}
     </div>
   );
 };

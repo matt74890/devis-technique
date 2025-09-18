@@ -15,9 +15,8 @@ import defaultTemplate from '@/data/pdfDefaultTemplate.json';
 
 export const PDFSettings = () => {
   const { settings, updateSettings } = useSettings();
-  const [template, setTemplate] = useState<PdfTemplateConfig>(
-    settings.pdf?.template || defaultTemplate as PdfTemplateConfig
-  );
+  const baseTemplate = settings.pdf?.template || defaultTemplate as PdfTemplateConfig;
+  const [template, setTemplate] = useState<PdfTemplateConfig>(baseTemplate);
 
   const handleSave = () => {
     updateSettings({
