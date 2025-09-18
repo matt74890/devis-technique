@@ -539,57 +539,6 @@ const DevisScreen = () => {
         </Card>
       )}
 
-      {/* Actions rapides */}
-      <Card className="shadow-soft border-accent/20">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-accent" />
-              <span>Actions rapides</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              {currentQuote && (
-              <PDFPreview 
-                quote={currentQuote} 
-                settings={settings} 
-                variant={currentQuote.items.some(i => i.kind === 'TECH') && currentQuote.items.some(i => i.kind === 'AGENT') ? 'mixte' : currentQuote.items.some(i => i.kind === 'AGENT') ? 'agent' : 'technique'} 
-              />
-              )}
-              <Button 
-                onClick={() => currentQuote && handleDownloadPdf(currentQuote, settings, currentQuote.items.some(i => i.kind === 'TECH') && currentQuote.items.some(i => i.kind === 'AGENT') ? 'mixte' : currentQuote.items.some(i => i.kind === 'AGENT') ? 'agent' : 'technique')} 
-                variant="outline"
-                disabled={exporting}
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                {exporting ? 'Génération...' : 'Télécharger PDF'}
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ref">Numéro de devis</Label>
-              <Input
-                id="ref"
-                value={currentQuote.ref}
-                onChange={(e) => updateQuote({ ref: e.target.value })}
-                placeholder="DEV-2024-001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={currentQuote.date}
-                onChange={(e) => updateQuote({ date: e.target.value })}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Informations client */}
       <Card className="shadow-soft">
         <CardHeader>
