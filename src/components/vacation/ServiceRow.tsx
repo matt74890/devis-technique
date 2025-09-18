@@ -1,9 +1,8 @@
 import { QuoteItem, Settings } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Copy, Trash2 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Copy, Trash2, Edit } from 'lucide-react';
+import ServiceFormModal from './ServiceFormModal';
 
 interface ServiceRowProps {
   item: QuoteItem;
@@ -12,9 +11,10 @@ interface ServiceRowProps {
   onDuplicate: () => void;
   onDelete: () => void;
   hideDelete?: boolean;
+  currentQuote: any; // Pour accéder au discountMode
 }
 
-export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDelete, hideDelete }: ServiceRowProps) {
+export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDelete, hideDelete, currentQuote }: ServiceRowProps) {
   const serviceTypes = [
     { value: 'patrouille_ouverture', label: 'Patrouille Ouverture' },
     { value: 'patrouille_fermeture', label: 'Patrouille Fermeture' },
@@ -27,8 +27,6 @@ export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDe
     { value: 'autre', label: 'Autre service' }
   ];
 
-  const workDaysOptions = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-
   const formatPrice = (price: number) => {
     const { currency } = settings;
     const formatted = price.toFixed(2);
@@ -37,76 +35,93 @@ export default function ServiceRow({ item, settings, onUpdate, onDuplicate, onDe
       : `${formatted}${currency.symbol}`;
   };
 
+  const getServiceLabel = (serviceType?: string) => {
+    return serviceTypes.find(t => t.value === serviceType)?.label || 'Autre service';
+  };
+
+  const handleServiceUpdate = (updates: Partial<QuoteItem>) => {
+    onUpdate(item.id, updates);
+  };
+
   return (
-    <tr className="border-b">
+    <tr className="border-b hover:bg-muted/30">
+      {/* Nature */}
       <td className="p-2">
-        <Select 
-          value={item.serviceType || 'autre'} 
-          onValueChange={(value) => onUpdate(item.id, { serviceType: value as any })}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {serviceTypes.map(type => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Badge variant="secondary" className="bg-green-100 text-green-800">SERVICE</Badge>
       </td>
+      {/* Type - Nom du service */}
       <td className="p-2">
-        <Textarea
-          value={item.serviceDescription || ''}
-          onChange={(e) => onUpdate(item.id, { serviceDescription: e.target.value })}
-          placeholder="Description libre du service"
-          className="min-h-[60px]"
-        />
+        <div className="font-medium text-sm">
+          {getServiceLabel(item.serviceType)}
+        </div>
+        <div className="text-xs text-muted-foreground truncate max-w-32">
+          {item.serviceDescription}
+        </div>
       </td>
+      {/* Référence */}
       <td className="p-2">
-        <Input
-          type="number"
-          min="1"
-          value={item.patrolsPerDay || 1}
-          onChange={(e) => onUpdate(item.id, { patrolsPerDay: parseInt(e.target.value) || 1 })}
-          className="w-20"
-        />
+        <div className="text-xs text-muted-foreground">
+          {item.reference || 'SRV-AUTO'}
+        </div>
       </td>
-      <td className="p-2">
-        <Input
-          type="number"
-          min="1"
-          value={item.daysCount || 1}
-          onChange={(e) => onUpdate(item.id, { daysCount: parseInt(e.target.value) || 1 })}
-          className="w-20"
-        />
+      {/* Mode */}
+      <td className="p-2 text-center">
+        <Badge variant="outline" className="text-xs">
+          unique
+        </Badge>
       </td>
-      <td className="p-2">
-        <Input
-          type="number"
-          min="5"
-          step="5"
-          value={item.durationMinutes || 30}
-          onChange={(e) => onUpdate(item.id, { durationMinutes: parseInt(e.target.value) || 30 })}
-          className="w-24"
-        />
+      {/* Qté - Nombre total de prestations */}
+      <td className="p-2 text-center">
+        <div className="font-medium">
+          {(item.patrolsPerDay || 1) * (item.daysCount || 1)}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          ({item.patrolsPerDay || 1} × {item.daysCount || 1}j)
+        </div>
       </td>
-      <td className="p-2">
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
-          value={item.serviceUnitPrice || 0}
-          onChange={(e) => onUpdate(item.id, { serviceUnitPrice: parseFloat(e.target.value) || 0 })}
-          className="w-24"
-        />
+      {/* Prix unitaire */}
+      <td className="p-2 text-center">
+        <div className="font-medium">
+          {formatPrice(item.serviceUnitPrice || 0)}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          par prestation
+        </div>
       </td>
+      {/* Mode prix */}
+      <td className="p-2 text-center">
+        <Badge variant="outline" className="text-xs">
+          HT
+        </Badge>
+      </td>
+      {/* Remise % si per_line */}
+      {currentQuote.discountMode === 'per_line' && (
+        <td className="p-2 text-center">
+          <span className="text-xs text-muted-foreground">N/A</span>
+        </td>
+      )}
+      {/* Total HT */}
+      <td className="p-2 text-right font-medium">
+        {formatPrice(item.lineHT || 0)}
+      </td>
+      {/* Total TTC */}
       <td className="p-2 text-right font-medium">
         {formatPrice(item.lineTTC || 0)}
       </td>
+      {/* Actions */}
       <td className="p-2">
         <div className="flex gap-1">
+          <ServiceFormModal
+            item={item}
+            settings={settings}
+            onSave={handleServiceUpdate}
+            isEdit={true}
+            trigger={
+              <Button variant="outline" size="sm">
+                <Edit className="h-3 w-3" />
+              </Button>
+            }
+          />
           <Button variant="outline" size="sm" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>

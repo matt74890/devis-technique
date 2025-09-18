@@ -22,6 +22,7 @@ import ServiceRow from '@/components/vacation/ServiceRow';
 import VacationSeriesGenerator from '@/components/vacation/VacationSeriesGenerator';
 import SavedQuoteManager from '@/components/vacation/SavedQuoteManager';
 import AgentDescriptionEditor from '@/components/agent/AgentDescriptionEditor';
+import ServiceFormModal from '@/components/vacation/ServiceFormModal';
 
 const DevisScreen = () => {
   const { toast } = useToast();
@@ -1233,9 +1234,34 @@ const DevisScreen = () => {
           {newItemKind === 'SERVICE' && (
             <div className="space-y-4">
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h4 className="font-semibold text-green-800 mb-3">Services complémentaires</h4>
-                <div className="text-sm text-green-700 mb-3">
-                  Configurez des services sur mesure comme des patrouilles, formations, maintenance, etc.
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-semibold text-green-800">Services complémentaires</h4>
+                  <ServiceFormModal
+                    settings={settings}
+                    onSave={(serviceData) => {
+                      const newItem = {
+                        id: crypto.randomUUID(),
+                        kind: 'SERVICE' as const,
+                        type: serviceData.serviceType || 'autre',
+                        reference: `SRV-${Date.now()}`,
+                        mode: 'unique' as const,
+                        unitPriceMode: 'HT' as const,
+                        ...serviceData
+                      };
+                      addQuoteItem(newItem);
+                    }}
+                    trigger={
+                      <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-100">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nouveau service
+                      </Button>
+                    }
+                  />
+                </div>
+                <div className="text-sm text-green-700">
+                  Configurez des services sur mesure : patrouilles, formations, maintenance, transport, etc.
+                  <br />
+                  Le calcul se fait automatiquement selon le nombre de prestations et la durée.
                 </div>
               </div>
             </div>
@@ -1427,6 +1453,7 @@ const DevisScreen = () => {
                       key={item.id}
                       item={item}
                       settings={settings}
+                      currentQuote={currentQuote}
                       onUpdate={(id, updates) => updateQuoteItem(id, updates)}
                       onDuplicate={() => duplicateQuoteItem(item.id)}
                       onDelete={() => {}}
