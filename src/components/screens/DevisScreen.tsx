@@ -545,6 +545,19 @@ const DevisScreen = () => {
           <CardTitle className="flex items-center justify-between">
             <span>Informations client</span>
             <div className="flex items-center space-x-2">
+              <Button 
+                onClick={() => updateQuote({ 
+                  addresses: { 
+                    ...currentQuote.addresses, 
+                    useSeparateAddresses: !currentQuote.addresses.useSeparateAddresses 
+                  } 
+                })}
+                variant={currentQuote.addresses.useSeparateAddresses ? "default" : "outline"}
+                size="sm"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                {currentQuote.addresses.useSeparateAddresses ? "Adresses séparées" : "Même adresse"}
+              </Button>
               <ClientSelector onSelect={handleClientSelect} />
               <Button onClick={saveClientToDatabase} variant="outline" size="sm">
                 Sauvegarder client
