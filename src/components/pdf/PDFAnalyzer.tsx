@@ -154,6 +154,7 @@ export const PDFAnalyzer: React.FC<PDFAnalyzerProps> = ({
       
       setTimeout(() => {
         onAnalyzeComplete(layoutConfig);
+        setIsAnalyzing(false);
       }, 500);
 
     } catch (error) {
