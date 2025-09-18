@@ -7,7 +7,7 @@
     <style>
         :root {
             --page-margin: {{theme.page.marginMm}}mm;
-            --font-family: {{theme.page.fontFamily}};
+            --font-family: "{{theme.page.fontFamily}}";
             --font-size: {{theme.page.fontSize}}pt;
             --c-text: {{theme.color.text}};
             --c-muted: {{theme.color.muted}};
@@ -25,23 +25,23 @@
             --badge-radius: {{theme.badge.radiusPx}}px;
         }
 
-        @page {
-            size: A4;
-            margin: var(--page-margin);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
+        /* Print-optimized base styles */
+        html, body { margin: 0; padding: 0; }
+        @page { size: A4; margin: 14mm; }
+        body { 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
             font-family: var(--font-family);
             font-size: var(--font-size);
             line-height: 1.4;
             color: var(--c-text);
-            margin: 0;
-            padding: 0;
         }
+        
+        [data-pdf-section]:empty { display: none; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        .totals-table, .signature-section { break-inside: avoid; page-break-inside: avoid; }
+        img { max-width: 100%; height: auto; }
 
         .page-header {
             display: flex;
@@ -237,8 +237,8 @@
         {{#if addresses.contact.street}}
         <div>{{addresses.contact.street}}</div>
         {{/if}}
-        {{#if addresses.contact.zipCity}}
-        <div>{{addresses.contact.zipCity}}</div>
+        {{#if addresses.contact.postalCode}}
+        <div>{{addresses.contact.postalCode}} {{addresses.contact.city}}</div>
         {{/if}}
     </div>
 
