@@ -207,21 +207,6 @@ const DevisScreen = () => {
     });
   };
 
-  async function handleDownloadPdf(quote: any, settings: any, variant: "technique"|"agent"|"mixte") {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      const dom = await renderPDFFromLayout(quote, settings, variant);
-      const filename = `devis_${quote.ref || "sans_ref"}_${new Date().toISOString().slice(0,10)}.pdf`;
-      await exportDomAsPDF(dom, filename);
-      toast({ title: "PDF téléchargé" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
-  }
-
   const handleItemUpdate = (itemId: string, field: string, value: any) => {
     const item = currentQuote.items.find(i => i.id === itemId);
     if (!item) return;
@@ -1093,48 +1078,6 @@ const DevisScreen = () => {
         <AgentDescriptionEditor
           description={currentQuote.agentDescription || {}}
           onUpdate={(description) => updateQuote({ agentDescription: description })}
-          onPreview={async () => {
-            try {
-              // Créer un quote temporaire avec seulement la description d'agent
-              const previewQuote = {
-                ...currentQuote,
-                items: [], // Pas d'items pour le preview de la description seule
-                agentDescription: currentQuote.agentDescription
-              };
-              
-              // Générer le DOM de preview
-              const dom = await renderPDFFromLayout(previewQuote, settings, 'agent');
-              
-              // Créer une nouvelle fenêtre pour afficher le preview
-              const previewWindow = window.open('', '_blank', 'width=800,height=600');
-              if (previewWindow) {
-                previewWindow.document.write(`
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <title>Aperçu Description Agent</title>
-                      <style>
-                        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                        .preview-container { max-width: 800px; margin: 0 auto; }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="preview-container">
-                        ${dom.outerHTML}
-                      </div>
-                    </body>
-                  </html>
-                `);
-                previewWindow.document.close();
-              }
-            } catch (error) {
-              toast({
-                title: "Erreur",
-                description: "Impossible de générer l'aperçu PDF",
-                variant: "destructive"
-              });
-            }
-          }}
         />
       )}
 

@@ -263,9 +263,6 @@ const defaultSettings: Settings = {
   models: [],
   catalog: [],
   pdfConfig: defaultPDFConfig,
-  pdfLayout: undefined,
-  pdfLayouts: {},
-  activePDFLayouts: {},
   defaults: {
     feesInstallHT: 0,
     feesDossierHT: 0,
