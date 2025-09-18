@@ -6,6 +6,7 @@ import { Quote } from '@/types';
 import { PdfTemplateConfig } from '@/types/pdf';
 import { buildRenderData } from './buildRenderData';
 import { registerPdfHelpers } from './helpers';
+import { useSettings } from '@/components/SettingsProvider';
 import Handlebars from 'handlebars';
 
 interface PreviewPaneProps {
@@ -18,6 +19,7 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { settings } = useSettings();
 
   useEffect(() => {
     generatePreview();
@@ -38,7 +40,7 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
       const compiledTemplate = Handlebars.compile(templateSource);
       
       // Build render data
-      const renderData = buildRenderData(quote, template);
+      const renderData = buildRenderData(quote, template, settings);
       
       // Generate HTML
       const html = compiledTemplate(renderData);
@@ -66,12 +68,15 @@ export const PreviewPane = ({ quote, template, onDownload }: PreviewPaneProps) =
 
   const handleDownloadPdf = async () => {
     try {
-      const renderData = buildRenderData(quote, template);
+      const renderData = buildRenderData(quote, template, settings);
       
-      // Call PDF render endpoint (to be implemented)
-      const response = await fetch('/api/render-pdf', {
+      // Call Supabase Edge Function
+      const response = await fetch('https://kwtdirfmdakbwwjxdynu.supabase.co/functions/v1/render-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3dGRpcmZtZGFrYnd3anhkeW51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNjg4NzcsImV4cCI6MjA3Mjc0NDg3N30.IdBjhaty0vlnpCztwu2lAMeR2FXt5FhJSwvQ4aJ8hQQ`
+        },
         body: JSON.stringify({ renderData, templateId: template.id })
       });
       

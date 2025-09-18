@@ -13,6 +13,7 @@ import { useSettings } from '@/components/SettingsProvider';
 import { Subscription } from '@/types';
 import ProductCatalog from '../catalog/ProductCatalog';
 import LogoUpload from '@/components/settings/LogoUpload';
+import SignatureUpload from '@/components/settings/SignatureUpload';
 import FontSelector from '@/components/settings/FontSelector';
 import FontUpload from '@/components/settings/FontUpload';
 import CurrencySettings from '@/components/settings/CurrencySettings';
@@ -147,6 +148,7 @@ const SettingsScreen = () => {
             </Card>
 
             <LogoUpload />
+            <SignatureUpload />
             <FontSelector />
             <FontUpload />
             <LetterTemplate />

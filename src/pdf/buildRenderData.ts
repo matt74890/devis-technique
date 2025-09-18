@@ -1,9 +1,9 @@
 import { PdfTemplateConfig } from "@/types/pdf";
-import { Quote } from "@/types";
+import { Quote, Settings } from "@/types";
 
 const sum = (arr: any[], key: string) => arr.reduce((s, i) => s + Number(i[key] || 0), 0);
 
-export function buildRenderData(quote: Quote, tpl: PdfTemplateConfig) {
+export function buildRenderData(quote: Quote, tpl: PdfTemplateConfig, settings?: Settings) {
   const items = quote.items || [];
   const techItems = items.filter(i => i.kind === 'TECH' || i.kind === 'SERVICE');
   const agentItems = items.filter(i => i.kind === 'AGENT');
@@ -41,10 +41,10 @@ export function buildRenderData(quote: Quote, tpl: PdfTemplateConfig) {
     },
     seller: {
       company: 'GPA',
-      name: tpl.brand.sellerName || '',
-      title: tpl.brand.sellerTitle || '',
-      logoUrl: tpl.brand.logoUrl || '',
-      signatureUrl: tpl.brand.sellerSignatureUrl || ''
+      name: settings?.sellerInfo?.name || tpl.brand.sellerName || 'Nom du vendeur',
+      title: settings?.sellerInfo?.title || tpl.brand.sellerTitle || 'Titre du vendeur',
+      logoUrl: settings?.logoUrl || tpl.brand.logoUrl || '',
+      signatureUrl: settings?.sellerInfo?.signature || tpl.brand.sellerSignatureUrl || ''
     },
     client: {
       civility: quote.clientCivility || '',
