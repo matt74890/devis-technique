@@ -724,9 +724,7 @@ export const buildDomFromLayout = (
       <div style="display: flex; align-items: center; gap: 15px;">
         ${settings.logoUrl ? `
           <img src="${settings.logoUrl}" alt="Logo" style="max-height: 60px; max-width: 120px; object-fit: contain;" />
-        ` : `
-          <div style="color: ${colors.letterHeaderColor}; font-size: 14pt; font-weight: bold;">${settings.sellerInfo?.name || 'GPA'}</div>
-        `}
+        ` : ''}
         <div style="font-size: 16pt; font-weight: bold; color: ${colors.primary};">
           Devis N° ${quote.ref}
         </div>
