@@ -116,15 +116,12 @@ const SettingsScreen = () => {
           </TabsTrigger>
           <TabsTrigger value="backup" className="flex items-center space-x-2">
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Sauvegarde</span>
+            <span className="hidden sm:inline">MDP & Sauvegarde</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
           <div className="space-y-6">
-            {/* Sécurité */}
-            <PasswordSettings />
-            
             {/* Informations vendeur */}
             <SellerInfo />
             
@@ -850,7 +847,10 @@ const SettingsScreen = () => {
         </TabsContent>
 
         <TabsContent value="backup">
-          <ImportExportSettings />
+          <div className="space-y-6">
+            <PasswordSettings />
+            <ImportExportSettings />
+          </div>
         </TabsContent>
 
       </Tabs>
