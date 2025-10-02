@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Eye, EyeOff, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -14,6 +14,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,6 +97,27 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
+
+      if (error) throw error;
+
+      toast.success('Email de réinitialisation envoyé ! Vérifiez votre boîte mail.');
+      setMode('signin');
+    } catch (error: any) {
+      console.error('Erreur lors de la réinitialisation:', error);
+      toast.error('Erreur: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md shadow-soft">
@@ -104,15 +126,55 @@ const Auth = () => {
             Devis Pro
           </CardTitle>
           <p className="text-center text-muted-foreground">
-            Connectez-vous pour accéder à votre espace
+            {mode === 'forgot' 
+              ? 'Réinitialiser votre mot de passe'
+              : 'Connectez-vous pour accéder à votre espace'
+            }
           </p>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Inscription</TabsTrigger>
-            </TabsList>
+          {mode === 'forgot' ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email-forgot">Email</Label>
+                <Input
+                  id="email-forgot"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="votre@email.com"
+                  required
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <span>Envoi...</span>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Envoyer l'email de réinitialisation
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setMode('signin')}
+              >
+                Retour à la connexion
+              </Button>
+            </form>
+          ) : (
+            <Tabs value={mode} onValueChange={(v) => setMode(v as 'signin' | 'signup')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Connexion</TabsTrigger>
+                <TabsTrigger value="signup">Inscription</TabsTrigger>
+              </TabsList>
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
@@ -158,13 +220,21 @@ const Auth = () => {
                     <span>Connexion...</span>
                   ) : (
                     <>
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Se connecter
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Se connecter
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => setMode('forgot')}
+            >
+              Mot de passe oublié ?
+            </Button>
+          </form>
+        </TabsContent>
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
@@ -219,10 +289,11 @@ const Auth = () => {
                 <p className="text-xs text-muted-foreground text-center">
                   Vos paramètres seront sauvegardés et synchronisés
                 </p>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
+          </form>
+        </TabsContent>
+      </Tabs>
+          )}
+    </CardContent>
       </Card>
     </div>
   );

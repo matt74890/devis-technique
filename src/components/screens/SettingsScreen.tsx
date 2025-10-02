@@ -24,6 +24,7 @@ import TemplateColors from '@/components/settings/TemplateColors';
 import LetterTemplate from '@/components/settings/LetterTemplate';
 import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
+import PasswordSettings from '@/components/settings/PasswordSettings';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -121,6 +122,9 @@ const SettingsScreen = () => {
 
         <TabsContent value="general">
           <div className="space-y-6">
+            {/* Sécurité */}
+            <PasswordSettings />
+            
             {/* Informations vendeur */}
             <SellerInfo />
             
