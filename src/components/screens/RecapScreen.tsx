@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { FileDown, Calculator, Euro } from 'lucide-react';
+import { FileDown, Calculator, Euro, Archive, CheckCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateQuoteTotals, calculateQuoteItem } from '@/utils/calculations';
 import { calculateAgentVacation } from '@/utils/agentCalculations';
@@ -16,15 +16,68 @@ import { useState } from "react";
 import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
 import { exportDomAsPDF } from "@/utils/pdfRenderer";
 import type { Quote, Settings } from "@/types";
+import { supabase } from '@/integrations/supabase/client';
 
 const RecapScreen = () => {
   const { currentQuote, settings, updateQuote } = useStore();
   const [exporting, setExporting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   if (!currentQuote) return null;
 
   const handleSignatureChange = (signature: string) => {
     updateQuote({ clientSignature: signature });
+  };
+
+  const archiveQuote = async (status: 'archived' | 'validated') => {
+    if (archiving) return;
+    
+    if (!currentQuote.ref) {
+      toast.error('Veuillez renseigner une référence pour le devis');
+      return;
+    }
+    
+    if (!currentQuote.client) {
+      toast.error('Veuillez sélectionner un client');
+      return;
+    }
+    
+    setArchiving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté');
+        return;
+      }
+
+      const totals = calculateQuoteTotals({ ...currentQuote, items: calculatedItems }, settings.tvaPct);
+
+      const { error } = await supabase
+        .from('archived_quotes')
+        .insert({
+          user_id: user.id,
+          quote_ref: currentQuote.ref,
+          client_name: currentQuote.client,
+          quote_date: currentQuote.date,
+          status: status,
+          subtotal_ht: totals.global.htAfterDiscount,
+          total_ttc: totals.global.totalTTC,
+          quote_data: currentQuote as any,
+        });
+
+      if (error) throw error;
+
+      toast.success(
+        status === 'archived' 
+          ? 'Devis archivé avec succès' 
+          : 'Devis validé et archivé avec succès'
+      );
+    } catch (error) {
+      console.error('Error archiving quote:', error);
+      toast.error('Erreur lors de l\'archivage du devis');
+    } finally {
+      setArchiving(false);
+    }
   };
 
   // Ensure all items have calculated values
@@ -1187,6 +1240,23 @@ const RecapScreen = () => {
               <Button onClick={downloadWord} variant="outline">
                 <FileDown className="h-4 w-4 mr-2" />
                 Télécharger Word
+              </Button>
+              <Button 
+                onClick={() => archiveQuote('archived')} 
+                variant="outline"
+                disabled={archiving}
+              >
+                <Archive className="h-4 w-4 mr-2" />
+                Archiver
+              </Button>
+              <Button 
+                onClick={() => archiveQuote('validated')} 
+                variant="default"
+                className="bg-success hover:bg-success/90"
+                disabled={archiving}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Valider
               </Button>
             </div>
           </CardTitle>

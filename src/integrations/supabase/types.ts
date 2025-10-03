@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      archived_quotes: {
+        Row: {
+          archived_at: string
+          client_name: string
+          created_at: string
+          id: string
+          quote_data: Json
+          quote_date: string
+          quote_ref: string
+          status: string
+          subtotal_ht: number
+          total_ttc: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string
+          client_name: string
+          created_at?: string
+          id?: string
+          quote_data: Json
+          quote_date: string
+          quote_ref: string
+          status: string
+          subtotal_ht: number
+          total_ttc: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          quote_data?: Json
+          quote_date?: string
+          quote_ref?: string
+          status?: string
+          subtotal_ht?: number
+          total_ttc?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null

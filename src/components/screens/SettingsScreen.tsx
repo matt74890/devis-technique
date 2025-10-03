@@ -25,6 +25,7 @@ import LetterTemplate from '@/components/settings/LetterTemplate';
 import AgentDescriptionSettings from '@/components/settings/AgentDescriptionSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
 import PasswordSettings from '@/components/settings/PasswordSettings';
+import { ArchivedQuotes } from '@/components/settings/ArchivedQuotes';
 
 const SettingsScreen = () => {
   const { settings, updateSettings } = useSettings();
@@ -93,7 +94,7 @@ const SettingsScreen = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 bg-card shadow-soft">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 bg-card shadow-soft">
           <TabsTrigger value="general" className="flex items-center space-x-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Général</span>
@@ -113,6 +114,10 @@ const SettingsScreen = () => {
           <TabsTrigger value="currency" className="flex items-center space-x-2">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">Devises</span>
+          </TabsTrigger>
+          <TabsTrigger value="archives" className="flex items-center space-x-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Archives PDF</span>
           </TabsTrigger>
           <TabsTrigger value="backup" className="flex items-center space-x-2">
             <Download className="h-4 w-4" />
@@ -844,6 +849,20 @@ const SettingsScreen = () => {
 
         <TabsContent value="currency">
           <CurrencySettings />
+        </TabsContent>
+
+        <TabsContent value="archives">
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <span>Archives PDF</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ArchivedQuotes />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="backup">
