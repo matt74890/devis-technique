@@ -17,6 +17,7 @@ import { renderPDFFromLayout } from "@/components/pdf/renderPDFFromLayout";
 import { exportDomAsPDF } from "@/utils/pdfRenderer";
 import type { Quote, Settings } from "@/types";
 import { supabase } from '@/integrations/supabase/client';
+import html2pdf from 'html2pdf.js';
 
 const RecapScreen = () => {
   const { currentQuote, settings, updateQuote } = useStore();
@@ -50,8 +51,49 @@ const RecapScreen = () => {
         return;
       }
 
+      // Générer le PDF
+      toast.info('Génération du PDF en cours...');
+      const variant = getQuoteVariant();
+      const dom = await renderPDFFromLayout(currentQuote, settings, variant);
+      
+      // Attendre que les polices soient chargées
+      if ((document as any).fonts?.ready) {
+        await (document as any).fonts.ready;
+      }
+
+      // Convertir le DOM en PDF blob
+      const pdfBlob = await new Promise<Blob>((resolve, reject) => {
+        const opt = {
+          margin: 8,
+          filename: `devis_${currentQuote.ref}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const worker = html2pdf().set(opt).from(dom).toPdf().output('blob');
+        worker.then((blob: Blob) => resolve(blob)).catch(reject);
+      });
+
+      // Upload du PDF dans Supabase Storage
+      const pdfPath = `${user.id}/${currentQuote.ref}_${Date.now()}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from('archived_pdfs')
+        .upload(pdfPath, pdfBlob, {
+          contentType: 'application/pdf',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Récupérer l'URL publique du PDF
+      const { data: { publicUrl } } = supabase.storage
+        .from('archived_pdfs')
+        .getPublicUrl(pdfPath);
+
       const totals = calculateQuoteTotals({ ...currentQuote, items: calculatedItems }, settings.tvaPct);
 
+      // Sauvegarder les données dans la base de données
       const { error } = await supabase
         .from('archived_quotes')
         .insert({
@@ -63,6 +105,7 @@ const RecapScreen = () => {
           subtotal_ht: totals.global.htAfterDiscount,
           total_ttc: totals.global.totalTTC,
           quote_data: currentQuote as any,
+          pdf_url: publicUrl,
         });
 
       if (error) throw error;

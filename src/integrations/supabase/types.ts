@@ -20,6 +20,7 @@ export type Database = {
           client_name: string
           created_at: string
           id: string
+          pdf_url: string | null
           quote_data: Json
           quote_date: string
           quote_ref: string
@@ -34,6 +35,7 @@ export type Database = {
           client_name: string
           created_at?: string
           id?: string
+          pdf_url?: string | null
           quote_data: Json
           quote_date: string
           quote_ref: string
@@ -48,6 +50,7 @@ export type Database = {
           client_name?: string
           created_at?: string
           id?: string
+          pdf_url?: string | null
           quote_data?: Json
           quote_date?: string
           quote_ref?: string

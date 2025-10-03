@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, FileText } from 'lucide-react';
+import { Trash2, FileText, CheckCircle, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -18,6 +18,7 @@ interface ArchivedQuote {
   subtotal_ht: number;
   total_ttc: number;
   archived_at: string;
+  pdf_url?: string;
 }
 
 interface MonthlyStats {
@@ -89,6 +90,31 @@ export function ArchivedQuotes() {
     setMonthlyStats(Object.values(statsByMonth).sort((a, b) => b.month.localeCompare(a.month)));
   };
 
+  const validateQuote = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('archived_quotes')
+        .update({ status: 'validated' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Devis validé',
+      });
+
+      fetchArchivedQuotes();
+    } catch (error) {
+      console.error('Error validating quote:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de valider le devis',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const deleteQuote = async (id: string) => {
     try {
       const { error } = await supabase
@@ -139,7 +165,7 @@ export function ArchivedQuotes() {
           ) : (
             archivedQuotes.map(quote => (
               <Card key={quote.id} className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold">Devis N° {quote.quote_ref}</h3>
@@ -155,13 +181,34 @@ export function ArchivedQuotes() {
                       <span className="font-medium">TTC: {quote.total_ttc.toFixed(2)} CHF</span>
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteQuote(quote.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {quote.pdf_url && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.open(quote.pdf_url, '_blank')}
+                        title="Télécharger le PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="default"
+                      size="icon"
+                      onClick={() => validateQuote(quote.id)}
+                      title="Valider le devis"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => deleteQuote(quote.id)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))
@@ -177,7 +224,7 @@ export function ArchivedQuotes() {
           ) : (
             validatedQuotes.map(quote => (
               <Card key={quote.id} className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold">Devis N° {quote.quote_ref}</h3>
@@ -193,13 +240,26 @@ export function ArchivedQuotes() {
                       <span className="font-medium">TTC: {quote.total_ttc.toFixed(2)} CHF</span>
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteQuote(quote.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {quote.pdf_url && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.open(quote.pdf_url, '_blank')}
+                        title="Télécharger le PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => deleteQuote(quote.id)}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))
